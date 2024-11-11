@@ -1,0 +1,8 @@
+[package]
+name = "FSAE-raspi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+FSAE-macro = { workspace = true }
+chrono = "0.4"

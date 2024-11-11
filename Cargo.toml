@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "FSAE-macro", "FSAE-raspi",
+]
+
+[workspace.dependencies]
+FSAE-macro = { path = "FSAE-macro" }
