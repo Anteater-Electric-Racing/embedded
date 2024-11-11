@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use FSAE_macro::MessageSize;
+use fsae_macro::MessageSize;
 use socketcan::{tokio::CanSocket, Id, Result, StandardId};
 
 trait CanReading {

@@ -3,24 +3,6 @@
 version = 3
 
 [[package]]
-name = "FSAE-macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.87",
-]
-
-[[package]]
-name = "FSAE-raspi"
-version = "0.1.0"
-dependencies = [
- "FSAE-macro",
- "chrono",
- "socketcan",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -143,6 +125,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9d2e857f87ac832df68fa498d18ddc679175cf3d2e4aa893988e5601baf9438"
 dependencies = [
  "nb",
+]
+
+[[package]]
+name = "fsae-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.87",
+]
+
+[[package]]
+name = "fsae-raspi"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "fsae-macro",
+ "socketcan",
 ]
 
 [[package]]

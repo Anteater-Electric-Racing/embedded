@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-FSAE-macro = { workspace = true }
+fsae-macro = { workspace = true }
 chrono = "0.4"
 socketcan = {version = "3.3.0", features = ["tokio"]}

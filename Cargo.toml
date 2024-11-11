@@ -4,4 +4,4 @@ members = [
 ]
 
 [workspace.dependencies]
-FSAE-macro = { path = "fsae-macro" }
+fsae-macro = { path = "fsae-macro" }
