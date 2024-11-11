@@ -1,0 +1,9 @@
+{
+    "name": "Rust",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "postCreateCommand": "sudo service influxdb start && influx -execute \"CREATE DATABASE data\" && sudo service grafana-server start",
+    "forwardPorts": [8086, 3000]
+}

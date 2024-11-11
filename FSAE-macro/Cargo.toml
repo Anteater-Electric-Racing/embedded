@@ -1,5 +1,5 @@
 [package]
-name = "FSAE-macro"
+name = "fsae-macro"
 version = "0.1.0"
 edition = "2021"
 
