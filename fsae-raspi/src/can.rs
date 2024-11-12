@@ -237,25 +237,25 @@ async fn check_message<T: CanReading + Send + 'static>(
         let topic = format!("{}/can/{}", MQTT_TOPIC, type_name::<T>());
 
         let mqtt_client = mqtt_client.clone();
-        // tokio::spawn(async move {    
+        tokio::spawn(async move {    
             if let Err(e) = mqtt_client
                 .publish(topic, QoS::AtLeastOnce, false, json)
                 .await
             {
                 eprintln!("Failed to publish to MQTT: {}", e);
             }
-        // });
+        });
 
         // Also write to InfluxDB
         let influx_client = influx_client.clone();
-        // tokio::spawn(async move {
+        tokio::spawn(async move {
             if let Err(e) = influx_client
                 .query(reading.into_query(type_name::<T>()))
                 .await
             {
                 eprintln!("Failed to write to InfluxDB: {}", e);
             }
-        // });
+        });
     }
 }
 
