@@ -234,7 +234,7 @@ async fn check_message<T: CanReading + Send + 'static>(
         };
 
         // Publish to MQTT
-        let topic = format!("{}/can/{}", MQTT_TOPIC, type_name::<T>());
+        let topic = format!("{}", type_name::<T>()).to_lowercase().replace("::", "/");
 
         let mqtt_client = mqtt_client.clone();
         tokio::spawn(async move {    
@@ -278,6 +278,31 @@ pub async fn read_can() {
             }
         }
     });
+
+    // loop {
+    //     // Generate sample data for testing
+    //     let sample_data = vec![
+    //         (BMSReading1::id(), vec![0x01, 0x02, 0x03, 0x04]),
+    //         (BMSReading2::id(), vec![0x05, 0x06, 0x07, 0x08, 0x09]),
+    //         (BMSReading3::id(), vec![0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11]),
+    //         (LeftESCReading1::id(), vec![0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19]),
+    //         (LeftESCReading2::id(), vec![0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21]),
+    //         (RightESCReading1::id(), vec![0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29]),
+    //         (RightESCReading2::id(), vec![0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31]),
+    //     ];
+
+    //     for (id, data) in sample_data {
+    //         check_message::<BMSReading1>(&influx_client, &mqtt_client, id, &data).await;
+    //         check_message::<BMSReading2>(&influx_client, &mqtt_client, id, &data).await;
+    //         check_message::<BMSReading3>(&influx_client, &mqtt_client, id, &data).await;
+    //         check_message::<LeftESCReading1>(&influx_client, &mqtt_client, id, &data).await;
+    //         check_message::<LeftESCReading2>(&influx_client, &mqtt_client, id, &data).await;
+    //         check_message::<RightESCReading1>(&influx_client, &mqtt_client, id, &data).await;
+    //         check_message::<RightESCReading2>(&influx_client, &mqtt_client, id, &data).await;
+    //     }
+
+    //     tokio::time::sleep(Duration::from_secs(1)).await;
+    // }
 
     loop {
         let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
