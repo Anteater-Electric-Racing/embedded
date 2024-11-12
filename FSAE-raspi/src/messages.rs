@@ -2,11 +2,14 @@ use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
 use socketcan::{tokio::CanSocket, EmbeddedFrame, Id, StandardId, ExtendedId};
 use std::any::type_name;
+use influxdb::{Client, InfluxDbWriteable};
 use tokio;
 
 const CAN_INTERFACE: &str = "can0";
+const INFLUXDB_URL: &str = "http://localhost:8086";
+const INFLUXDB_DATABASE: &str = "fsae";
 
-#[derive(Debug)]
+#[derive(InfluxDbWriteable)]
 struct BMSReading1 {
     time: DateTime<Utc>,
     current: i16,
@@ -27,7 +30,7 @@ impl CanReading for BMSReading1 {
     const SIZE: usize = 4;
 }
 
-#[derive(Debug)]
+#[derive(InfluxDbWriteable)]
 struct BMSReading2 {
     time: DateTime<Utc>,
     dlc: u8,
@@ -54,7 +57,7 @@ impl CanReading for BMSReading2 {
     const SIZE: usize = 5;
 }
 
-#[derive(Debug)]
+#[derive(InfluxDbWriteable)]
 struct BMSReading3 {
     time: DateTime<Utc>,
     relay_state: u8,
@@ -83,7 +86,7 @@ impl CanReading for BMSReading3 {
     const SIZE: usize = 8;
 }
 
-#[derive(Debug)]
+#[derive(InfluxDbWriteable)]
 struct LeftESCReading1 {
     time: DateTime<Utc>,
     speed_rpm: u16,
@@ -108,7 +111,7 @@ impl CanReading for LeftESCReading1 {
     const SIZE: usize = 8;
 }
 
-#[derive(Debug)]
+#[derive(InfluxDbWriteable)]
 struct LeftESCReading2 {
     time: DateTime<Utc>,
     throttle_signal: u8,
@@ -135,7 +138,7 @@ impl CanReading for LeftESCReading2 {
     const SIZE: usize = 8;
 }
 
-#[derive(Debug)]
+#[derive(InfluxDbWriteable)]
 struct RightESCReading1 {
     time: DateTime<Utc>,
     speed_rpm: u16,
@@ -160,7 +163,7 @@ impl CanReading for RightESCReading1 {
     const SIZE: usize = 8;
 }
 
-#[derive(Debug)]
+#[derive(InfluxDbWriteable)]
 struct RightESCReading2 {
     time: DateTime<Utc>,
     throttle_signal: u8,
@@ -187,13 +190,13 @@ impl CanReading for RightESCReading2 {
     const SIZE: usize = 8;
 }
 
-trait CanReading: std::fmt::Debug {
+pub trait CanReading: InfluxDbWriteable {
     fn id() -> Id;
     fn construct(data: &[u8]) -> Self;
     const SIZE: usize;
 }
 
-fn check_message<T: CanReading>(id: Id, data: &[u8]) {
+async fn check_message<T: CanReading>(client: Client, id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
             eprintln!("Invalid data length for {}: {}", type_name::<T>(), data.len());
@@ -202,12 +205,18 @@ fn check_message<T: CanReading>(id: Id, data: &[u8]) {
 
         let reading = T::construct(data);
 
-        #[cfg(debug_assertions)]
-        println!("{:?}", reading);
+        if let Err(e) = client
+            .query(reading.into_query("tst"))
+            .await
+        {
+            eprintln!("Failed to write to InfluxDB: {}", e);
+        }
     }
 }
 
-async fn read_can() {
+pub async fn read_can() {
+    let client = Client::new(INFLUXDB_URL, INFLUXDB_DATABASE);
+
     loop {
         let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
             eprintln!("Failed to open CAN socket, retrying...");
@@ -217,14 +226,15 @@ async fn read_can() {
         while let Some(Ok(frame)) = sock.next().await {
             let data = frame.data();
             let id = frame.id();
+            // let x = frame.timestamp();
 
-            check_message::<BMSReading1>(id, data);
-            check_message::<BMSReading2>(id, data);
-            check_message::<BMSReading3>(id, data);
-            check_message::<LeftESCReading1>(id, data);
-            check_message::<LeftESCReading2>(id, data);
-            check_message::<RightESCReading1>(id, data);
-            check_message::<RightESCReading2>(id, data);
+            // check_message::<BMSReading1>(client, id, data);
+            // check_message::<BMSReading2>(client, id, data);
+            // check_message::<BMSReading3>(client, id, data);
+            // check_message::<LeftESCReading1>(client, id, data);
+            // check_message::<LeftESCReading2>(client, id, data);
+            // check_message::<RightESCReading1>(client, id, data);
+            // check_message::<RightESCReading2>(client, id, data);
         }
     }
 }
