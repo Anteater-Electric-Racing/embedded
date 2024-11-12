@@ -5,10 +5,22 @@ use std::any::type_name;
 use influxdb::{Client, InfluxDbWriteable};
 use tokio;
 
+// constants
 const CAN_INTERFACE: &str = "can0";
 const INFLUXDB_URL: &str = "http://localhost:8086";
 const INFLUXDB_DATABASE: &str = "fsae";
 
+// this sets up thea trait that contains nessesary information for all CAN messages that follow
+pub trait CanReading: InfluxDbWriteable {
+    // a function to get the expected ID of a CAN message
+    fn id() -> Id;
+    // a function to construct a CAN reading from the raw data
+    fn construct(data: &[u8]) -> Self;
+    // the expected size of the raw data
+    const SIZE: usize;
+}
+
+// Now we list out all possible CAN messages
 #[derive(InfluxDbWriteable)]
 struct BMSReading1 {
     time: DateTime<Utc>,
@@ -190,12 +202,7 @@ impl CanReading for RightESCReading2 {
     const SIZE: usize = 8;
 }
 
-pub trait CanReading: InfluxDbWriteable {
-    fn id() -> Id;
-    fn construct(data: &[u8]) -> Self;
-    const SIZE: usize;
-}
-
+// this takes in 
 async fn check_message<T: CanReading>(client: Client, id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
@@ -228,13 +235,13 @@ pub async fn read_can() {
             let id = frame.id();
             let x = frame.timestamp();
 
-            check_message::<BMSReading1>(client, id, data);
-            check_message::<BMSReading2>(client, id, data);
-            check_message::<BMSReading3>(client, id, data);
-            check_message::<LeftESCReading1>(client, id, data);
-            check_message::<LeftESCReading2>(client, id, data);
-            check_message::<RightESCReading1>(client, id, data);
-            check_message::<RightESCReading2>(client, id, data);
+            check_message::<BMSReading1>(client, id, data).await;
+            check_message::<BMSReading2>(client, id, data).await;
+            check_message::<BMSReading3>(client, id, data).await;
+            check_message::<LeftESCReading1>(client, id, data).await;
+            check_message::<LeftESCReading2>(client, id, data).await;
+            check_message::<RightESCReading1>(client, id, data).await;
+            check_message::<RightESCReading2>(client, id, data).await;
         }
     }
 }
