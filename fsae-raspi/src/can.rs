@@ -9,7 +9,7 @@ use tokio;
 // constants
 const CAN_INTERFACE: &str = "can0";
 
-// this sets up thea trait that contains nessesary information for all CAN messages that follow
+// this sets up a trait that contains necessary information for all CAN messages that follow
 pub trait CanReading: InfluxDbWriteable {
     // a function to get the expected ID of a CAN message
     fn id() -> Id;
