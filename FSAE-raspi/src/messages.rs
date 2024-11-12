@@ -1,25 +1,25 @@
 use chrono::{DateTime, Utc};
 use fsae_macro::MessageSize;
 use futures_util::StreamExt;
-use socketcan::{tokio::CanSocket, Id, Result, StandardId, EmbeddedFrame};
+use socketcan::{tokio::CanSocket, EmbeddedFrame, Id, StandardId, ExtendedId};
 use std::any::type_name;
 use tokio;
 
 const CAN_INTERFACE: &str = "can0";
 
 #[derive(MessageSize, Debug)]
-struct PackReading1 {
+struct BMSReading1 {
     time: DateTime<Utc>,
     current: i16,
     inst_voltage: i16,
 }
 
-impl CanReading for PackReading1 {
+impl CanReading for BMSReading1 {
     fn id() -> Id {
         Id::Standard(StandardId::new(0x03B).unwrap())
     }
     fn construct(data: &[u8]) -> Self {
-        PackReading1 {
+        BMSReading1 {
             time: Utc::now(),
             current: i16::from_be_bytes([data[0], data[1]]),
             inst_voltage: i16::from_be_bytes([data[2], data[3]]),
@@ -28,7 +28,7 @@ impl CanReading for PackReading1 {
 }
 
 #[derive(MessageSize, Debug)]
-struct PackReading2 {
+struct BMSReading2 {
     time: DateTime<Utc>,
     dlc: u8,
     ccl: u8,
@@ -37,12 +37,12 @@ struct PackReading2 {
     low_temp: u8,
 }
 
-impl CanReading for PackReading2 {
+impl CanReading for BMSReading2 {
     fn id() -> Id {
         Id::Standard(StandardId::new(0x3CB).unwrap())
     }
     fn construct(data: &[u8]) -> Self {
-        PackReading2 {
+        BMSReading2 {
             time: Utc::now(),
             dlc: data[0],
             ccl: data[1],
@@ -53,12 +53,140 @@ impl CanReading for PackReading2 {
     }
 }
 
+#[derive(MessageSize, Debug)]
+struct BMSReading3 {
+    time: DateTime<Utc>,
+    relay_state: u8,
+    soc: u8,
+    resistance: i16,
+    open_voltage: i16,
+    amphours: u8,
+    pack_health: u8,
+}
+
+impl CanReading for BMSReading3 {
+    fn id() -> Id {
+        Id::Standard(StandardId::new(0x6B2).unwrap())
+    }
+    fn construct(data: &[u8]) -> Self {
+        BMSReading3 {
+            time: Utc::now(),
+            relay_state: data[0],
+            soc: data[1],
+            resistance: i16::from_be_bytes([data[2], data[3]]),
+            open_voltage: i16::from_be_bytes([data[4], data[5]]),
+            amphours: data[6],
+            pack_health: data[7],
+        }
+    }
+}
+
+#[derive(MessageSize, Debug)]
+struct LeftESCReading1 {
+    time: DateTime<Utc>,
+    speed_rpm: u16,
+    motor_current: u16,
+    battery_voltage: u16,
+    error_code: u16,
+}
+
+impl CanReading for LeftESCReading1 {
+    fn id() -> Id {
+        Id::Extended(ExtendedId::new(0x0CF11E06).unwrap())
+    }
+    fn construct(data: &[u8]) -> Self {
+        LeftESCReading1 {
+            time: Utc::now(),
+            speed_rpm: u16::from_le_bytes([data[0], data[1]]),
+            motor_current: u16::from_le_bytes([data[2], data[3]]),
+            battery_voltage: u16::from_le_bytes([data[4], data[5]]),
+            error_code: u16::from_be_bytes([data[6], data[7]]),
+        }
+    }
+}
+
+#[derive(MessageSize, Debug)]
+struct LeftESCReading2 {
+    time: DateTime<Utc>,
+    throttle_signal: u8,
+    controller_temp: i8,
+    motor_temp: i8,
+    controller_status: u8,
+    switch_status: u8,
+}
+
+impl CanReading for LeftESCReading2 {
+    fn id() -> Id {
+        Id::Extended(ExtendedId::new(0x0CF11F06).unwrap())
+    }
+    fn construct(data: &[u8]) -> Self {
+        LeftESCReading2 {
+            time: Utc::now(),
+            throttle_signal: data[0],
+            controller_temp: data[1] as i8 - 40,
+            motor_temp: data[2] as i8 - 30,
+            controller_status: data[5],
+            switch_status: data[6],
+        }
+    }
+}
+
+#[derive(MessageSize, Debug)]
+struct RightESCReading1 {
+    time: DateTime<Utc>,
+    speed_rpm: u16,
+    motor_current: u16,
+    battery_voltage: u16,
+    error_code: u16,
+}
+
+impl CanReading for RightESCReading1 {
+    fn id() -> Id {
+        Id::Extended(ExtendedId::new(0x0CF11E05).unwrap())
+    }
+    fn construct(data: &[u8]) -> Self {
+        RightESCReading1 {
+            time: Utc::now(),
+            speed_rpm: u16::from_le_bytes([data[0], data[1]]),
+            motor_current: u16::from_le_bytes([data[2], data[3]]),
+            battery_voltage: u16::from_le_bytes([data[4], data[5]]),
+            error_code: u16::from_be_bytes([data[6], data[7]]),
+        }
+    }
+}
+
+#[derive(MessageSize, Debug)]
+struct RightESCReading2 {
+    time: DateTime<Utc>,
+    throttle_signal: u8,
+    controller_temp: i8,
+    motor_temp: i8,
+    controller_status: u8,
+    switch_status: u8,
+}
+
+impl CanReading for RightESCReading2 {
+    fn id() -> Id {
+        Id::Extended(ExtendedId::new(0x0CF11F05).unwrap())
+    }
+    fn construct(data: &[u8]) -> Self {
+        RightESCReading2 {
+            time: Utc::now(),
+            throttle_signal: data[0],
+            controller_temp: data[1] as i8 - 40,
+            motor_temp: data[2] as i8 - 30,
+            controller_status: data[5],
+            switch_status: data[6],
+        }
+    }
+}
+
 trait CanReading {
     fn id() -> Id;
     fn construct(data: &[u8]) -> Self;
 }
 
-async fn read_can(){
+async fn read_can() {
     loop {
         let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
             eprintln!("Failed to open CAN socket, retrying...");
@@ -69,26 +197,85 @@ async fn read_can(){
             let data = frame.data();
             let id = frame.id();
 
-
-            if PackReading1::id() == id {
-                if data.len() != PackReading1::SIZE {
-                    eprintln!("Invalid data length for PackReading1: {}", data.len());
+            if BMSReading1::id() == id {
+                if data.len() != BMSReading1::SIZE {
+                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
                     continue;
                 }
 
-                let reading = PackReading1::construct(data);
+                let reading = BMSReading1::construct(data);
 
                 #[cfg(debug_assertions)]
                 println!("{:?}", reading);
             }
 
-            if PackReading2::id() == id {
-                if data.len() != PackReading2::SIZE {
-                    eprintln!("Invalid data length for PackReading2: {}", data.len());
+            if BMSReading2::id() == id {
+                if data.len() != BMSReading2::SIZE {
+                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
                     continue;
                 }
 
-                let reading = PackReading2::construct(data);
+                let reading = BMSReading2::construct(data);
+
+                #[cfg(debug_assertions)]
+                println!("{:?}", reading);
+            }
+
+            if BMSReading3::id() == id {
+                if data.len() != BMSReading3::SIZE {
+                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
+                    continue;
+                }
+
+                let reading = BMSReading3::construct(data);
+
+                #[cfg(debug_assertions)]
+                println!("{:?}", reading);
+            }
+
+            if LeftESCReading1::id() == id {
+                if data.len() != LeftESCReading1::SIZE {
+                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
+                    continue;
+                }
+
+                let reading = LeftESCReading1::construct(data);
+
+                #[cfg(debug_assertions)]
+                println!("{:?}", reading);
+            }
+
+            if LeftESCReading2::id() == id {
+                if data.len() != LeftESCReading2::SIZE {
+                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
+                    continue;
+                }
+
+                let reading = LeftESCReading2::construct(data);
+
+                #[cfg(debug_assertions)]
+                println!("{:?}", reading);
+            }
+
+            if RightESCReading1::id() == id {
+                if data.len() != RightESCReading1::SIZE {
+                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
+                    continue;
+                }
+
+                let reading = RightESCReading1::construct(data);
+
+                #[cfg(debug_assertions)]
+                println!("{:?}", reading);
+            }
+
+            if RightESCReading2::id() == id {
+                if data.len() != RightESCReading2::SIZE {
+                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
+                    continue;
+                }
+
+                let reading = RightESCReading2::construct(data);
 
                 #[cfg(debug_assertions)]
                 println!("{:?}", reading);
