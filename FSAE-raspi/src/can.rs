@@ -4,11 +4,10 @@ use influxdb::{Client, InfluxDbWriteable};
 use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
 use std::any::type_name;
 use tokio;
+use crate::influx::{INFLUXDB_DATABASE, INFLUXDB_URL};
 
 // constants
 const CAN_INTERFACE: &str = "can0";
-const INFLUXDB_URL: &str = "http://localhost:8086";
-const INFLUXDB_DATABASE: &str = "data";
 
 // this sets up thea trait that contains nessesary information for all CAN messages that follow
 pub trait CanReading: InfluxDbWriteable {

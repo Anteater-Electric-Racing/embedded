@@ -9,3 +9,4 @@ socketcan = {version = "3.3.0", features = ["tokio"]}
 futures-util = "0.3"
 tokio = { version = "1", features = ["full"] }
 influxdb = { version = "0.7.2", features = ["derive"] }
+tokio-serial = "5.4.1"
