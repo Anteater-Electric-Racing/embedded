@@ -1,10 +1,10 @@
+use crate::influx::{INFLUXDB_DATABASE, INFLUXDB_URL};
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
 use influxdb::{Client, InfluxDbWriteable};
 use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
 use std::any::type_name;
 use tokio;
-use crate::influx::{INFLUXDB_DATABASE, INFLUXDB_URL};
 
 // constants
 const CAN_INTERFACE: &str = "can0";
@@ -202,7 +202,7 @@ impl CanReading for RightESCReading2 {
 }
 
 // this checks a reading against a specific CAN message, and sends to influx if it matches
-async fn check_message<T: CanReading>(client: &Client, id: Id, data: &[u8]) {
+async fn check_message<T: CanReading + Send + 'static>(client: &Client, id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
             eprintln!(
@@ -215,9 +215,12 @@ async fn check_message<T: CanReading>(client: &Client, id: Id, data: &[u8]) {
 
         let reading = T::construct(data);
 
-        if let Err(e) = client.query(reading.into_query(type_name::<T>())).await {
-            eprintln!("Failed to write to InfluxDB: {}", e);
-        }
+        let client = client.clone();
+        tokio::spawn(async move {
+            if let Err(e) = client.query(reading.into_query(type_name::<T>())).await {
+                eprintln!("Failed to write to InfluxDB: {}", e);
+            }
+        });
     }
 }
 

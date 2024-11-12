@@ -45,9 +45,16 @@ async fn check_uart(client: &Client, parts: Vec<&str>) {
         shock_a,
         shock_b,
     };
-    if let Err(e) = client.query(reading.into_query(type_name::<UARTReading>())).await {
-        eprintln!("Failed to write to InfluxDB: {}", e);
-    }
+
+    let client = client.clone();
+    tokio::spawn(async move {
+        if let Err(e) = client
+            .query(reading.into_query(type_name::<UARTReading>()))
+            .await
+        {
+            eprintln!("Failed to write to InfluxDB: {}", e);
+        }
+    });
 }
 
 // read from the UART port and parse the data
