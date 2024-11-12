@@ -202,7 +202,7 @@ impl CanReading for RightESCReading2 {
     const SIZE: usize = 8;
 }
 
-// this takes in 
+// this takes in a client, id, and data for a CanReading type. If the id and size matches the can reading type, it constructs the reading and sends it to the influxdb
 async fn check_message<T: CanReading>(client: &Client, id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
