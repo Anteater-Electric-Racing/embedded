@@ -218,89 +218,13 @@ async fn read_can() {
             let data = frame.data();
             let id = frame.id();
 
-            if BMSReading1::id() == id {
-                if data.len() != BMSReading1::SIZE {
-                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
-                    continue;
-                }
-
-                let reading = BMSReading1::construct(data);
-
-                #[cfg(debug_assertions)]
-                println!("{:?}", reading);
-            }
-
-            if BMSReading2::id() == id {
-                if data.len() != BMSReading2::SIZE {
-                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
-                    continue;
-                }
-
-                let reading = BMSReading2::construct(data);
-
-                #[cfg(debug_assertions)]
-                println!("{:?}", reading);
-            }
-
-            if BMSReading3::id() == id {
-                if data.len() != BMSReading3::SIZE {
-                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
-                    continue;
-                }
-
-                let reading = BMSReading3::construct(data);
-
-                #[cfg(debug_assertions)]
-                println!("{:?}", reading);
-            }
-
-            if LeftESCReading1::id() == id {
-                if data.len() != LeftESCReading1::SIZE {
-                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
-                    continue;
-                }
-
-                let reading = LeftESCReading1::construct(data);
-
-                #[cfg(debug_assertions)]
-                println!("{:?}", reading);
-            }
-
-            if LeftESCReading2::id() == id {
-                if data.len() != LeftESCReading2::SIZE {
-                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
-                    continue;
-                }
-
-                let reading = LeftESCReading2::construct(data);
-
-                #[cfg(debug_assertions)]
-                println!("{:?}", reading);
-            }
-
-            if RightESCReading1::id() == id {
-                if data.len() != RightESCReading1::SIZE {
-                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
-                    continue;
-                }
-
-                let reading = RightESCReading1::construct(data);
-
-                #[cfg(debug_assertions)]
-                println!("{:?}", reading);
-            }
-
-            if RightESCReading2::id() == id {
-                if data.len() != RightESCReading2::SIZE {
-                    eprintln!("Invalid data length for {}: {}", type_name::<BMSReading1>(), data.len());
-                    continue;
-                }
-
-                let reading = RightESCReading2::construct(data);
-
-                #[cfg(debug_assertions)]
-                println!("{:?}", reading);
-            }
+            check_message::<BMSReading1>(id, data);
+            check_message::<BMSReading2>(id, data);
+            check_message::<BMSReading3>(id, data);
+            check_message::<LeftESCReading1>(id, data);
+            check_message::<LeftESCReading2>(id, data);
+            check_message::<RightESCReading1>(id, data);
+            check_message::<RightESCReading2>(id, data);
         }
     }
 }
