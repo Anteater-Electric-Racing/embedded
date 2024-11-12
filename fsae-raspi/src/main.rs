@@ -1,6 +1,7 @@
 mod influx;
 mod can;
 mod uart;
+mod mqtt;
 use tokio;
 use can::read_can;
 use uart::read_uart;
