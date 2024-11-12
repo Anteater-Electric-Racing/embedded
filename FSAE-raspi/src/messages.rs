@@ -203,7 +203,7 @@ impl CanReading for RightESCReading2 {
 }
 
 // this takes in 
-async fn check_message<T: CanReading>(client: Client, id: Id, data: &[u8]) {
+async fn check_message<T: CanReading>(client: &Client, id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
             eprintln!("Invalid data length for {}: {}", type_name::<T>(), data.len());
@@ -233,15 +233,14 @@ pub async fn read_can() {
         while let Some(Ok(frame)) = sock.next().await {
             let data = frame.data();
             let id = frame.id();
-            let x = frame.timestamp();
 
-            check_message::<BMSReading1>(client, id, data).await;
-            check_message::<BMSReading2>(client, id, data).await;
-            check_message::<BMSReading3>(client, id, data).await;
-            check_message::<LeftESCReading1>(client, id, data).await;
-            check_message::<LeftESCReading2>(client, id, data).await;
-            check_message::<RightESCReading1>(client, id, data).await;
-            check_message::<RightESCReading2>(client, id, data).await;
+            check_message::<BMSReading1>(&client, id, data).await;
+            check_message::<BMSReading2>(&client, id, data).await;
+            check_message::<BMSReading3>(&client, id, data).await;
+            check_message::<LeftESCReading1>(&client, id, data).await;
+            check_message::<LeftESCReading2>(&client, id, data).await;
+            check_message::<RightESCReading1>(&client, id, data).await;
+            check_message::<RightESCReading2>(&client, id, data).await;
         }
     }
 }
