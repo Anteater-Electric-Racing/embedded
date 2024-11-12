@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
-use socketcan::{tokio::CanSocket, EmbeddedFrame, Id, StandardId, ExtendedId};
-use std::any::type_name;
 use influxdb::{Client, InfluxDbWriteable};
+use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
+use std::any::type_name;
 use tokio;
 
 // constants
@@ -206,16 +206,17 @@ impl CanReading for RightESCReading2 {
 async fn check_message<T: CanReading>(client: &Client, id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
-            eprintln!("Invalid data length for {}: {}", type_name::<T>(), data.len());
+            eprintln!(
+                "Invalid data length for {}: {}",
+                type_name::<T>(),
+                data.len()
+            );
             return;
         }
 
         let reading = T::construct(data);
 
-        if let Err(e) = client
-            .query(reading.into_query(type_name::<T>()))
-            .await
-        {
+        if let Err(e) = client.query(reading.into_query(type_name::<T>())).await {
             eprintln!("Failed to write to InfluxDB: {}", e);
         }
     }

@@ -1,7 +1,6 @@
 mod messages;
 use tokio;
 use messages::read_can;
-use influxdb::{Client, Error, InfluxDbWriteable, ReadQuery, Timestamp};
 
 
 #[tokio::main]
