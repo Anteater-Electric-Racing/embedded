@@ -6,7 +6,7 @@ flowchart TD
     O(Orion BMS) -->|CAN| Pi[fa:fa-raspberry-pi Raspberry Pi System]
     K(Kelly Motor Controllers) -->|CAN| Pi[fa:fa-raspberry-pi Raspberry Pi System]
     subgraph Pi[fa:fa-raspberry-pi Raspberry Pi System]
-        R(["<a href='https://github.com/AlistairKeiller/FSAE' target='_blank'>Rust Logging Code</a>"]) -->|HTTP| I(InfluxDB)
+        R(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/FSAE-raspi' target='_blank'>Rust Logging Code</a>"]) -->|HTTP| I(InfluxDB)
         I(InfluxDB) -->|HTTP| G(Grafana)
     end
 ```
