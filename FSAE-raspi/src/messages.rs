@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use fsae_macro::MessageSize;
 use futures_util::StreamExt;
 use socketcan::{tokio::CanSocket, EmbeddedFrame, Id, StandardId, ExtendedId};
 use std::any::type_name;
@@ -7,7 +6,7 @@ use tokio;
 
 const CAN_INTERFACE: &str = "can0";
 
-#[derive(MessageSize, Debug)]
+#[derive(Debug)]
 struct BMSReading1 {
     time: DateTime<Utc>,
     current: i16,
@@ -25,9 +24,10 @@ impl CanReading for BMSReading1 {
             inst_voltage: i16::from_be_bytes([data[2], data[3]]),
         }
     }
+    const SIZE: usize = 4;
 }
 
-#[derive(MessageSize, Debug)]
+#[derive(Debug)]
 struct BMSReading2 {
     time: DateTime<Utc>,
     dlc: u8,
@@ -51,9 +51,10 @@ impl CanReading for BMSReading2 {
             low_temp: data[4],
         }
     }
+    const SIZE: usize = 5;
 }
 
-#[derive(MessageSize, Debug)]
+#[derive(Debug)]
 struct BMSReading3 {
     time: DateTime<Utc>,
     relay_state: u8,
@@ -79,9 +80,10 @@ impl CanReading for BMSReading3 {
             pack_health: data[7],
         }
     }
+    const SIZE: usize = 8;
 }
 
-#[derive(MessageSize, Debug)]
+#[derive(Debug)]
 struct LeftESCReading1 {
     time: DateTime<Utc>,
     speed_rpm: u16,
@@ -103,9 +105,10 @@ impl CanReading for LeftESCReading1 {
             error_code: u16::from_be_bytes([data[6], data[7]]),
         }
     }
+    const SIZE: usize = 8;
 }
 
-#[derive(MessageSize, Debug)]
+#[derive(Debug)]
 struct LeftESCReading2 {
     time: DateTime<Utc>,
     throttle_signal: u8,
@@ -129,9 +132,10 @@ impl CanReading for LeftESCReading2 {
             switch_status: data[6],
         }
     }
+    const SIZE: usize = 8;
 }
 
-#[derive(MessageSize, Debug)]
+#[derive(Debug)]
 struct RightESCReading1 {
     time: DateTime<Utc>,
     speed_rpm: u16,
@@ -153,9 +157,10 @@ impl CanReading for RightESCReading1 {
             error_code: u16::from_be_bytes([data[6], data[7]]),
         }
     }
+    const SIZE: usize = 8;
 }
 
-#[derive(MessageSize, Debug)]
+#[derive(Debug)]
 struct RightESCReading2 {
     time: DateTime<Utc>,
     throttle_signal: u8,
@@ -179,11 +184,27 @@ impl CanReading for RightESCReading2 {
             switch_status: data[6],
         }
     }
+    const SIZE: usize = 8;
 }
 
 trait CanReading {
     fn id() -> Id;
     fn construct(data: &[u8]) -> Self;
+    const SIZE: usize;
+}
+
+fn check_message<T: CanReading>(id: Id, data: &[u8]) {
+    if T::id() == id {
+        if data.len() != T::SIZE {
+            eprintln!("Invalid data length for {}: {}", type_name::<T>(), data.len());
+            return;
+        }
+
+        let reading = T::construct(data);
+
+        #[cfg(debug_assertions)]
+        println!("{:?}", reading);
+    }
 }
 
 async fn read_can() {

@@ -140,20 +140,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "fsae-macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.87",
-]
-
-[[package]]
 name = "fsae-raspi"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "fsae-macro",
  "futures-util",
  "socketcan",
  "tokio",
