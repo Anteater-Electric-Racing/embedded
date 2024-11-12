@@ -206,7 +206,7 @@ async fn check_message<T: CanReading>(client: Client, id: Id, data: &[u8]) {
         let reading = T::construct(data);
 
         if let Err(e) = client
-            .query(reading.into_query("tst"))
+            .query(reading.into_query(type_name::<T>()))
             .await
         {
             eprintln!("Failed to write to InfluxDB: {}", e);
@@ -226,15 +226,15 @@ pub async fn read_can() {
         while let Some(Ok(frame)) = sock.next().await {
             let data = frame.data();
             let id = frame.id();
-            // let x = frame.timestamp();
+            let x = frame.timestamp();
 
-            // check_message::<BMSReading1>(client, id, data);
-            // check_message::<BMSReading2>(client, id, data);
-            // check_message::<BMSReading3>(client, id, data);
-            // check_message::<LeftESCReading1>(client, id, data);
-            // check_message::<LeftESCReading2>(client, id, data);
-            // check_message::<RightESCReading1>(client, id, data);
-            // check_message::<RightESCReading2>(client, id, data);
+            check_message::<BMSReading1>(client, id, data);
+            check_message::<BMSReading2>(client, id, data);
+            check_message::<BMSReading3>(client, id, data);
+            check_message::<LeftESCReading1>(client, id, data);
+            check_message::<LeftESCReading2>(client, id, data);
+            check_message::<RightESCReading1>(client, id, data);
+            check_message::<RightESCReading2>(client, id, data);
         }
     }
 }
