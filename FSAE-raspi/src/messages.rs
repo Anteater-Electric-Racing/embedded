@@ -187,7 +187,7 @@ impl CanReading for RightESCReading2 {
     const SIZE: usize = 8;
 }
 
-trait CanReading {
+trait CanReading: std::fmt::Debug {
     fn id() -> Id;
     fn construct(data: &[u8]) -> Self;
     const SIZE: usize;
