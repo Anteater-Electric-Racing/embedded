@@ -5,9 +5,11 @@ use std::any::type_name;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_serial::SerialPortBuilderExt;
 
+// constants
 const SERIAL_PORT: &str = "/dev/ttyACM0";
 const SERIAL_BAUD_RATE: u32 = 9600;
 
+// UART reading struct
 #[derive(InfluxDbWriteable)]
 struct UARTReading {
     time: DateTime<Utc>,
@@ -17,10 +19,12 @@ struct UARTReading {
     shock_b: u16,
 }
 
+// expected number of parts in a UART reading
 impl UARTReading {
     const SIZE: usize = 4;
 }
 
+// check the UART reading and write to InfluxDB
 async fn check_uart(client: &Client, parts: Vec<&str>) {
     if parts.len() == UARTReading::SIZE {
         return;
@@ -46,6 +50,7 @@ async fn check_uart(client: &Client, parts: Vec<&str>) {
     }
 }
 
+// read from the UART port and parse the data
 pub async fn read_uart() {
     let client = Client::new(INFLUXDB_URL, INFLUXDB_DATABASE);
 
