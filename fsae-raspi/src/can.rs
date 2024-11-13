@@ -1,5 +1,5 @@
 use crate::influx::{INFLUXDB_DATABASE, INFLUXDB_URL};
-use crate::mqtt::{MQTT_HOST, MQTT_ID, MQTT_PORT, MQTT_TOPIC};
+use crate::mqtt::{MQTT_HOST, MQTT_ID, MQTT_PORT};
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
 use influxdb::{Client, InfluxDbWriteable};
