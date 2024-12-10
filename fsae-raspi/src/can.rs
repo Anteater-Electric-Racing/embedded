@@ -3,14 +3,13 @@ use crate::mqtt::{MQTT_HOST, MQTT_ID, MQTT_PORT};
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
 use influxdb::{Client, InfluxDbWriteable};
+use rand::Rng;
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
 use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
 use std::any::type_name;
 use tokio;
 use tokio::time::Duration;
-#[cfg(debug_assertions)]  
-use rand::Rng;
 
 // constants
 const CAN_INTERFACE: &str = "can0";
@@ -236,10 +235,12 @@ async fn check_message<T: CanReading + Send + 'static>(
         };
 
         // Publish to MQTT
-        let topic = format!("{}", type_name::<T>()).to_lowercase().replace("::", "/");
+        let topic = format!("{}", type_name::<T>())
+            .to_lowercase()
+            .replace("::", "/");
 
         let mqtt_client = mqtt_client.clone();
-        tokio::spawn(async move {    
+        tokio::spawn(async move {
             if let Err(e) = mqtt_client
                 .publish(topic, QoS::AtLeastOnce, false, json)
                 .await
@@ -281,56 +282,78 @@ pub async fn read_can() {
         }
     });
 
-    #[cfg(debug_assertions)]    
-    loop {
-        // Generate random BMSReading1 data
-        let voltage = rand::thread_rng().gen_range(70..=90);
-        let current = rand::thread_rng().gen_range(0..=500);
+    if cfg!(debug_assertions) {
+        loop {
+            // Generate random BMSReading1 data
+            let voltage = rand::thread_rng().gen_range(70..=90);
+            let current = rand::thread_rng().gen_range(0..=500);
 
-        let sample_data = vec![
-            (BMSReading1::id(), vec![
-                (current >> 8) as u8, current as u8,
-                (voltage >> 8) as u8, voltage as u8
-            ]),
-            (BMSReading2::id(), vec![0x05, 0x06, 0x07, 0x08, 0x09]),
-            (BMSReading3::id(), vec![0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11]),
-            (LeftESCReading1::id(), vec![0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19]),
-            (LeftESCReading2::id(), vec![0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21]),
-            (RightESCReading1::id(), vec![0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29]),
-            (RightESCReading2::id(), vec![0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31]),
-        ];
+            let sample_data = vec![
+                (
+                    BMSReading1::id(),
+                    vec![
+                        (current >> 8) as u8,
+                        current as u8,
+                        (voltage >> 8) as u8,
+                        voltage as u8,
+                    ],
+                ),
+                (BMSReading2::id(), vec![0x05, 0x06, 0x07, 0x08, 0x09]),
+                (
+                    BMSReading3::id(),
+                    vec![0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11],
+                ),
+                (
+                    LeftESCReading1::id(),
+                    vec![0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19],
+                ),
+                (
+                    LeftESCReading2::id(),
+                    vec![0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21],
+                ),
+                (
+                    RightESCReading1::id(),
+                    vec![0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29],
+                ),
+                (
+                    RightESCReading2::id(),
+                    vec![0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31],
+                ),
+            ];
 
-        for (id, data) in sample_data {
-            check_message::<BMSReading1>(&influx_client, &mqtt_client, id, &data).await;
-            check_message::<BMSReading2>(&influx_client, &mqtt_client, id, &data).await;
-            check_message::<BMSReading3>(&influx_client, &mqtt_client, id, &data).await;
-            check_message::<LeftESCReading1>(&influx_client, &mqtt_client, id, &data).await;
-            check_message::<LeftESCReading2>(&influx_client, &mqtt_client, id, &data).await;
-            check_message::<RightESCReading1>(&influx_client, &mqtt_client, id, &data).await;
-            check_message::<RightESCReading2>(&influx_client, &mqtt_client, id, &data).await;
+            for (id, data) in sample_data {
+                check_message::<BMSReading1>(&influx_client, &mqtt_client, id, &data).await;
+                check_message::<BMSReading2>(&influx_client, &mqtt_client, id, &data).await;
+                check_message::<BMSReading3>(&influx_client, &mqtt_client, id, &data).await;
+                check_message::<LeftESCReading1>(&influx_client, &mqtt_client, id, &data).await;
+                check_message::<LeftESCReading2>(&influx_client, &mqtt_client, id, &data).await;
+                check_message::<RightESCReading1>(&influx_client, &mqtt_client, id, &data).await;
+                check_message::<RightESCReading2>(&influx_client, &mqtt_client, id, &data).await;
+            }
+
+            tokio::time::sleep(Duration::from_secs(1)).await;
         }
-
-        tokio::time::sleep(Duration::from_secs(1)).await;
     }
 
-    #[cfg(not(debug_assertions))]
-    loop {
-        let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
-            eprintln!("Failed to open CAN socket, retrying...");
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-            continue;
-        };
-        while let Some(Ok(frame)) = sock.next().await {
-            let data = frame.data();
-            let id = frame.id();
+    if cfg!(not(debug_assertions)) {
+        loop {
+            let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
+                eprintln!("Failed to open CAN socket, retrying...");
+                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+                continue;
+            };
+            while let Some(Ok(frame)) = sock.next().await {
+                let data = frame.data();
+                let id = frame.id();
 
-            check_message::<BMSReading1>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<BMSReading2>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<BMSReading3>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<LeftESCReading1>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<LeftESCReading2>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<RightESCReading1>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<RightESCReading2>(&influx_client, &mqtt_client, id, data).await;
+                check_message::<BMSReading1>(&influx_client, &mqtt_client, id, data).await;
+                check_message::<BMSReading2>(&influx_client, &mqtt_client, id, data).await;
+                check_message::<BMSReading3>(&influx_client, &mqtt_client, id, data).await;
+                check_message::<LeftESCReading1>(&influx_client, &mqtt_client, id, data).await;
+                check_message::<LeftESCReading2>(&influx_client, &mqtt_client, id, data).await;
+                check_message::<RightESCReading1>(&influx_client, &mqtt_client, id, data).await;
+                check_message::<RightESCReading2>(&influx_client, &mqtt_client, id, data).await;
+            }
         }
     }
 }
