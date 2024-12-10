@@ -4,8 +4,11 @@
         "dockerfile": "Dockerfile",
         "context": ".."
     },
-    "postCreateCommand": "sudo service influxdb start && influx -execute \"CREATE DATABASE data\" && sudo service grafana-server start",
-    "forwardPorts": [8086, 3000],
+    "postCreateCommand": "sudo service influxdb start && influx -execute \"CREATE DATABASE data\" && sudo mkdir -m 777 /run/mosquitto/ && sudo service mosquitto start && (sudo service grafana-server start || true)",
+    "forwardPorts": [
+        8086,
+        3000
+    ],
     "mounts": [
         "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
     ]
