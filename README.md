@@ -1,8 +1,8 @@
 ```mermaid
 flowchart TD
     B(Brake Sensors) -->|Analog| A(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-arduino' target='_blank'>Arduino</a>"])
-    L(Linear Potentiometers) -->|Analog| A(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-arduino' target='_blank'>Arduino</a>"])
-    A(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-arduino' target='_blank'>Arduino</a>"]) -->|UART| Pi
+    L(Linear Potentiometers) -->|Analog| A
+    A -->|UART| Pi
     O(Orion BMS) -->|CAN| Pi
     K(Kelly Motor Controllers) -->|CAN| Pi
     IMS(Elcon Charger) -->|CAN| Pi
@@ -10,7 +10,7 @@ flowchart TD
         R(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-raspi' target='_blank'>Rust Logging Code</a>"]) -->|HTTP| I(InfluxDB)
     end
     subgraph Graphana[Wireless Dashboard]
-        I(InfluxDB) -->|HTTP| F(Full Histroy Preview)
+        I -->|HTTP| F(Full Histroy Preview)
         R -->|MQTT| P(Real Time Preview)
-    end Graphana[Graphana]
+    end
 ```
