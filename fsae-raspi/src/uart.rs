@@ -26,7 +26,8 @@ impl UARTReading {
 
 // check the UART reading and write to InfluxDB
 async fn check_uart(client: &Client, parts: Vec<&str>) {
-    if parts.len() == UARTReading::SIZE {
+    if parts.len() != UARTReading::SIZE {
+        eprintln!("Invalid number of parts: {:?}", parts);
         return;
     }
     let (Ok(brake_a), Ok(brake_b), Ok(shock_a), Ok(shock_b)) = (
@@ -61,20 +62,22 @@ async fn check_uart(client: &Client, parts: Vec<&str>) {
 pub async fn read_uart() {
     let client = Client::new(INFLUXDB_URL, INFLUXDB_DATABASE);
 
-    loop {
-        let Ok(serial) = tokio_serial::new(SERIAL_PORT, SERIAL_BAUD_RATE).open_native_async()
-        else {
-            eprintln!("Failed to open serial port, retrying...");
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-            continue;
-        };
+    if cfg!(not(debug_assertions)) {
+        loop {
+            let Ok(serial) = tokio_serial::new(SERIAL_PORT, SERIAL_BAUD_RATE).open_native_async()
+            else {
+                eprintln!("Failed to open serial port, retrying...");
+                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+                continue;
+            };
 
-        let reader = BufReader::new(serial);
-        let mut lines = reader.lines();
+            let reader = BufReader::new(serial);
+            let mut lines = reader.lines();
 
-        while let Ok(Some(line)) = lines.next_line().await {
-            let parts: Vec<&str> = line.trim().split_whitespace().collect();
-            check_uart(&client, parts).await;
+            while let Ok(Some(line)) = lines.next_line().await {
+                let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                check_uart(&client, parts).await;
+            }
         }
     }
 }
