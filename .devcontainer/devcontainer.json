@@ -4,7 +4,7 @@
         "dockerfile": "Dockerfile",
         "context": ".."
     },
-    "postCreateCommand": "sudo service influxdb start && influx -execute \"CREATE DATABASE data\" && sudo mkdir -p /run/mosquitto /var/log/mosquitto/ && sudo touch /run/mosquitto/mosquitto.pid && sudo chown vscode:vscode /run/mosquitto/mosquitto.pid /var/log/mosquitto/ && sudo service mosquitto start && (sudo service grafana-server start || true)",
+    "postCreateCommand": "sudo service influxdb start && influx -execute \"CREATE DATABASE data\" && (sudo service grafana-server start || true)",
     "forwardPorts": [
         8086,
         3000
