@@ -238,7 +238,6 @@ async fn check_message<T: CanReading + Send + 'static>(
         let topic = format!("{}", type_name::<T>())
             .to_lowercase()
             .replace("::", "/"); // e.g. BMSReading1 -> fsae_raspi/can/bmsreading1
-        println!("Publishing to MQTT topic {}: {}", topic, json);
 
         let mqtt_client = mqtt_client.clone();
         tokio::spawn(async move {
