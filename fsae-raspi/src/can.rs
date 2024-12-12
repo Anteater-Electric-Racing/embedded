@@ -298,7 +298,7 @@ pub async fn read_can() {
                         voltage as u8,
                     ],
                 ),
-                (BMSReading2::id(), vec![0x05, 0x06, 0x07, 0x08, 0x09]),
+                (BMSReading2::id(), vec![0x05, 0x06, 0x07, rand::thread_rng().gen_range(10..=50), 0x09]),
                 (
                     BMSReading3::id(),
                     vec![0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11],

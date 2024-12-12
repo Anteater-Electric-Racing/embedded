@@ -44,6 +44,7 @@ fn battery_char(level: usize) -> char {
 struct Dashboard {
     current: i16,
     voltage: i16,
+    temp: u8,
 }
 
 #[derive(Debug, Clone)]
@@ -76,10 +77,17 @@ fn mqtt() -> impl Stream<Item = Event> {
                     let mut mqttoptions = MqttOptions::new("dashboard", "127.0.0.1", 1883);
                     mqttoptions.set_keep_alive(Duration::from_secs(5));
                     let (_client, eventloop) = AsyncClient::new(mqttoptions, 10);
-                    let Ok(_) = _client
+                    if let Err(_) = _client
                         .subscribe("fsae_raspi/can/bmsreading1", QoS::AtMostOnce)
                         .await
-                    else {
+                    {
+                        eprintln!("Failed to subscribe to topic");
+                        continue;
+                    };
+                    if let Err(_) = _client
+                        .subscribe("fsae_raspi/can/bmsreading2", QoS::AtMostOnce)
+                        .await
+                    {
                         eprintln!("Failed to subscribe to topic");
                         continue;
                     };
@@ -87,13 +95,12 @@ fn mqtt() -> impl Stream<Item = Event> {
                 }
                 BackgroundState::Connected(connection) => {
                     while let Ok(notification) = connection.eventloop.poll().await {
-                        println!("{:?}", notification);
                         if let Err(e) = output.send(Event::Message(notification)).await {
                             eprintln!("Failed to send message: {}", e);
                             break;
                         }
                     }
-                    println!("Connection lost");
+                    eprintln!("Connection lost");
                     state = BackgroundState::Disconnected;
                 }
             }
@@ -115,12 +122,12 @@ impl Dashboard {
                     eprintln!("Failed to parse JSON: {}", payload);
                     return;
                 };
-                print!("{:?}", json);
                 if publish.topic == "fsae_raspi/can/bmsreading1" {
                     let Some(current) = json["current"].as_u64() else {
                         eprintln!("Missing or invalid 'current' field in JSON: {:?}", json);
                         return;
                     };
+                    self.current = current as i16;
                     let Some(voltage) = json["inst_voltage"].as_u64() else {
                         eprintln!(
                             "Missing or invalid 'inst_voltage' field in JSON: {:?}",
@@ -128,8 +135,14 @@ impl Dashboard {
                         );
                         return;
                     };
-                    self.current = current as i16;
                     self.voltage = voltage as i16;
+                }
+                if publish.topic == "fsae_raspi/can/bmsreading2" {
+                    let Some(temp) = json["high_temp"].as_u64() else {
+                        eprintln!("Missing or invalid 'temp' field in JSON: {:?}", json);
+                        return;
+                    };
+                    self.temp = temp as u8;
                 }
             }
         }
@@ -170,26 +183,53 @@ impl Dashboard {
             3 => pallate::RED_500,    // Red
             _ => Color::WHITE,        // White
         };
-        let height = stack![row![
+        let temp_level = if self.temp < 20 {
+            0
+        } else if self.temp < 30 {
+            1
+        } else if self.temp < 40 {
+            2
+        } else if self.temp < 50 {
+            3
+        } else {
+            4
+        };
+        let temp_color: Color = match temp_level {
+            0 => pallate::CYAN_500,   // Cyan
+            1 => pallate::BLUE_500,   // Blue
+            2 => pallate::GREEN_500,  // Green
+            3 => pallate::YELLOW_500, // Yellow
+            4 => pallate::RED_500,    // Red
+            _ => Color::WHITE,        // White
+        };
+        let height = stack![
             row![
-                text(format!("{}V", self.voltage))
-                    .size(30)
-                    .color(voltage_color),
-                icon(battery_char(voltage_level))
-                    .size(30)
-                    .color(voltage_color),
-            ]
-            .padding(20),
-            row![
-                text(format!("{:>3}A", self.current))
-                    .size(30)
-                    .color(current_color),
-                icon('\u{ea0b}').size(30).color(current_color),
-            ]
-            .padding(20)
-        ],
-        center(text("50 MPH").size(50).color(Color::WHITE))
-        ].width(Fill).height(Fill);
+                row![
+                    text(format!("{}V", self.voltage))
+                        .size(30)
+                        .color(voltage_color),
+                    icon(battery_char(voltage_level))
+                        .size(30)
+                        .color(voltage_color),
+                ]
+                .padding(20),
+                row![
+                    text(format!("{:>3}A", self.current))
+                        .size(30)
+                        .color(current_color),
+                    icon('\u{ea0b}').size(30).color(current_color),
+                ]
+                .padding(20),
+                row![
+                    text(format!("{}°C", self.temp)).size(30).color(temp_color),
+                    icon('\u{e1ff}').size(30).color(temp_color),
+                ]
+                .padding(20),
+            ],
+            center(text("50 MPH").size(50).color(Color::WHITE))
+        ]
+        .width(Fill)
+        .height(Fill);
         height
     }
 
