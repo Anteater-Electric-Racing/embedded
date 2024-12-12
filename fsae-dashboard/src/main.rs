@@ -1,22 +1,47 @@
 use std::time::Duration;
 
 use iced::futures::{SinkExt, Stream};
-use iced::stream;
-use iced::widget::{column, text, Column};
+use iced::widget::{column, stack, text, Column, Text};
+use iced::{stream, Font};
 use iced::{Center, Subscription};
 use rumqttc::{AsyncClient, EventLoop, MqttOptions, QoS};
 
 pub fn main() -> iced::Result {
     iced::application("FSAE Dashboard", Dashboard::update, Dashboard::view)
         .subscription(Dashboard::subscription)
+        .font(include_bytes!(
+            "../fonts/MaterialSymbolsRounded-Regular.ttf"
+        ))
         .run()
+}
+
+const ICONS: Font = Font::with_name("Material Symbols Rounded");
+
+fn icon(unicode: char) -> Text<'static> {
+    text(unicode.to_string())
+        .font(ICONS)
+        .size(50)
+        .align_x(Center)
+}
+
+fn battery_char(level: usize) -> char {
+    match level {
+        0 => '\u{ebdc}',
+        1 => '\u{ebd9}',
+        2 => '\u{ebe0}',
+        3 => '\u{ebdd}',
+        4 => '\u{ebe2}',
+        5 => '\u{ebd4}',
+        6 => '\u{ebd2}',
+        7 => '\u{e1a4}',
+        _ => '\u{ebdc}',
+    }
 }
 
 #[derive(Default)]
 struct Dashboard {
     current: usize,
     voltage: usize,
-    // text: String,
 }
 
 #[derive(Debug, Clone)]
@@ -95,7 +120,10 @@ impl Dashboard {
                         return;
                     };
                     let Some(voltage) = json["inst_voltage"].as_u64() else {
-                        eprintln!("Missing or invalid 'inst_voltage' field in JSON: {:?}", json);
+                        eprintln!(
+                            "Missing or invalid 'inst_voltage' field in JSON: {:?}",
+                            json
+                        );
                         return;
                     };
                     self.current = current as usize;
@@ -106,9 +134,16 @@ impl Dashboard {
     }
 
     fn view(&self) -> Column<Message> {
+        let level = if self.voltage <= 70 {
+            0
+        } else if self.voltage > 90 {
+            7
+        } else {
+            ((self.voltage - 70) as f64 / 20.0 * 7.0).round() as usize
+        };
         column![
-            text::Text::new(format!("Current: {}", self.current)),
-            text::Text::new(format!("Voltage: {}", self.voltage)),
+            text(format!("{}V", self.voltage)).size(30),
+            stack![icon(battery_char(level)).size(50)]
         ]
         .padding(20)
         .align_x(Center)
