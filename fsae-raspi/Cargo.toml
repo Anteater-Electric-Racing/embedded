@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-chrono = {version = "0.4", features = ["serde"]}
-socketcan = {version = "3.3.0", features = ["tokio"]}
+chrono = { version = "0.4", features = ["serde"] }
+socketcan = { version = "3.3.0", features = ["tokio"] }
 futures-util = "0.3"
 tokio = { version = "1", features = ["full"] }
 influxdb = { version = "0.7.2", features = ["derive"] }
