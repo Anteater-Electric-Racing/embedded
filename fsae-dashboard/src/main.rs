@@ -7,18 +7,21 @@ use iced::{Center, Subscription};
 use rumqttc::{AsyncClient, EventLoop, MqttOptions, QoS};
 
 pub fn main() -> iced::Result {
-    iced::application("FSAE Dashboard", Dashboard::update, Dashboard::view).subscription(Dashboard::subscription).run()
+    iced::application("FSAE Dashboard", Dashboard::update, Dashboard::view)
+        .subscription(Dashboard::subscription)
+        .run()
 }
 
 #[derive(Default)]
 struct Dashboard {
-    text: String,
+    current: usize,
+    voltage: usize,
+    // text: String,
 }
-
 
 #[derive(Debug, Clone)]
 enum Message {
-    Background(Event)
+    Background(Event),
 }
 
 enum BackgroundState {
@@ -46,16 +49,22 @@ fn mqtt() -> impl Stream<Item = Event> {
                     let mut mqttoptions = MqttOptions::new("dashboard", "127.0.0.1", 1883);
                     mqttoptions.set_keep_alive(Duration::from_secs(5));
                     let (_client, eventloop) = AsyncClient::new(mqttoptions, 10);
-                    _client
+                    let Ok(_) = _client
                         .subscribe("fsae_raspi/can/bmsreading1", QoS::AtMostOnce)
                         .await
-                        .unwrap();
+                    else {
+                        eprintln!("Failed to subscribe to topic");
+                        continue;
+                    };
                     state = BackgroundState::Connected(Connection { _client, eventloop });
                 }
                 BackgroundState::Connected(connection) => {
                     while let Ok(notification) = connection.eventloop.poll().await {
                         println!("{:?}", notification);
-                        output.send(Event::Message(notification)).await.unwrap();
+                        if let Err(e) = output.send(Event::Message(notification)).await {
+                            eprintln!("Failed to send message: {}", e);
+                            break;
+                        }
                     }
                     println!("Connection lost");
                     state = BackgroundState::Disconnected;
@@ -69,14 +78,37 @@ impl Dashboard {
     fn update(&mut self, message: Message) {
         match message {
             Message::Background(event) => {
-                self.text = format!("{:?}", event);
+                let Event::Message(rumqttc::Event::Incoming(rumqttc::Packet::Publish(publish))) =
+                    event
+                else {
+                    return;
+                };
+                let payload = String::from_utf8_lossy(&publish.payload);
+                let Ok(json) = serde_json::from_str::<serde_json::Value>(&payload) else {
+                    eprintln!("Failed to parse JSON: {}", payload);
+                    return;
+                };
+                print!("{:?}", json);
+                if publish.topic == "fsae_raspi/can/bmsreading1" {
+                    let Some(current) = json["current"].as_u64() else {
+                        eprintln!("Missing or invalid 'current' field in JSON: {:?}", json);
+                        return;
+                    };
+                    let Some(voltage) = json["inst_voltage"].as_u64() else {
+                        eprintln!("Missing or invalid 'inst_voltage' field in JSON: {:?}", json);
+                        return;
+                    };
+                    self.current = current as usize;
+                    self.voltage = voltage as usize;
+                }
             }
         }
     }
 
     fn view(&self) -> Column<Message> {
         column![
-            text(&self.text)
+            text::Text::new(format!("Current: {}", self.current)),
+            text::Text::new(format!("Voltage: {}", self.voltage)),
         ]
         .padding(20)
         .align_x(Center)
