@@ -1,4 +1,4 @@
-use rumqttd::{Broker, Config};
+use rumqttd::Broker;
 
 pub const MQTT_ID: &str = "raspi";
 pub const MQTT_HOST: &str = "127.0.0.1";
@@ -22,13 +22,14 @@ pub fn mqttd() {
             include_str!("../rumqttd.toml"),
             config::FileFormat::Toml,
         ))
-        .build() {
-            Ok(config) => config,
-            Err(e) => {
-                eprintln!("Failed to load config: {:?}", e);
-                return;
-            }
-        };
+        .build()
+    {
+        Ok(config) => config,
+        Err(e) => {
+            eprintln!("Failed to load config: {:?}", e);
+            return;
+        }
+    };
 
     let config = match config.try_deserialize() {
         Ok(config) => config,

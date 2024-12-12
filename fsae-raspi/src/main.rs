@@ -15,7 +15,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     tokio::spawn(read_uart());
     
-    mqttd();
+    std::thread::spawn(mqttd);
+
+    tokio::signal::ctrl_c().await?;
 
     Ok(())
 }
