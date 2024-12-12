@@ -1,6 +1,7 @@
 mod pallate;
 use iced::futures::{SinkExt, Stream};
-use iced::widget::{column, row, text, Column, Text};
+use iced::widget::{center, row, stack, text, Stack, Text};
+use iced::Length::Fill;
 use iced::{stream, Color, Font};
 use iced::{Center, Subscription};
 use rumqttc::{AsyncClient, EventLoop, MqttOptions, QoS};
@@ -134,7 +135,7 @@ impl Dashboard {
         }
     }
 
-    fn view(&self) -> Column<Message> {
+    fn view(&self) -> Stack<Message> {
         let voltage_level = if self.voltage <= 70 {
             0
         } else if self.voltage > 90 {
@@ -157,7 +158,7 @@ impl Dashboard {
             0
         } else if self.current == 0 {
             1
-        } else if self.current <= 100 {
+        } else if self.current <= 250 {
             2
         } else {
             3
@@ -169,7 +170,7 @@ impl Dashboard {
             3 => pallate::RED_500,    // Red
             _ => Color::WHITE,        // White
         };
-        column![row![
+        let height = stack![row![
             row![
                 text(format!("{}V", self.voltage))
                     .size(30)
@@ -186,7 +187,10 @@ impl Dashboard {
                 icon('\u{ea0b}').size(30).color(current_color),
             ]
             .padding(20)
-        ]]
+        ],
+        center(text("50 MPH").size(50).color(Color::WHITE))
+        ].width(Fill).height(Fill);
+        height
     }
 
     fn subscription(&self) -> Subscription<Message> {
