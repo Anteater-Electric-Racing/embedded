@@ -17,16 +17,29 @@ pub fn mqttd() {
         .try_init()
         .expect("initialized subscriber succesfully");
 
-    let config = config::Config::builder()
+    let config = match config::Config::builder()
         .add_source(config::File::from_str(
             include_str!("../rumqttd.toml"),
             config::FileFormat::Toml,
         ))
-        .build()
-        .unwrap();
+        .build() {
+            Ok(config) => config,
+            Err(e) => {
+                eprintln!("Failed to load config: {:?}", e);
+                return;
+            }
+        };
 
-    let config: Config = config.try_deserialize().unwrap();
+    let config = match config.try_deserialize() {
+        Ok(config) => config,
+        Err(e) => {
+            eprintln!("Failed to deserialize config: {:?}", e);
+            return;
+        }
+    };
 
     let mut broker = Broker::new(config);
-    broker.start().unwrap();
+    if let Err(e) = broker.start() {
+        eprintln!("Failed to start broker: {:?}", e);
+    }
 }
