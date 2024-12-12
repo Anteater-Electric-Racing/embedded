@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-iced = "0.13"
+iced = {version = "0.13", features = ["tokio"]}
+rumqttc = "0.24.0"
