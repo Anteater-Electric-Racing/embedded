@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use iced::futures::{SinkExt, Stream};
-use iced::widget::{column, stack, text, Column, Text};
-use iced::{stream, Font};
+use iced::widget::{column, row, text, Column, Text};
+use iced::{stream, Color, Font};
 use iced::{Center, Subscription};
 use rumqttc::{AsyncClient, EventLoop, MqttOptions, QoS};
 
@@ -12,6 +12,7 @@ pub fn main() -> iced::Result {
         .font(include_bytes!(
             "../fonts/MaterialSymbolsRounded-Regular.ttf"
         ))
+        .default_font(Font::MONOSPACE)
         .run()
 }
 
@@ -40,8 +41,8 @@ fn battery_char(level: usize) -> char {
 
 #[derive(Default)]
 struct Dashboard {
-    current: usize,
-    voltage: usize,
+    current: i16,
+    voltage: i16,
 }
 
 #[derive(Debug, Clone)]
@@ -126,27 +127,82 @@ impl Dashboard {
                         );
                         return;
                     };
-                    self.current = current as usize;
-                    self.voltage = voltage as usize;
+                    self.current = current as i16;
+                    self.voltage = voltage as i16;
                 }
             }
         }
     }
 
     fn view(&self) -> Column<Message> {
-        let level = if self.voltage <= 70 {
+        let voltage_level = if self.voltage <= 70 {
             0
         } else if self.voltage > 90 {
             7
         } else {
             ((self.voltage - 70) as f64 / 20.0 * 7.0).round() as usize
         };
-        column![
-            text(format!("{}V", self.voltage)).size(30),
-            stack![icon(battery_char(level)).size(50)]
-        ]
-        .padding(20)
-        .align_x(Center)
+        let voltage_color: (u8, u8, u8) = match voltage_level {
+            0 => (255, 0, 0),     // Red
+            1 => (255, 165, 0),   // Orange
+            2 => (255, 255, 0),   // Yellow
+            3 => (173, 255, 47),  // GreenYellow
+            4 => (0, 255, 0),     // Green
+            5 => (0, 128, 0),     // DarkGreen
+            6 => (0, 255, 255),   // Cyan
+            7 => (0, 0, 255),     // Blue
+            _ => (255, 255, 255), // White
+        };
+        let current_level = if self.current < 0 {
+            0
+        } else if self.current == 0 {
+            1
+        } else if self.current <= 100 {
+            2
+        } else {
+            3
+        };
+        let current_color: (u8, u8, u8) = match current_level {
+            0 => (0, 255, 0),     // Green
+            1 => (255, 255, 255), // White
+            2 => (255, 255, 0),   // Yellow
+            3 => (255, 0, 0),     // Red
+            _ => (255, 255, 255), // White
+        };
+        column![row![
+            row![
+                text(format!("{}V", self.voltage))
+                    .size(30)
+                    .color(Color::from_rgb8(
+                        voltage_color.0,
+                        voltage_color.1,
+                        voltage_color.2
+                    )),
+                icon(battery_char(voltage_level))
+                    .size(30)
+                    .color(Color::from_rgb8(
+                        voltage_color.0,
+                        voltage_color.1,
+                        voltage_color.2
+                    )),
+            ]
+            .padding(20),
+            row![
+                text(format!("{:>3}A", self.current))
+                    .size(30)
+                    .color(Color::from_rgb8(
+                        current_color.0,
+                        current_color.1,
+                        current_color.2
+                    )),
+                icon('\u{ea0b}').size(30).color(Color::from_rgb8(
+                    current_color.0,
+                    current_color.1,
+                    current_color.2
+                )),
+            ]
+            .padding(20)
+        ]]
     }
 
     fn subscription(&self) -> Subscription<Message> {
