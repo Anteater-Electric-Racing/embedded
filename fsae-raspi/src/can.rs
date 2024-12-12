@@ -331,7 +331,7 @@ pub async fn read_can() {
                 check_message::<RightESCReading2>(&influx_client, &mqtt_client, id, &data).await;
             }
 
-            tokio::time::sleep(Duration::from_secs(1)).await;
+            tokio::time::sleep(Duration::from_millis(200)).await;
         }
     }
 
