@@ -1,10 +1,10 @@
-use std::time::Duration;
-
+mod pallate;
 use iced::futures::{SinkExt, Stream};
 use iced::widget::{column, row, text, Column, Text};
 use iced::{stream, Color, Font};
 use iced::{Center, Subscription};
 use rumqttc::{AsyncClient, EventLoop, MqttOptions, QoS};
+use std::time::Duration;
 
 pub fn main() -> iced::Result {
     iced::application("FSAE Dashboard", Dashboard::update, Dashboard::view)
@@ -142,16 +142,16 @@ impl Dashboard {
         } else {
             ((self.voltage - 70) as f64 / 20.0 * 7.0).round() as usize
         };
-        let voltage_color: (u8, u8, u8) = match voltage_level {
-            0 => (255, 0, 0),     // Red
-            1 => (255, 165, 0),   // Orange
-            2 => (255, 255, 0),   // Yellow
-            3 => (173, 255, 47),  // GreenYellow
-            4 => (0, 255, 0),     // Green
-            5 => (0, 128, 0),     // DarkGreen
-            6 => (0, 255, 255),   // Cyan
-            7 => (0, 0, 255),     // Blue
-            _ => (255, 255, 255), // White
+        let voltage_color: Color = match voltage_level {
+            0 => pallate::RED_500,    // Red
+            1 => pallate::ORANGE_500, // Orange
+            2 => pallate::YELLOW_500, // Yellow
+            3 => pallate::LIME_500,   // GreenYellow
+            4 => pallate::GREEN_500,  // Green
+            5 => pallate::GREEN_700,  // DarkGreen
+            6 => pallate::CYAN_500,   // Cyan
+            7 => pallate::BLUE_500,   // Blue
+            _ => Color::WHITE,        // White
         };
         let current_level = if self.current < 0 {
             0
@@ -162,44 +162,28 @@ impl Dashboard {
         } else {
             3
         };
-        let current_color: (u8, u8, u8) = match current_level {
-            0 => (0, 255, 0),     // Green
-            1 => (255, 255, 255), // White
-            2 => (255, 255, 0),   // Yellow
-            3 => (255, 0, 0),     // Red
-            _ => (255, 255, 255), // White
+        let current_color: Color = match current_level {
+            0 => pallate::GREEN_500,  // Green
+            1 => Color::WHITE,        // White
+            2 => pallate::YELLOW_500, // Yellow
+            3 => pallate::RED_500,    // Red
+            _ => Color::WHITE,        // White
         };
         column![row![
             row![
                 text(format!("{}V", self.voltage))
                     .size(30)
-                    .color(Color::from_rgb8(
-                        voltage_color.0,
-                        voltage_color.1,
-                        voltage_color.2
-                    )),
+                    .color(voltage_color),
                 icon(battery_char(voltage_level))
                     .size(30)
-                    .color(Color::from_rgb8(
-                        voltage_color.0,
-                        voltage_color.1,
-                        voltage_color.2
-                    )),
+                    .color(voltage_color),
             ]
             .padding(20),
             row![
                 text(format!("{:>3}A", self.current))
                     .size(30)
-                    .color(Color::from_rgb8(
-                        current_color.0,
-                        current_color.1,
-                        current_color.2
-                    )),
-                icon('\u{ea0b}').size(30).color(Color::from_rgb8(
-                    current_color.0,
-                    current_color.1,
-                    current_color.2
-                )),
+                    .color(current_color),
+                icon('\u{ea0b}').size(30).color(current_color),
             ]
             .padding(20)
         ]]
