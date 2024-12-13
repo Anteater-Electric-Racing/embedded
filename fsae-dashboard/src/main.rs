@@ -153,32 +153,32 @@ impl Dashboard {
         let height = stack![
             row![
                 row![
-                    text(format!("{:>3}V", self.voltage))
-                        .size(50)
-                        .color(voltage_color),
+                    text(format!("{:>3}", self.voltage)).size(50),
+                    text("V").size(50).color(pallate::GRAY_500),
                     icon(voltage_icon).size(50).color(voltage_color),
                 ],
                 row![
-                    text(format!("{:>3}A", self.current))
-                        .size(50)
-                        .color(current_color),
+                    text(format!("{:>3}", self.current)).size(50),
+                    text("A").size(50).color(pallate::GRAY_500),
                     icon('\u{ea0b}').size(50).color(current_color),
                 ],
                 row![
-                    text(format!("{:>3}°C", self.temp))
-                        .size(50)
-                        .color(temp_color),
+                    text(format!("{:>3}", self.temp)).size(50),
+                    text("°C").size(50).color(pallate::GRAY_500),
                     icon('\u{e1ff}').size(50).color(temp_color),
-                ]
+                ],
             ]
             .spacing(20)
             .padding(20),
-            center(column![
-                text(format!("{:>2}", self.speed))
-                    .size(100)
-                    .color(Color::WHITE),
-                text("MPH").size(50).color(pallate::GRAY_500)
-            ].align_x(Right))
+            center(
+                column![
+                    text(format!("{:>2}", self.speed))
+                        .size(100)
+                        .color(Color::WHITE),
+                    text("MPH").size(50).color(pallate::GRAY_500)
+                ]
+                .align_x(Right)
+            )
         ]
         .width(Fill)
         .height(Fill);
