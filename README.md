@@ -1,4 +1,5 @@
 # Architecture
+
 ```mermaid
 flowchart TD
     B(Brake Sensors) -->|Analog| A(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-arduino' target='_blank'>Arduino</a>"])
@@ -9,17 +10,33 @@ flowchart TD
     IMS(Elcon Charger) -->|CAN| Pi
     subgraph Pi[Raspberry Pi System]
         R(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-raspi' target='_blank'>Rust Logging Code</a>"]) -->|HTTP| I(InfluxDB)
+        R -->|MQTT| D(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-dashboard' target='_blank'>Raspi Dashboard</a>"])
     end
-    subgraph Graphana[Wireless Dashboard]
+    subgraph Graphana[Wireless Grafana]
         I -->|HTTP| F(Full Histroy Preview)
         R -->|MQTT| P(Real Time Preview)
     end
 ```
+
 # Development Environment
-## Devcontainer
-- Install the [Devcontainer](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VSCode
+
+## fsae-raspi
+
 - Open the project in VSCode
+- Install the [Devcontainer](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension for VSCode
 - Open the command palette (Super+Shift+P) and run `Dev Containers: Rebuild and Reopen in Container`
 - The project will now be running in a container with all the necessary dependencies (rust) and services (grafana, influxdb)
-- Now run `cargo run` to start the logging service
+- Now run `cargo run --bin fsae-raspi` to start the logging service
 - You can view the dashboard at `http://localhost:3000` (default username: admin, password: admin)
+- You can view the influxdb database (`http://localhost:8086`) or mqtt broker (`localhost:1883`), by adding it as a data source in grafana
+
+## fsae-arduino
+- Open the project in VSCode
+- Install the [PlatformIO](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide) extension for VSCode
+- Open the command palette (Super+Shift+P) and run `PlatformIO: Build`
+- Open the command palette (Super+Shift+P) and run `PlatformIO: Upload`
+- The code will now be running on the arduino
+
+## fsae-dashboard
+- Open the project in VSCode
+- Now run `cargo run --bin fsae-dashboard` to start the dashboard
