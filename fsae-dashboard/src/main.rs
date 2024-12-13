@@ -170,7 +170,7 @@ impl Dashboard {
             ]
             .spacing(20)
             .padding(20),
-            center(text(format!("{} MPH", self.speed)).size(100).color(Color::WHITE))
+            center(text(format!("{:>2} MPH", self.speed)).size(100).color(Color::WHITE))
         ]
         .width(Fill)
         .height(Fill);
