@@ -287,6 +287,7 @@ pub async fn read_can() {
             // Generate random BMSReading1 data
             let voltage = rand::thread_rng().gen_range(70..=90);
             let current = rand::thread_rng().gen_range(0..=500);
+            let rpm = rand::thread_rng().gen_range(0..=6000);
 
             let sample_data = vec![
                 (
@@ -305,7 +306,7 @@ pub async fn read_can() {
                 ),
                 (
                     LeftESCReading1::id(),
-                    vec![0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19],
+                    vec![rpm as u8, (rpm >> 8) as u8, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19],
                 ),
                 (
                     LeftESCReading2::id(),

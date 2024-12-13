@@ -1,3 +1,4 @@
+mod consts;
 mod mqtt;
 mod pallate;
 
@@ -77,7 +78,7 @@ impl Dashboard {
                         eprintln!("Missing or invalid 'speed' field in JSON: {:?}", json);
                         return;
                     };
-                    self.speed = rpm as u16;
+                    self.speed = (rpm as f64 * consts::speed_to_rpm) as u16;
                 }
             }
         }
@@ -169,7 +170,7 @@ impl Dashboard {
             ]
             .spacing(20)
             .padding(20),
-            center(text("50 MPH").size(100).color(Color::WHITE))
+            center(text(format!("{} MPH", self.speed)).size(100).color(Color::WHITE))
         ]
         .width(Fill)
         .height(Fill);
