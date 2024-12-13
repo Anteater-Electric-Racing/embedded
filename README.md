@@ -31,6 +31,7 @@ flowchart TD
 - You can view the influxdb database (`http://localhost:8086`) or mqtt broker (`localhost:1883`), by adding it as a data source in grafana
 
 ## fsae-arduino
+
 - Open the project in VSCode
 - Install the [PlatformIO](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide) extension for VSCode
 - Open the command palette (Super+Shift+P) and run `PlatformIO: Build`
@@ -38,5 +39,6 @@ flowchart TD
 - The code will now be running on the arduino
 
 ## fsae-dashboard
+
 - Open the project in VSCode
 - Now run `cargo run --bin fsae-dashboard` to start the dashboard
