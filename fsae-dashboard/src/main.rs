@@ -78,7 +78,7 @@ impl Dashboard {
                         eprintln!("Missing or invalid 'speed' field in JSON: {:?}", json);
                         return;
                     };
-                    self.speed = (rpm as f64 * consts::speed_to_rpm) as u16;
+                    self.speed = (rpm as f64 * consts::SPEED_TO_RPM) as u16;
                 }
             }
         }
