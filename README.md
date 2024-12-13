@@ -9,7 +9,7 @@ flowchart TD
     K(Kelly Motor Controllers) -->|CAN| Pi
     IMS(Elcon Charger) -->|CAN| Pi
     subgraph Pi[Raspberry Pi System]
-        R(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-raspi' target='_blank'>Rust Logging Code</a>"]) -->|HTTP| I(InfluxDB)
+        R(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-raspi' target='_blank'>Raspi Logger</a>"]) -->|HTTP| I(InfluxDB)
         R -->|MQTT| D(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-dashboard' target='_blank'>Raspi Dashboard</a>"])
     end
     subgraph Graphana[Wireless Grafana]
@@ -32,11 +32,11 @@ flowchart TD
 
 ## fsae-arduino
 
+- Plug in the Arduino
 - Open the project in VSCode
 - Install the [PlatformIO](https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide) extension for VSCode
-- Open the command palette (Super+Shift+P) and run `PlatformIO: Build`
 - Open the command palette (Super+Shift+P) and run `PlatformIO: Upload`
-- The code will now be running on the arduino
+- The code will now be running on the Arduino
 
 ## fsae-dashboard
 
