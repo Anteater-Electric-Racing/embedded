@@ -2,8 +2,8 @@ mod mqtt;
 mod pallate;
 mod util;
 
-use iced::widget::{container, row, stack, text, Stack};
-use iced::Length::Fill;
+use iced::widget::{container, row, stack, svg, text, Stack};
+use iced::Length::{self, Fill};
 use iced::{border, Subscription, Theme};
 use iced::{Color, Font};
 use util::{clamped_stepping_function, icon};
@@ -117,7 +117,7 @@ impl Dashboard {
             4 => pallate::RED_500,
             _ => pallate::AMBER_500,
         };
-        let height = stack![row![
+        stack![row![
             container(row![
                 text(format!("{:>3}", self.voltage)).size(50),
                 text("V").size(50).color(pallate::GRAY_500),
@@ -157,10 +157,11 @@ impl Dashboard {
         ]
         .spacing(20)
         .padding(20)
-        .wrap(),]
+        .wrap(),
+        container(svg("fonts/car.svg")).center(Fill)
+        ]
         .width(Fill)
-        .height(Fill);
-        height
+        .height(Fill)
     }
 
     fn theme(&self) -> Theme {
