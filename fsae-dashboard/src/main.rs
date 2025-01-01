@@ -1,12 +1,13 @@
-mod consts;
 mod mqtt;
 mod pallate;
+mod util;
 
 use iced::alignment::Horizontal::Right;
-use iced::widget::{center, column, row, stack, text, Stack, Text};
+use iced::widget::{center, column, row, stack, text, Stack};
 use iced::Length::Fill;
-use iced::{Center, Subscription};
+use iced::Subscription;
 use iced::{Color, Font};
+use util::{clamped_stepping_function, icon};
 
 pub fn main() -> iced::Result {
     iced::application("FSAE Dashboard", Dashboard::update, Dashboard::view)
@@ -18,16 +19,10 @@ pub fn main() -> iced::Result {
         .run()
 }
 
-const ICONS: Font = Font::with_name("Material Symbols Rounded");
-
-fn icon(unicode: char) -> Text<'static> {
-    text(unicode.to_string()).font(ICONS).align_x(Center)
-}
-
 #[derive(Default)]
 struct Dashboard {
-    current: i16,
     voltage: i16,
+    current: i16,
     temp: u8,
     speed: u16,
 }
@@ -79,51 +74,28 @@ impl Dashboard {
                         eprintln!("Missing or invalid 'speed' field in JSON: {:?}", json);
                         return;
                     };
-                    self.speed = (rpm as f64 * consts::SPEED_TO_RPM) as u16;
+                    self.speed = (rpm as f64 * util::SPEED_TO_RPM) as u16;
                 }
             }
         }
     }
 
     fn view(&self) -> Stack<Message> {
-        let voltage_level = if self.voltage <= 70 {
-            0
-        } else if self.voltage > 90 {
-            7
-        } else {
-            ((self.voltage - 70) as f64 / 20.0 * 7.0).round() as usize
+        let voltage_level =
+            clamped_stepping_function(self.voltage as f64, util::VOLTAGE_MIN, util::VOLTAGE_MAX, 7);
+        let (voltage_color, voltage_icon) = match voltage_level {
+            0 => (pallate::RED_500, '\u{ebdc}'),    // Red
+            1 => (pallate::ORANGE_500, '\u{ebd9}'), // Orange
+            2 => (pallate::YELLOW_500, '\u{ebe0}'), // Yellow
+            3 => (pallate::LIME_500, '\u{ebdd}'),   // Lime
+            4 => (pallate::GREEN_500, '\u{ebe2}'),  // Green
+            5 => (pallate::GREEN_700, '\u{ebd4}'),  // DarkGreen
+            6 => (pallate::CYAN_500, '\u{ebd2}'),   // Cyan
+            7 => (pallate::BLUE_500, '\u{e1a4}'),   // Blue
+            _ => (Color::WHITE, '\u{ebdc}'),        // White
         };
-        let voltage_color: Color = match voltage_level {
-            0 => pallate::RED_500,    // Red
-            1 => pallate::ORANGE_500, // Orange
-            2 => pallate::YELLOW_500, // Yellow
-            3 => pallate::LIME_500,   // GreenYellow
-            4 => pallate::GREEN_500,  // Green
-            5 => pallate::GREEN_700,  // DarkGreen
-            6 => pallate::CYAN_500,   // Cyan
-            7 => pallate::BLUE_500,   // Blue
-            _ => Color::WHITE,        // White
-        };
-        let voltage_icon = match voltage_level {
-            0 => '\u{ebdc}',
-            1 => '\u{ebd9}',
-            2 => '\u{ebe0}',
-            3 => '\u{ebdd}',
-            4 => '\u{ebe2}',
-            5 => '\u{ebd4}',
-            6 => '\u{ebd2}',
-            7 => '\u{e1a4}',
-            _ => '\u{ebdc}',
-        };
-        let current_level = if self.current < 0 {
-            0
-        } else if self.current == 0 {
-            1
-        } else if self.current <= 250 {
-            2
-        } else {
-            3
-        };
+        let current_level =
+            clamped_stepping_function(self.current as f64, util::CURRENT_MIN, util::CURRENT_MAX, 3);
         let current_color: Color = match current_level {
             0 => pallate::GREEN_500,  // Green
             1 => Color::WHITE,        // White
@@ -131,17 +103,8 @@ impl Dashboard {
             3 => pallate::RED_500,    // Red
             _ => Color::WHITE,        // White
         };
-        let temp_level = if self.temp < 20 {
-            0
-        } else if self.temp < 30 {
-            1
-        } else if self.temp < 40 {
-            2
-        } else if self.temp < 50 {
-            3
-        } else {
-            4
-        };
+        let temp_level =
+            clamped_stepping_function(self.temp as f64, util::TEMP_MIN, util::TEMP_MAX, 4);
         let temp_color: Color = match temp_level {
             0 => pallate::CYAN_500,   // Cyan
             1 => pallate::BLUE_500,   // Blue
