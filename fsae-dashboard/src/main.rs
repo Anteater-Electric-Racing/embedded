@@ -2,9 +2,11 @@ mod mqtt;
 mod pallate;
 mod util;
 
-use iced::widget::{container, row, stack, svg, text, Stack};
-use iced::Length::{self, Fill};
-use iced::{border, Subscription, Theme};
+use std::time::{Duration, Instant};
+
+use iced::widget::{container, horizontal_space, row, stack, text, Stack};
+use iced::Length::Fill;
+use iced::{border, padding, time, Subscription, Theme};
 use iced::{Color, Font};
 use util::{clamped_stepping_function, icon};
 
@@ -25,11 +27,13 @@ struct Dashboard {
     current: i16,
     temp: u8,
     speed: u16,
+    stop_watch: Duration,
 }
 
 #[derive(Debug, Clone)]
 enum Message {
     Background(mqtt::Event),
+    Tick(Instant),
 }
 
 impl Dashboard {
@@ -77,6 +81,9 @@ impl Dashboard {
                     self.speed = (rpm as f64 * util::SPEED_TO_RPM) as u16;
                 }
             }
+            Message::Tick(_instant) => {
+                self.stop_watch += Duration::from_millis(10);
+            }
         }
     }
 
@@ -117,48 +124,64 @@ impl Dashboard {
             4 => pallate::RED_500,
             _ => pallate::AMBER_500,
         };
-        stack![row![
-            container(row![
-                text(format!("{:>3}", self.voltage)).size(50),
-                text("V").size(50).color(pallate::GRAY_500),
-                icon(voltage_icon).size(50).color(voltage_color),
-            ].padding(5))
-            .style(|_theme| {
-                container::Style::default()
-                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
-            }),
-            container(row![
-                text(format!("{:>3}", self.current)).size(50),
-                text("A").size(50).color(pallate::GRAY_500),
-                icon('\u{ea0b}').size(50).color(current_color),
-            ].padding(5))
-            .style(|_theme| {
-                container::Style::default()
-                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
-            }),
-            container(row![
-                text(format!("{:>2}", self.temp)).size(50),
-                text("°C").size(50).color(pallate::GRAY_500),
-                icon('\u{e846}').size(50).color(temp_color),
-            ].padding(5))
-            .style(|_theme| {
-                container::Style::default()
-                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
-            }),
-            container(row![
-                text(format!("{:>2}", self.speed)).size(50),
-                text("mph").size(50).color(pallate::GRAY_500),
-                icon('\u{e9e4}').size(50).color(pallate::GRAY_500),
-            ].padding(5))
-            .style(|_theme| {
-                container::Style::default()
-                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
-            }),
-        ]
-        .spacing(20)
-        .padding(20)
-        .wrap(),
-        container(svg("fonts/car.svg")).center(Fill)
+        stack![
+            row![
+                container(
+                    row![
+                        text(format!("{:>3}", self.voltage)).size(50),
+                        text("V").size(50).color(pallate::GRAY_500),
+                        icon(voltage_icon).size(50).color(voltage_color),
+                    ]
+                    .padding(5)
+                )
+                .style(|_theme| {
+                    container::Style::default()
+                        .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+                }),
+                container(
+                    row![
+                        text(format!("{:>3}", self.current)).size(50),
+                        text("A").size(50).color(pallate::GRAY_500),
+                        icon('\u{ea0b}').size(50).color(current_color),
+                    ]
+                    .padding(5)
+                )
+                .style(|_theme| {
+                    container::Style::default()
+                        .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+                }),
+                container(
+                    row![
+                        text(format!("{:>2}", self.temp)).size(50),
+                        text("°C").size(50).color(pallate::GRAY_500),
+                        icon('\u{e846}').size(50).color(temp_color),
+                    ]
+                    .padding(5)
+                )
+                .style(|_theme| {
+                    container::Style::default()
+                        .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+                }),
+                container(
+                    row![
+                        text(format!("{:>2}", self.speed)).size(50),
+                        text("mph").size(50).color(pallate::GRAY_500),
+                        icon('\u{e9e4}').size(50).color(pallate::GRAY_500),
+                        horizontal_space().width(5),
+                    ]
+                    .padding(5)
+                )
+                .style(|_theme| {
+                    container::Style::default()
+                        .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+                }),
+            ]
+            .spacing(20)
+            .padding(20)
+            .wrap(),
+            container(text(format!("{:.2}", self.stop_watch.as_secs_f64()))
+                .size(50)
+                .color(pallate::GRAY_500)).center(Fill)
         ]
         .width(Fill)
         .height(Fill)
@@ -169,6 +192,9 @@ impl Dashboard {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        Subscription::run(mqtt::mqtt).map(Message::Background)
+        Subscription::batch(vec![
+            Subscription::run(mqtt::mqtt).map(Message::Background),
+            time::every(Duration::from_millis(10)).map(Message::Tick),
+        ])
     }
 }
