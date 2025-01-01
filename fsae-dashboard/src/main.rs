@@ -2,9 +2,9 @@ mod mqtt;
 mod pallate;
 mod util;
 
-use iced::widget::{row, stack, text, Stack};
+use iced::widget::{container, row, stack, text, Stack};
 use iced::Length::Fill;
-use iced::Subscription;
+use iced::{border, Subscription, Theme};
 use iced::{Color, Font};
 use util::{clamped_stepping_function, icon};
 
@@ -15,6 +15,7 @@ pub fn main() -> iced::Result {
             "../fonts/MaterialSymbolsRounded-Regular.ttf"
         ))
         .default_font(Font::MONOSPACE)
+        .theme(Dashboard::theme)
         .run()
 }
 
@@ -117,25 +118,42 @@ impl Dashboard {
             _ => pallate::AMBER_500,
         };
         let height = stack![row![
-            row![
+            container(row![
                 text(format!("{:>3}", self.voltage)).size(50),
                 text("V").size(50).color(pallate::GRAY_500),
                 icon(voltage_icon).size(50).color(voltage_color),
-            ],
-            row![
+            ].padding(5))
+            .style(|_theme| {
+                container::Style::default()
+                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+            }),
+            container(row![
                 text(format!("{:>3}", self.current)).size(50),
                 text("A").size(50).color(pallate::GRAY_500),
                 icon('\u{ea0b}').size(50).color(current_color),
-            ],
-            row![
-                text(format!("{:>3}", self.temp)).size(50),
+            ].padding(5))
+            .style(|_theme| {
+                container::Style::default()
+                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+            }),
+            container(row![
+                text(format!("{:>2}", self.temp)).size(50),
                 text("°C").size(50).color(pallate::GRAY_500),
                 icon('\u{e846}').size(50).color(temp_color),
-            ],
-            row![
-                text(format!("{:>3}", self.speed)).size(50),
+            ].padding(5))
+            .style(|_theme| {
+                container::Style::default()
+                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+            }),
+            container(row![
+                text(format!("{:>2}", self.speed)).size(50),
                 text("mph").size(50).color(pallate::GRAY_500),
-            ],
+                icon('\u{e9e4}').size(50).color(pallate::GRAY_500),
+            ].padding(5))
+            .style(|_theme| {
+                container::Style::default()
+                    .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+            }),
         ]
         .spacing(20)
         .padding(20)
@@ -143,6 +161,10 @@ impl Dashboard {
         .width(Fill)
         .height(Fill);
         height
+    }
+
+    fn theme(&self) -> Theme {
+        Theme::CatppuccinMocha
     }
 
     fn subscription(&self) -> Subscription<Message> {
