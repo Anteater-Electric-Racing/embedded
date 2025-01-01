@@ -4,9 +4,10 @@ mod util;
 
 use std::time::{Duration, Instant};
 
-use iced::widget::{container, horizontal_space, row, stack, text, Stack};
+use iced::alignment::Horizontal::Right;
+use iced::widget::{column, container, horizontal_space, row, stack, text, Stack};
 use iced::Length::Fill;
-use iced::{border, padding, time, Subscription, Theme};
+use iced::{border, time, Subscription, Theme};
 use iced::{Color, Font};
 use util::{clamped_stepping_function, icon};
 
@@ -27,7 +28,7 @@ struct Dashboard {
     current: i16,
     temp: u8,
     speed: u16,
-    stop_watch: Duration,
+    stopwatch: Duration,
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +83,7 @@ impl Dashboard {
                 }
             }
             Message::Tick(_instant) => {
-                self.stop_watch += Duration::from_millis(10);
+                self.stopwatch += Duration::from_millis(10);
             }
         }
     }
@@ -179,9 +180,16 @@ impl Dashboard {
             .spacing(20)
             .padding(20)
             .wrap(),
-            container(text(format!("{:.2}", self.stop_watch.as_secs_f64()))
-                .size(50)
-                .color(pallate::GRAY_500)).center(Fill)
+            container(
+                column![
+                    text(format!("{:.2}", self.stopwatch.as_secs_f64()))
+                        .size(100)
+                        .color(pallate::GRAY_500),
+                    text("-0.51").size(50).color(pallate::GREEN_500)
+                ]
+                .align_x(Right)
+            )
+            .center(Fill),
         ]
         .width(Fill)
         .height(Fill)
