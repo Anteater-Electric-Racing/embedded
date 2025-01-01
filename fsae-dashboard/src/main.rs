@@ -2,8 +2,7 @@ mod mqtt;
 mod pallate;
 mod util;
 
-use iced::alignment::Horizontal::Right;
-use iced::widget::{center, column, row, stack, text, Stack};
+use iced::widget::{row, stack, text, Stack};
 use iced::Length::Fill;
 use iced::Subscription;
 use iced::{Color, Font};
@@ -84,65 +83,63 @@ impl Dashboard {
         let voltage_level =
             clamped_stepping_function(self.voltage as f64, util::VOLTAGE_MIN, util::VOLTAGE_MAX, 7);
         let (voltage_color, voltage_icon) = match voltage_level {
-            0 => (pallate::RED_500, '\u{ebdc}'),    // Red
-            1 => (pallate::ORANGE_500, '\u{ebd9}'), // Orange
-            2 => (pallate::YELLOW_500, '\u{ebe0}'), // Yellow
-            3 => (pallate::LIME_500, '\u{ebdd}'),   // Lime
-            4 => (pallate::GREEN_500, '\u{ebe2}'),  // Green
-            5 => (pallate::GREEN_700, '\u{ebd4}'),  // DarkGreen
-            6 => (pallate::CYAN_500, '\u{ebd2}'),   // Cyan
-            7 => (pallate::BLUE_500, '\u{e1a4}'),   // Blue
-            _ => (Color::WHITE, '\u{ebdc}'),        // White
+            0 => (pallate::RED_500, '\u{ebdc}'),
+            1 => (pallate::ORANGE_500, '\u{ebd9}'),
+            2 => (pallate::YELLOW_500, '\u{ebe0}'),
+            3 => (pallate::GRAY_500, '\u{ebdd}'),
+            4 => (pallate::GRAY_500, '\u{ebe2}'),
+            5 => (pallate::GRAY_500, '\u{ebd4}'),
+            6 => (pallate::GRAY_500, '\u{ebd2}'),
+            7 => (pallate::GRAY_500, '\u{e1a4}'),
+            _ => (pallate::AMBER_500, '\u{ebdc}'),
         };
         let current_level =
-            clamped_stepping_function(self.current as f64, util::CURRENT_MIN, util::CURRENT_MAX, 3);
-        let current_color: Color = match current_level {
-            0 => pallate::GREEN_500,  // Green
-            1 => Color::WHITE,        // White
-            2 => pallate::YELLOW_500, // Yellow
-            3 => pallate::RED_500,    // Red
-            _ => Color::WHITE,        // White
+            clamped_stepping_function(self.current as f64, util::CURRENT_MIN, util::CURRENT_MAX, 7);
+        let current_color = match current_level {
+            0 => pallate::GRAY_500,
+            1 => pallate::GRAY_500,
+            2 => pallate::GRAY_500,
+            3 => pallate::GRAY_500,
+            4 => pallate::GRAY_500,
+            5 => pallate::GRAY_500,
+            6 => pallate::GRAY_500,
+            7 => pallate::ORANGE_500,
+            _ => pallate::AMBER_500,
         };
         let temp_level =
             clamped_stepping_function(self.temp as f64, util::TEMP_MIN, util::TEMP_MAX, 4);
         let temp_color: Color = match temp_level {
-            0 => pallate::CYAN_500,   // Cyan
-            1 => pallate::BLUE_500,   // Blue
-            2 => pallate::GREEN_500,  // Green
-            3 => pallate::YELLOW_500, // Yellow
-            4 => pallate::RED_500,    // Red
-            _ => Color::WHITE,        // White
+            0 => pallate::CYAN_500,
+            1 => pallate::GRAY_500,
+            2 => pallate::GRAY_500,
+            3 => pallate::YELLOW_500,
+            4 => pallate::RED_500,
+            _ => pallate::AMBER_500,
         };
-        let height = stack![
+        let height = stack![row![
             row![
-                row![
-                    text(format!("{:>3}", self.voltage)).size(50),
-                    text("V").size(50).color(pallate::GRAY_500),
-                    icon(voltage_icon).size(50).color(voltage_color),
-                ],
-                row![
-                    text(format!("{:>3}", self.current)).size(50),
-                    text("A").size(50).color(pallate::GRAY_500),
-                    icon('\u{ea0b}').size(50).color(current_color),
-                ],
-                row![
-                    text(format!("{:>3}", self.temp)).size(50),
-                    text("°C").size(50).color(pallate::GRAY_500),
-                    icon('\u{e1ff}').size(50).color(temp_color),
-                ],
-            ]
-            .spacing(20)
-            .padding(20),
-            center(
-                column![
-                    text(format!("{:>2}", self.speed))
-                        .size(100)
-                        .color(Color::WHITE),
-                    text("MPH").size(50).color(pallate::GRAY_500)
-                ]
-                .align_x(Right)
-            )
+                text(format!("{:>3}", self.voltage)).size(50),
+                text("V").size(50).color(pallate::GRAY_500),
+                icon(voltage_icon).size(50).color(voltage_color),
+            ],
+            row![
+                text(format!("{:>3}", self.current)).size(50),
+                text("A").size(50).color(pallate::GRAY_500),
+                icon('\u{ea0b}').size(50).color(current_color),
+            ],
+            row![
+                text(format!("{:>3}", self.temp)).size(50),
+                text("°C").size(50).color(pallate::GRAY_500),
+                icon('\u{e846}').size(50).color(temp_color),
+            ],
+            row![
+                text(format!("{:>3}", self.speed)).size(50),
+                text("mph").size(50).color(pallate::GRAY_500),
+            ],
         ]
+        .spacing(20)
+        .padding(20)
+        .wrap(),]
         .width(Fill)
         .height(Fill);
         height

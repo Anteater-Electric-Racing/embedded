@@ -59,6 +59,7 @@ pub fn mqtt() -> impl Stream<Item = Event> {
                         }
                     }
                     eprintln!("Connection lost");
+                    tokio::time::sleep(Duration::from_secs(1)).await;
                     state = BackgroundState::Disconnected;
                 }
             }
