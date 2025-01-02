@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use iced::alignment::Horizontal::Right;
 use iced::widget::{column, container, horizontal_space, row, stack, text, Stack};
 use iced::Length::Fill;
-use iced::{border, time, Subscription, Theme};
+use iced::{border, padding, time, Padding, Subscription, Theme};
 use iced::{Color, Font};
 use util::{clamped_stepping_function, icon};
 
@@ -29,6 +29,9 @@ struct Dashboard {
     temp: u8,
     speed: u16,
     stopwatch: Duration,
+    best_lap: Duration,
+    last_lap: Duration,
+    
 }
 
 #[derive(Debug, Clone)]
@@ -129,23 +132,25 @@ impl Dashboard {
             row![
                 container(
                     row![
-                        text(format!("{:>3}", self.voltage)).size(50),
+                        horizontal_space().width(15),
+                        text(format!("{:>2}", self.voltage)).size(50),
                         text("V").size(50).color(pallate::GRAY_500),
                         icon(voltage_icon).size(50).color(voltage_color),
+                        horizontal_space().width(5),
                     ]
-                    .padding(5)
                 )
                 .style(|_theme| {
                     container::Style::default()
-                        .border(border::color(pallate::GRAY_500).width(4).rounded(15))
+                        .border(border::color(pallate::GRAY_500).width(4).rounded(12))
                 }),
                 container(
                     row![
+                        horizontal_space().width(15),
                         text(format!("{:>3}", self.current)).size(50),
                         text("A").size(50).color(pallate::GRAY_500),
                         icon('\u{ea0b}').size(50).color(current_color),
+                        horizontal_space().width(5),
                     ]
-                    .padding(5)
                 )
                 .style(|_theme| {
                     container::Style::default()
@@ -153,11 +158,12 @@ impl Dashboard {
                 }),
                 container(
                     row![
+                        horizontal_space().width(15),
                         text(format!("{:>2}", self.temp)).size(50),
                         text("°C").size(50).color(pallate::GRAY_500),
                         icon('\u{e846}').size(50).color(temp_color),
+                        horizontal_space().width(5),
                     ]
-                    .padding(5)
                 )
                 .style(|_theme| {
                     container::Style::default()
@@ -165,12 +171,12 @@ impl Dashboard {
                 }),
                 container(
                     row![
+                        horizontal_space().width(15),
                         text(format!("{:>2}", self.speed)).size(50),
                         text("mph").size(50).color(pallate::GRAY_500),
                         icon('\u{e9e4}').size(50).color(pallate::GRAY_500),
-                        horizontal_space().width(5),
+                        horizontal_space().width(12),
                     ]
-                    .padding(5)
                 )
                 .style(|_theme| {
                     container::Style::default()
@@ -183,9 +189,11 @@ impl Dashboard {
             container(
                 column![
                     text(format!("{:.2}", self.stopwatch.as_secs_f64()))
-                        .size(100)
-                        .color(pallate::GRAY_500),
-                    text("-0.51").size(50).color(pallate::GREEN_500)
+                        .size(100),
+                    text(format!("best lap {:.2}", self.best_lap.as_secs_f64()))
+                        .size(30).color(pallate::GRAY_500),
+                    text(format!("last lap {:.2}", self.last_lap.as_secs_f64()))
+                        .size(30).color(pallate::GRAY_500),
                 ]
                 .align_x(Right)
             )
