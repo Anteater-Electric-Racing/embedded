@@ -6,11 +6,13 @@ flowchart TD
     L(Linear Potentiometers) -->|Analog| A
     A -->|UART| Pi
     O(Orion BMS) -->|CAN| Pi
-    K(Omni Inverter) -->|CAN| Pi
+    OI(Omni Inverter) -->|CAN| Pi
     SC(RP2040 Omni Speed Controller) -->|CAN| Pi
     IMU(MPU6050 IMU) -->|I2C| Pi
     GPS(NEO-6M GPS) -->|UART| Pi
     IMS(Elcon Charger) -->|CAN| Pi
+    IMS(Elcon Charger) <-->|CAN| O
+    SC(RP2040 Omni Speed Controller) -->|CAN| OI
     subgraph Pi[Raspberry Pi System]
         R(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-raspi' target='_blank'>Raspi Logger</a>"]) -->|HTTP| I(InfluxDB)
         R -->|MQTT| D(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-dashboard' target='_blank'>Raspi Dashboard</a>"])
