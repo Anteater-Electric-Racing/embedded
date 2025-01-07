@@ -2,17 +2,17 @@
 
 ```mermaid
 flowchart TD
-    B(Brake Sensors) -->|Analog| A(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-arduino' target='_blank'>Arduino</a>"])
-    L(Linear Potentiometers) -->|Analog| A
-    A -->|UART| Pi
+    B(Brake Sensors) -->|Analog| SC(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-arduino' target='_blank'>Arduino</a>"])
+    L(Linear Potentiometers) -->|Analog| SC
+    PI(Pedal Input) -->|Analog| SC
     O(Orion BMS) -->|CAN| Pi
-    OI(Omni Inverter) -->|CAN| Pi
-    SC(RP2040 Omni Speed Controller) -->|CAN| Pi
-    IMU(MPU6050 IMU) -->|I2C| Pi
-    GPS(NEO-6M GPS) -->|UART| Pi
+    %% OI(Omni Inverter) -->|CAN| Pi
+    SC(Teensy Omni Speed Controller) -->|CAN| Pi
+    IMU(MPU6050 IMU) -->|I2C| SC
+    GPS(NEO-6M GPS) -->|UART| SC
     IMS(Elcon Charger) -->|CAN| Pi
     IMS(Elcon Charger) <-->|CAN| O
-    SC(RP2040 Omni Speed Controller) -->|CAN| OI
+    SC(Teensy Omni Speed Controller) <-->|CAN| OI(Omni Inverter)
     subgraph Pi[Raspberry Pi System]
         R(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-raspi' target='_blank'>Raspi Logger</a>"]) -->|HTTP| I(InfluxDB)
         R -->|MQTT| D(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-dashboard' target='_blank'>Raspi Dashboard</a>"])
