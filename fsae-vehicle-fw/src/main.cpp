@@ -4,7 +4,7 @@
 #define THREAD_MAIN_PRIORITY 1
 
 #include <Arduino.h>
-#include <Arduino_FreeRTOS.h>
+#include <arduino_freertos.h>
 
 #include "peripherals/peripherals.h"
 
@@ -18,6 +18,7 @@ void threadMain( void *pvParameters ) {
   Peripherals_init();
   while (true) {
     // Main loop
-    break;
   }
 }
+
+void loop() {}
