@@ -1,4 +1,6 @@
-on: push
+on:
+  push:
+    paths: ['**.c', '**.cpp', '**.h', '**.hpp', '**.cxx', '**.hxx', '**.cc', '**.hh', '**CMakeLists.txt', 'meson.build', '**.cmake']
 name: Clang tidy
 
 jobs:
