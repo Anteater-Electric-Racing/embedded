@@ -75,7 +75,7 @@ pub async fn read_uart() {
             let mut lines = reader.lines();
 
             while let Ok(Some(line)) = lines.next_line().await {
-                let parts: Vec<&str> = line.trim().split_whitespace().collect();
+                let parts: Vec<&str> = line.split_whitespace().collect();
                 check_uart(&client, parts).await;
             }
         }
