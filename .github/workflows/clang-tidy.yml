@@ -1,7 +1,7 @@
 on:
   push:
+    branches: ['*']
     paths: ['**.c', '**.cpp', '**.h', '**.hpp', '**.cxx', '**.hxx', '**.cc', '**.hh', '**CMakeLists.txt', 'meson.build', '**.cmake']
-name: Clang tidy
 
 jobs:
   clang_tidy:
