@@ -10,6 +10,8 @@ on:
 jobs:
   cpp-linter:
     runs-on: ubuntu-latest
+    permissions: 
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -20,6 +22,7 @@ jobs:
         with:
           style: 'file'  # Use .clang-format config file. 
           tidy-checks: '-*' # disable clang-tidy checks. 
+          thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
 
       - name: Fail fast?!
         if: steps.linter.outputs.clang-format-checks-failed > 0
