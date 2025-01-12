@@ -4,7 +4,7 @@
 
 #include "peripherals/peripherals.h"
 
-//change this to use freertos
+// change this to use freertos
 
 void setup() {
   // put your setup code here, to run once:
