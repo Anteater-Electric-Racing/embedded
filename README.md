@@ -1,4 +1,4 @@
-JW - test
+JW - testing
 # Architecture
 
 ```mermaid
