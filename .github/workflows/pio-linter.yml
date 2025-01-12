@@ -21,4 +21,4 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Build PlatformIO Project
-        run: pio check --project-dir fsae-vehicle-fw
+        run: pio check --project-dir ${GITHUB_WORKSPACE}/fsae-vehicle-fw
