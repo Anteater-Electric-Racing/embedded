@@ -8,7 +8,6 @@ use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
 use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
 use std::any::type_name;
-use tokio;
 use tokio::time::Duration;
 
 // constants
@@ -235,7 +234,7 @@ async fn check_message<T: CanReading + Send + 'static>(
         };
 
         // Publish to MQTT
-        let topic = format!("{}", type_name::<T>())
+        let topic = type_name::<T>().to_string()
             .to_lowercase()
             .replace("::", "/"); // e.g. BMSReading1 -> fsae_raspi/can/bmsreading1
 
