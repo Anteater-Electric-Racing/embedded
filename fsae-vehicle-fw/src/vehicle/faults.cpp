@@ -2,15 +2,6 @@
 
 #include "vehicle/faults.h"
 
-typedef struct{
-    bool overCurrent: 1;
-    bool underVoltage: 1;
-    bool overTemp: 1;
-    bool APPS_fault: 1;
-    bool BSE_fault: 1;
-    bool APPS_brake_plausibility: 1;
-} FaultMap;
-
 FaultMap faultMap;
 
 void Faults_Init(){
@@ -67,6 +58,11 @@ void Faults_Set(FaultType fault){
     }
 }
 
+// for telemetry
+FaultMap Faults_Get() {
+    return faultMap;
+}
+
 void Faults_Clear(FaultType fault){
     switch(fault){
         case FAULT_NONE:
@@ -107,5 +103,63 @@ void Faults_Clear(FaultType fault){
         {
             break;
         }
+    }
+}
+
+// need struct of car info
+// fault logging?
+void Faults_Check() {
+    if (checkOverCurrent())
+        Faults_Set(FAULT_OVER_CURRENT);
+    if (checkUnderVoltage())
+        Faults_Set(FAULT_UNDER_VOLTAGE);
+    if (checkOverTemp())
+        Faults_Set(FAULT_OVER_TEMP);
+    if (checkAPPS())
+        Faults_Set(FAULT_APPS);
+    if (checkBSE())
+        Faults_Set(FAULT_BSE);
+    if (checkABP())
+        Faults_Set(FAULT_APPS_BRAKE_PLAUSIBILITY);
+}
+
+
+bool checkOverCurrent() {
+    return false;
+}
+
+bool checkUnderVoltage() {
+    return false;
+}
+
+bool checkOverTemp() {
+    return false;
+}
+
+bool checkAPPS() {
+    // APPS check for 10% difference in throttle inputs
+    // interface with module to turn off TS (power to motors shut off)
+    // handle APPS ? 
+    return false;
+}
+
+bool checkBSE() {
+    // BSE check for signal in range of 0.5-4.5 V
+    // interface with module to turn off TS (power to motors shut off)
+    // handle BSE ? 
+    return false;
+}
+
+bool checkABP() {
+    // ABP check for brakes engaged + APPS more than 25%
+    // interface with module to turn off TS (power to motors shut off)
+    // handle ABP ? 
+    return false;
+}
+
+void Faults_Handle() {
+    if (faultMap.overCurrent) {
+        // handle
+        Faults_Clear(FAULT_OVER_CURRENT);
     }
 }
