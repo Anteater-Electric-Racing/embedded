@@ -12,20 +12,27 @@
 #include "vehicle/telemetry.h"
 
 void threadMain( void *pvParameters );
-
 void setup() {
-  xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
 }
 
 void threadMain( void *pvParameters ) {
-  Peripherals_init();
+    Peripherals_init();
 
-  Faults_Init();
-  Telemetry_Init();
+    Faults_Init();
+    Telemetry_Init();
 
-  while (true) {
-    // Main loop
-  }
+    
+
+    while (true) {
+        // Main loop
+        
+        // check faults
+        Faults_Check(/* need struct of car info */);
+        // handle faults
+        Faults_Handle();
+        // adc sampling
+    }
 }
 
 void loop() {}
