@@ -8,6 +8,9 @@
 
 #include "peripherals/peripherals.h"
 
+#include "vehicle/faults.h"
+#include "vehicle/telemetry.h"
+
 void threadMain( void *pvParameters );
 
 void setup() {
@@ -16,6 +19,10 @@ void setup() {
 
 void threadMain( void *pvParameters ) {
   Peripherals_init();
+
+  Faults_Init();
+  Telemetry_Init();
+
   while (true) {
     // Main loop
   }
