@@ -23,11 +23,12 @@ typedef enum {
 } FaultType;
 
 void Faults_Init();
-void Faults_Set(FaultType fault);
-FaultMap Faults_Get();
-void Faults_Clear(FaultType fault);
-void Faults_Check();
-void Faults_Handle();
+void Faults_SetFault(FaultType fault);
+FaultMap* Faults_GetFaults(); 
+void Faults_ClearFault(FaultType fault);
+void Faults_CheckFaults();
+void Faults_HandleFaults();
+bool Faults_CheckAllClear();
 
 bool checkOverCurrent();
 bool checkUnderVoltage();

@@ -23,15 +23,15 @@ void threadMain( void *pvParameters ) {
     Faults_Init();
     Telemetry_Init();
 
-
+    
 
     while (true) {
         // Main loop
-
+        
         // check faults
-        Faults_Check(/* need struct of car info */);
+        Faults_CheckFaults(/* need struct of car info */);
         // handle faults
-        Faults_Handle();
+        Faults_HandleFaults();
         // adc sampling
     }
 }

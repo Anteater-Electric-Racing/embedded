@@ -1,6 +1,7 @@
 // Anteater Electric Racing, 2025
 
 #include "vehicle/faults.h"
+#include "vehicle/motor.h"
 
 FaultMap faultMap;
 
@@ -15,7 +16,7 @@ void Faults_Init(){
     };
 }
 
-void Faults_Set(FaultType fault){
+void Faults_SetFault(FaultType fault){
     switch(fault){
         case FAULT_NONE:
         {
@@ -59,11 +60,11 @@ void Faults_Set(FaultType fault){
 }
 
 // for telemetry
-FaultMap Faults_Get() {
-    return faultMap;
+FaultMap* Faults_GetFaults() {
+    return &faultMap;
 }
 
-void Faults_Clear(FaultType fault){
+void Faults_ClearFault(FaultType fault){
     switch(fault){
         case FAULT_NONE:
         {
@@ -108,58 +109,89 @@ void Faults_Clear(FaultType fault){
 
 // need struct of car info
 // fault logging?
-void Faults_Check() {
+void Faults_CheckFaults() {
     if (checkOverCurrent())
-        Faults_Set(FAULT_OVER_CURRENT);
+        Faults_SetFault(FAULT_OVER_CURRENT);
     if (checkUnderVoltage())
-        Faults_Set(FAULT_UNDER_VOLTAGE);
+        Faults_SetFault(FAULT_UNDER_VOLTAGE);
     if (checkOverTemp())
-        Faults_Set(FAULT_OVER_TEMP);
+        Faults_SetFault(FAULT_OVER_TEMP);
     if (checkAPPS())
-        Faults_Set(FAULT_APPS);
+        Faults_SetFault(FAULT_APPS);
     if (checkBSE())
-        Faults_Set(FAULT_BSE);
+        Faults_SetFault(FAULT_BSE);
     if (checkABP())
-        Faults_Set(FAULT_APPS_BRAKE_PLAUSIBILITY);
+        Faults_SetFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
 }
 
 
 bool checkOverCurrent() {
+    // battery shutdown
     return false;
 }
 
 bool checkUnderVoltage() {
+    // battery shutdown
     return false;
 }
 
 bool checkOverTemp() {
+    // battery shutdown
     return false;
 }
 
 bool checkAPPS() {
     // APPS check for 10% difference in throttle inputs
-    // interface with module to turn off TS (power to motors shut off)
-    // handle APPS ? 
+    // Motor_SetFaultState();
     return false;
 }
 
 bool checkBSE() {
     // BSE check for signal in range of 0.5-4.5 V
-    // interface with module to turn off TS (power to motors shut off)
-    // handle BSE ? 
+    // Motor_SetFaultState();
     return false;
 }
 
 bool checkABP() {
-    // ABP check for brakes engaged + APPS more than 25%
-    // interface with module to turn off TS (power to motors shut off)
-    // handle ABP ? 
+    // ABP check for brakes engaged + APPS more than 25% throttle
+    // Motor_SetFaultState();
     return false;
 }
 
-void Faults_Handle() {
+void Faults_HandleFaults() {
     if (faultMap.overCurrent) {
-        // handle
-        Faults_Clear(FAULT_OVER_CURRENT);
+        // battery on
+        Faults_ClearFault(FAULT_OVER_CURRENT);
     }
+    if (faultMap.underVoltage) {
+        // battery on
+        Faults_ClearFault(FAULT_UNDER_VOLTAGE);
+    }
+    if (faultMap.overTemp) {
+        // battery on
+        Faults_ClearFault(FAULT_OVER_TEMP);
+    }
+    if (faultMap.APPS_fault) {
+        // clear fault and motor on when throttle is within 10% difference
+        Faults_ClearFault(FAULT_APPS);
+    }
+    if (faultMap.BSE_fault) {
+        // clear fault and motor on when brake signal is within range 0.5-4.5 V
+        Faults_ClearFault(FAULT_BSE);
+    }
+    if (faultMap.APPS_brake_plausibility) {
+        // clear fault and motor on when throttle is less than 5% travel
+        Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
+    }
+
+    // final check before reset
+    if (Faults_CheckAllClear()) {
+        // check if motor/battery faulted
+            // set motor state to driving
+            // reset battery
+    }
+}
+
+bool Faults_CheckAllClear() {
+    return !faultMap.overCurrent && !faultMap.underVoltage && !faultMap.overTemp && !faultMap.APPS_fault && !faultMap.BSE_fault && !faultMap.APPS_brake_plausibility;
 }

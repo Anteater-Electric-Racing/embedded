@@ -16,3 +16,7 @@ void Telemetry_Init() {
 TelemetryData* Telemetry_GetData() {
     return &telemetryData;
 }
+
+void Telemetry_UpdateData(TelemetryData* data) {
+    telemetryData = *data;
+}
