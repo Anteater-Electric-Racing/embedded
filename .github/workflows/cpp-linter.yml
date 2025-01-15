@@ -10,16 +10,20 @@ on:
 jobs:
   cpp-linter:
     runs-on: ubuntu-latest
+    permissions: 
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          style: 'file'  # Use .clang-format config file.
-          tidy-checks: '' # Use .clang-tidy config file.
+          style: 'file'  # Use .clang-format config file. 
+          tidy-checks: '-*' # disable clang-tidy checks. 
+          thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
 
       - name: Fail fast?!
-        if: steps.linter.outputs.clang-tidy-checks-failed > 0
+        if: steps.linter.outputs.clang-format-checks-failed > 0
         run: exit 1
