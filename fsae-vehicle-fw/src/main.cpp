@@ -9,6 +9,7 @@
 #include "peripherals/peripherals.h"
 
 #include "vehicle/faults.h"
+#include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 
 void threadMain( void *pvParameters );
@@ -22,11 +23,11 @@ void threadMain( void *pvParameters ) {
     Faults_Init();
     Telemetry_Init();
 
-    
+
 
     while (true) {
         // Main loop
-        
+
         // check faults
         Faults_Check(/* need struct of car info */);
         // handle faults
