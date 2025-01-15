@@ -18,16 +18,14 @@ void setup() {
 }
 
 void threadMain( void *pvParameters ) {
-    Peripherals_init();
+    Peripherals_Init();
 
     Faults_Init();
     Telemetry_Init();
 
-    
-
     while (true) {
         // Main loop
-        
+
         // check faults
         Faults_CheckFaults(/* need struct of car info */);
         // handle faults
