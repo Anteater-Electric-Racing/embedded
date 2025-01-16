@@ -8,13 +8,13 @@ class PID{
     public:
         PID(double kP, double kI, double kD, double kS, double kV, double max, double min);
 
-        double PID_Calculate(double setpoint, double dt);
+        double PID_Calculate(double setpoint, double dt, double currentvalue);
 
-        double PID_SetFF(double kS, double kV);
+        void PID_SetFF(double kS, double kV);
 
-        double PID_SetPID(double kP, double kI, double kD);
+        void PID_SetPID(double kP, double kI, double kD);
 
-        double PID_SetOutputRange(double max, double min);
+        ~PID();
 
     private:
         double _dt;
