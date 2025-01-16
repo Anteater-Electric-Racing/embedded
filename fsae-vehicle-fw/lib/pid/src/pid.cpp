@@ -1,8 +1,6 @@
 // Anteater Racing 2025
 
 
-#include <iostream>
-#include <cmath>
 #include "pid.h"
 
 PID::PID(double kP, double kI, double kD, double kS, double kV, double max, double min):
