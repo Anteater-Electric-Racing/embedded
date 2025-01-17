@@ -3,8 +3,6 @@
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 
-#include <cstdint>
-
 uint32_t faultBitMap;
 
 void Faults_Init(){
@@ -55,7 +53,7 @@ void Faults_SetFault(FaultType fault){
 }
 
 // for telemetry
-FaultMap* Faults_GetFaults() {
+uint32_t* Faults_GetFaults() {
     return &faultBitMap;
 }
 

@@ -1,45 +1,49 @@
 // Anteater Electric Racing, 2025
 
+#define APPS_IMPLAUSABILITY_THRESHOLD 0.1
+
 #include <cmath>
 
-class APPS {
-    private: 
-        float apps1, apps2;
-        const float threshold = 0.1;
-        bool APPS_fault = false;
+#include "apps.h"
 
-        void checkAPPSFault() {
-            if (abs(apps1 - apps2) > threshold) {
-                APPS_fault = true;
-                // motor_setFaultState();
-                // fault.setFault(FAULT_APPS);
-            }
-        }
+#include "vehicle/faults.h"
 
-        void clearAPPSFault() {
-            if (abs(apps1 - apps2) < threshold){
-                APPS_fault = false;
-                // fault.clearFault(FAULT_APPS);
-                // send command to another module that checks if all faults are clear - fault.sendAllClear();
-            }
-        }
+APPS::APPS() {
+    _APPSdata.appsReading1 = 0;
+    _APPSdata.appsReading1 = 0;
+    APPS_fault = false;
+}
 
-    public:
-        void APPS_UpdateData(/*data*/) {
-            // update data
-            // apps1 = data.apps;
-            // apps2 = data.apps2;
+APPS::~APPS() {}
 
-            // check if faulted then handle
-            if (APPS_fault) {
-                // attempt to clear fault
-                clearAPPSFault();
-            } else {
-                // check if faulted
-                checkAPPSFault();
-            }
+void APPS::checkAPPSFault() {
+    if (abs(_APPSdata.appsReading1 - _APPSdata.appsReading2) > APPS_IMPLAUSABILITY_THRESHOLD) {
+        APPS_fault = true;
+        Faults_SetFault(FAULT_APPS);
+        // motor_setFaultState();
+    }
+}
 
-            // send to telemetry (or should this be in the adc loop?)
-            // but need to send to telemetry that there is a apps fault
-        }
-};
+void APPS::clearAPPSFault() {
+    if (abs(_APPSdata.appsReading1 - _APPSdata.appsReading2) < APPS_IMPLAUSABILITY_THRESHOLD){
+        APPS_fault = false;
+        Faults_ClearFault(FAULT_APPS);
+        // send command to another module that checks if all faults are clear - fault.sendAllClear();
+    }
+}
+
+void APPS::APPS_UpdateData(APPSData* data) {
+    _APPSdata.appsReading1 = data->appsReading1;
+    _APPSdata.appsReading2 = data->appsReading2;
+
+    if (!APPS_fault) {
+        // If not already faulted, check for fault
+        checkAPPSFault();
+    } else {
+        // If already faulted, check if fault can be cleared
+        clearAPPSFault();
+    }
+
+    // send to telemetry (or should this be in the adc loop?)
+    // but need to send to telemetry that there is a apps fault
+}

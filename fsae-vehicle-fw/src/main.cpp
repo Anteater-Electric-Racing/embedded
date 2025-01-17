@@ -25,11 +25,6 @@ void threadMain( void *pvParameters ) {
 
     while (true) {
         // Main loop
-
-        // check faults
-        Faults_CheckFaults(/* need struct of car info */);
-        // handle faults
-        Faults_HandleFaults();
     }
 }
 

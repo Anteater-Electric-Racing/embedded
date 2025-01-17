@@ -10,14 +10,7 @@
 #define FAULT_BSE_OFFSET 0x1 << 4
 #define FAULT_APPS_BRAKE_PLAUSIBILITY_OFFSET 0x1 << 5
 
-typedef struct{
-    bool overCurrent: 1;
-    bool underVoltage: 1;
-    bool overTemp: 1;
-    bool APPS_fault: 1;
-    bool BSE_fault: 1;
-    bool APPS_brake_plausibility: 1;
-} FaultMap;
+#include <stdint.h>
 
 typedef enum {
     FAULT_NONE,
@@ -31,7 +24,7 @@ typedef enum {
 
 void Faults_Init();
 void Faults_SetFault(FaultType fault);
-FaultMap* Faults_GetFaults(); 
+uint32_t* Faults_GetFaults();
 void Faults_ClearFault(FaultType fault);
 void Faults_CheckFaults();
 void Faults_HandleFaults();
