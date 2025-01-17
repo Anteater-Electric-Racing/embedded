@@ -1,9 +1,8 @@
 // Anteater Racing 2025
 
-
 #include "pid.h"
 
-PID::PID(double kP, double kI, double kD, double kS, double kV, double max, double min):
+PID::PID(float kP, float kI, float kD, float kS, float kV, float max, float min):
     _kP(kP),
     _kI(kI),
     _kD(kD),
@@ -18,31 +17,31 @@ PID::PID(double kP, double kI, double kD, double kS, double kV, double max, doub
 PID::~PID() {}
 
 
-void PID::PID_SetPID(double kP, double kI, double kD){
+void PID::PID_SetPID(float kP, float kI, float kD){
     _kP = kP;
     _kI = kI;
     _kD = kD;
 }
 
-void PID::PID_SetFF(double kS, double kV){
+void PID::PID_SetFF(float kS, float kV){
     _kS = kS;
     _kV = kV;
 }
 
-double PID::PID_Calculate(double setpoint, double dt, double currentValue){
+float PID::PID_Calculate(float setpoint, float dt, float currentValue){
 
     //error calculation
-    double error = setpoint - currentValue;
+    float error = setpoint - currentValue;
 
-    double P = _kP * error; //P
+    float P = _kP * error; //P
     _sum += error * dt;     //I
-    double derivative = (error - _pre_error) / dt;  //D
+    float derivative = (error - _pre_error) / dt;  //D
 
-    double feedback = (_kP * error) + (_kI * _sum) + (_kD * derivative); //PID output
+    float feedback = (_kP * error) + (_kI * _sum) + (_kD * derivative); //PID output
 
-    double feedforward =  (_kV * setpoint) + _kS * (setpoint > 0 ? 1 : -1); //FF output
+    float feedforward =  (_kV * setpoint) + _kS * (setpoint > 0 ? 1 : -1); //FF output
 
-    double output = feedback + feedforward;
+    float output = feedback + feedforward;
 
     // set output range
     if( output > _max )
