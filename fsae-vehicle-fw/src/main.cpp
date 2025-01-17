@@ -28,11 +28,11 @@ void threadMain( void *pvParameters ) {
     while (true) {
         // Main loop
         
+        // adc sampling
         // check faults
         Faults_CheckFaults(/* need struct of car info */);
         // handle faults
         Faults_HandleFaults();
-        // adc sampling
     }
 }
 

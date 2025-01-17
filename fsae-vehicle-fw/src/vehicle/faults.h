@@ -3,6 +3,13 @@
 #ifndef FAULTS_H
 #define FAULTS_H
 
+#define FAULT_OVER_CURRENT_OFFSET 0x1
+#define FAULT_UNDER_VOLTAGE_OFFSET 0x1 << 1
+#define FAULT_OVER_TEMP_OFFSET 0x1 << 2
+#define FAULT_APPS_OFFSET 0x1 << 3
+#define FAULT_BSE_OFFSET 0x1 << 4
+#define FAULT_APPS_BRAKE_PLAUSIBILITY_OFFSET 0x1 << 5
+
 typedef struct{
     bool overCurrent: 1;
     bool underVoltage: 1;
