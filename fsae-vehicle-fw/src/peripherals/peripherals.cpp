@@ -6,7 +6,7 @@
 
 void Peripherals_init() {
     GPIO_init();
-    ADC0_init();
     ADC1_init();
     // init the rest of peripherals
+    ADC1_start();
 }
