@@ -3,17 +3,12 @@
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 
-FaultMap faultMap;
+#include <cstdint>
+
+uint32_t faultBitMap;
 
 void Faults_Init(){
-    faultMap = {
-        .overCurrent = false,
-        .underVoltage = false,
-        .overTemp = false,
-        .APPS_fault = false,
-        .BSE_fault = false,
-        .APPS_brake_plausibility = false
-    };
+    faultBitMap = 0;
 }
 
 void Faults_SetFault(FaultType fault){
@@ -24,32 +19,32 @@ void Faults_SetFault(FaultType fault){
         }
         case FAULT_OVER_CURRENT:
         {
-            faultMap.overCurrent = true;
+            faultBitMap |= FAULT_OVER_CURRENT_OFFSET;
             break;
         }
         case FAULT_UNDER_VOLTAGE:
         {
-            faultMap.underVoltage = true;
+            faultBitMap |= FAULT_UNDER_VOLTAGE_OFFSET;
             break;
         }
         case FAULT_OVER_TEMP:
         {
-            faultMap.overTemp = true;
+            faultBitMap |= FAULT_OVER_TEMP_OFFSET;
             break;
         }
         case FAULT_APPS:
         {
-            faultMap.APPS_fault = true;
+            faultBitMap |= FAULT_APPS_OFFSET;
             break;
         }
         case FAULT_BSE:
         {
-            faultMap.BSE_fault = true;
+            faultBitMap |= FAULT_BSE_OFFSET;
             break;
         }
         case FAULT_APPS_BRAKE_PLAUSIBILITY:
         {
-            faultMap.APPS_brake_plausibility = true;
+            faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_OFFSET;
             break;
         }
         default:
@@ -61,7 +56,7 @@ void Faults_SetFault(FaultType fault){
 
 // for telemetry
 FaultMap* Faults_GetFaults() {
-    return &faultMap;
+    return &faultBitMap;
 }
 
 void Faults_ClearFault(FaultType fault){
@@ -72,32 +67,32 @@ void Faults_ClearFault(FaultType fault){
         }
         case FAULT_OVER_CURRENT:
         {
-            faultMap.overCurrent = false;
+            faultBitMap &= ~FAULT_OVER_CURRENT_OFFSET;
             break;
         }
         case FAULT_UNDER_VOLTAGE:
         {
-            faultMap.underVoltage = false;
+            faultBitMap &= ~FAULT_UNDER_VOLTAGE_OFFSET;
             break;
         }
         case FAULT_OVER_TEMP:
         {
-            faultMap.overTemp = false;
+            faultBitMap &= ~FAULT_OVER_TEMP_OFFSET;
             break;
         }
         case FAULT_APPS:
         {
-            faultMap.APPS_fault = false;
+            faultBitMap &= ~FAULT_APPS_OFFSET;
             break;
         }
         case FAULT_BSE:
         {
-            faultMap.BSE_fault = false;
+            faultBitMap &= ~FAULT_BSE_OFFSET;
             break;
         }
         case FAULT_APPS_BRAKE_PLAUSIBILITY:
         {
-            faultMap.APPS_brake_plausibility = false;
+            faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_OFFSET;
             break;
         }
         default:
@@ -158,40 +153,43 @@ bool checkABP() {
     return false;
 }
 
-void Faults_HandleFaults() {
-    if (faultMap.overCurrent) {
-        // battery on
-        Faults_ClearFault(FAULT_OVER_CURRENT);
-    }
-    if (faultMap.underVoltage) {
-        // battery on
-        Faults_ClearFault(FAULT_UNDER_VOLTAGE);
-    }
-    if (faultMap.overTemp) {
-        // battery on
-        Faults_ClearFault(FAULT_OVER_TEMP);
-    }
-    if (faultMap.APPS_fault) {
-        // clear fault and motor on when throttle is within 10% difference
-        Faults_ClearFault(FAULT_APPS);
-    }
-    if (faultMap.BSE_fault) {
-        // clear fault and motor on when brake signal is within range 0.5-4.5 V
-        Faults_ClearFault(FAULT_BSE);
-    }
-    if (faultMap.APPS_brake_plausibility) {
-        // clear fault and motor on when throttle is less than 5% travel
-        Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
-    }
+// void Faults_HandleFaults() {
+//     if (faultMap.overCurrent) {
+//         // battery on
+//         Faults_ClearFault(FAULT_OVER_CURRENT);
+//     }
+//     if (faultMap.underVoltage) {
+//         // battery on
+//         Faults_ClearFault(FAULT_UNDER_VOLTAGE);
+//     }
+//     if (faultMap.overTemp) {
+//         // battery on
+//         Faults_ClearFault(FAULT_OVER_TEMP);
+//     }
+//     if (faultMap.APPS_fault) {
+//         // clear fault and motor on when throttle is within 10% difference
+//         Faults_ClearFault(FAULT_APPS);
+//     }
+//     if (faultMap.BSE_fault) {
+//         // clear fault and motor on when brake signal is within range 0.5-4.5 V
+//         Faults_ClearFault(FAULT_BSE);
+//     }
+//     if (faultMap.APPS_brake_plausibility) {
+//         // clear fault and motor on when throttle is less than 5% travel
+//         Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
+//     }
 
-    // final check before reset
-    if (Faults_CheckAllClear()) {
-        // check if motor/battery faulted
-            // set motor state to driving
-            // reset battery
-    }
-}
+//     // final check before reset
+//     if (Faults_CheckAllClear()) {
+//         // check if motor/battery faulted
+//             // set motor state to driving
+//             // reset battery
+//     }
+// }
 
-bool Faults_CheckAllClear() {
-    return !faultMap.overCurrent && !faultMap.underVoltage && !faultMap.overTemp && !faultMap.APPS_fault && !faultMap.BSE_fault && !faultMap.APPS_brake_plausibility;
-}
+// bool Faults_CheckAllClear() {
+//     return !faultMap.overCurrent && !faultMap.underVoltage && !faultMap.overTemp && !faultMap.APPS_fault && !faultMap.BSE_fault && !faultMap.APPS_brake_plausibility;
+// }
+
+
+// faults.sendallclear() - this would be called whenever a fault is cleared so that if all faults are clear, the system can be reset

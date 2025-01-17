@@ -30,7 +30,6 @@ void threadMain( void *pvParameters ) {
         Faults_CheckFaults(/* need struct of car info */);
         // handle faults
         Faults_HandleFaults();
-        // adc sampling
     }
 }
 
