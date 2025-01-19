@@ -7,8 +7,9 @@
 
 /**
  * GPS module architecture
- * State
- * 
+ * States: GPS readings, time, lap count, sector count
+ * Logic Functions: Draw track, update telemetry
+ * User Interface: Track view, telemetry view
  */
 
 use iced::widget::{canvas, container, row, Column};
@@ -34,7 +35,27 @@ enum Message {
     SectorChange(u8), // 
 }
 
-fn main() {
-    println!("Hello, world!");
+// update logic functions
+
+// user interface functions
+//! change UI in the future 
+impl GPSApp {
+    fn view(&self) -> Element<Message> {
+        // create a canvas to store track lines
+        let track_view = canvas(TrackMap::new(&self))
+            .width(Length::Fill)
+            .height(Length::Fill);
+
+        // create a container to store telemetry
+        let telemetry = container(
+            Column::new()
+                .spacing(10)
+                .push(text(format!("Speed: {} km/h", self.speed)))
+                .push(text(format!("Lap: {}", self.lap_time.as_secs_f32())))
+                .push(text(format!("Lap Count: {}", self.lap_count)))
+        );
+
+        row![track_view, telemetry].into()
+    }
+
 }
- 
