@@ -3,31 +3,32 @@
 #ifndef PID_H
 #define PID_H
 
-class PID{
+struct PIDConfig {
+    float dt;
+    float max;
+    float min;
+    float kP;
+    float kD;
+    float kI;
+    float kS;
+    float kV;
+};
 
-    public:
-        PID(double kP, double kI, double kD, double kS, double kV, double max, double min);
+class PID {
 
-        double PID_Calculate(double setpoint, double dt, double currentvalue);
+  public:
+    PID(const PIDConfig &config);
 
-        void PID_SetFF(double kS, double kV);
+    float PID_Calculate(float &setpoint, float &dt, float &currentvalue);
 
-        void PID_SetPID(double kP, double kI, double kD);
+    void PID_SetConfig(const PIDConfig &config);
 
-        ~PID();
+    ~PID();
 
-    private:
-        double _dt;
-        double _max;
-        double _min;
-        double _kP;
-        double _kD;
-        double _kI;
-        double _kS;
-        double _kV;
-        double _pre_error;
-        double _sum;
-
+  private:
+    float pre_error;
+    float sum;
+    PIDConfig _config;
 };
 
 #endif

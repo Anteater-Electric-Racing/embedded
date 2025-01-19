@@ -2,54 +2,40 @@
 
 #include "pid.h"
 
-PID::PID(float kP, float kI, float kD, float kS, float kV, float max, float min):
-    _kP(kP),
-    _kI(kI),
-    _kD(kD),
-    _kS(kS),
-    _kV(kV),
-    _max(max),
-    _min(min),
-    _sum(0),
-    _pre_error(0)
+PID::PID(const PIDConfig &config):
+    _config(config),
+    pre_error(0),
+    sum(0)
     {}
 
 PID::~PID() {}
 
 
-void PID::PID_SetPID(float kP, float kI, float kD){
-    _kP = kP;
-    _kI = kI;
-    _kD = kD;
+void PID::PID_SetConfig(const PIDConfig &config){
+    _config = config;
 }
 
-void PID::PID_SetFF(float kS, float kV){
-    _kS = kS;
-    _kV = kV;
-}
-
-float PID::PID_Calculate(float setpoint, float dt, float currentValue){
+float PID::PID_Calculate(float &setpoint, float &dt, float &currentValue){
 
     //error calculation
     float error = setpoint - currentValue;
 
-    float P = _kP * error; //P
-    _sum += error * dt;     //I
-    float derivative = (error - _pre_error) / dt;  //D
+    sum += error * dt; //I
+    float derivative = (error - pre_error) / dt;  //D
 
-    float feedback = (_kP * error) + (_kI * _sum) + (_kD * derivative); //PID output
+    float feedback = (_config.kP * error) + (_config.kI  * sum) + (_config.kD  * derivative); //PID output
 
-    float feedforward =  (_kV * setpoint) + _kS * (setpoint > 0 ? 1 : -1); //FF output
+    float feedforward =  (_config.kV  * setpoint) + _config.kS  * (setpoint > 0 ? 1 : -1); //FF output
 
     float output = feedback + feedforward;
 
     // set output range
-    if( output > _max )
-        output = _max;
-    else if( output < _min )
-        output = _min;
+    if( output > _config.max )
+        output = _config.max;
+    else if( output < _config.min )
+        output = _config.min;
 
-    _pre_error = error;
+    pre_error = error;
 
     return output;
 }
