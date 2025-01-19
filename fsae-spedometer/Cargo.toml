@@ -1,0 +1,10 @@
+[package]
+name = "fsae-spedometer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+iced = {version = "0.13", features =["canvas", "tokio", "debug"] }
+chrono = "0.4"
+tracing-subscriber = "0.3"
+rand = "0.8"
