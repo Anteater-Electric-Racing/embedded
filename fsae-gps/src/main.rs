@@ -28,10 +28,10 @@ struct GPSApp {
 // first, clone the state to avoid mutability
 #[derive(Debug, Clone)]
 enum Message {
-    GpsUpdate(GpsReading), // pulled from MQTT subscription
-    Tick(Instant), // timer tick for each lap
-    NewLap, // create ned lap
-    SectorChange(u8), // changes in driver position relative to track
+    GpsUpdate(GpsReading), // pull from MQTT subscription
+    Tick(Instant), // increment lap time
+    NewLap, // create new lap
+    SectorChange(u8), // 
 }
 
 fn main() {
