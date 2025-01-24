@@ -2,10 +2,10 @@
 
 #include <ADC.h>
 
+// #include <ADC.h>
+#include <iostream>
 #include "peripherals/adc.h"
 #include "callbacks.h"
-
-ADC *adc = new ADC();
 
 void ADC1_init() {
     adc->adc1->setAveraging(1); // set number of averages
@@ -16,6 +16,8 @@ void ADC1_init() {
 }
 
 void ADC1_start() {
-    adc->adc1->startSingleRead(pins[index]); // in callbacks.h
-    adc->adc1->startTimer(1000); // every 0.001 seconds
+    uint8_t currentPin = pins[adcIndex];
+    std::cout << "Starting read for " << currentPin << std::endl;
+    adc->adc1->startSingleRead(currentPin); // in callbacks.h
+    adc->adc1->startTimer(1000); // every 0.001 seconds. starts single read every time period
 }
