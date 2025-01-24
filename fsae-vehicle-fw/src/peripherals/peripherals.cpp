@@ -7,6 +7,7 @@
 void Peripherals_init() {
     GPIO_init();
     ADC1_init();
+    Serial.print("initialized ADCs");
     // init the rest of peripherals
     ADC1_start();
 }
