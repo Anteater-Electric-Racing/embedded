@@ -1,5 +1,5 @@
 /*
- * Track map to store track lines
+ * Track visualization
  */
 use iced::widget::canvas::{self, Frame, Geometry, Path, Stroke};
 use iced::{Point, Rectangle};
