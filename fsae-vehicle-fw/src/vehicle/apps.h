@@ -8,10 +8,9 @@ typedef struct{
 class APPS {
     private:
         APPSData _APPSdata;
-        bool APPS_fault;
 
-        void checkAPPSFault();
-        void clearAPPSFault();
+        void APPS::checkAndHandleAPPSFault();
+        void APPS::checkAndHandlePlausibilityFault(BSE* bse);
 
     public:
         APPS();
@@ -19,4 +18,24 @@ class APPS {
 
         void APPS_UpdateData(APPSData* data);
         float APPS_GetAPPSReading();
+};
+
+typedef struct{
+    float BSEReading1;
+    float BSEReading2;
+} BSEData;
+
+class BSE {
+    private:
+        BSEData _BSEdata;
+
+        void BSE::checkAndHandleBSEFault();
+        void BSE::verifySensorAgreement();
+
+    public:
+        BSE();
+        ~BSE();
+
+        void BSE_UpdateData(APPSData* data);
+        float BSE_GetBSEReading();
 };
