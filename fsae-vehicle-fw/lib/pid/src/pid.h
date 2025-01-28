@@ -17,9 +17,9 @@ struct PIDConfig {
 class PID {
 
   public:
-    PID(const PIDConfig &config);
+    PID(const PIDConfig &config, float &inversedt);
 
-    float PID_Calculate(float &setpoint, float &dt, float &currentvalue);
+    float PID_Calculate(float &setpoint, float &currentvalue);
 
     void PID_SetConfig(const PIDConfig &config);
 
