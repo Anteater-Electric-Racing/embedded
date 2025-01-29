@@ -4,9 +4,10 @@
 #include "peripherals/gpio.h"
 #include "peripherals/peripherals.h"
 
-void Peripherals_init() {
-    GPIO_init();
-    ADC1_init();
+void Peripherals_Init() {
+    GPIO_Init();
+    ADC0_Init();
+    ADC1_Init();
     // init the rest of peripherals
     ADC1_start();
 }

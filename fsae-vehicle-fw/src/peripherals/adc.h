@@ -1,10 +1,9 @@
 // Anteater Electric Racing, 2025
 
-#include <cstdint>
-#include <ADC.h>
+#ifndef ADC_H
+#define ADC_H
 
-static ADC *adc = new ADC();
+void ADC0_Init();
+void ADC1_Init();
 
-void callbacks ();
-void ADC1_init();
-void ADC1_start();
+#endif // ADC_H

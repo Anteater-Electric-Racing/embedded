@@ -2,6 +2,6 @@
 
 #include "peripherals/gpio.h"
 
-void GPIO_init() {
+void GPIO_Init() {
     // do something
 }

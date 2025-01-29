@@ -8,17 +8,24 @@
 
 #include "peripherals/peripherals.h"
 
-void threadMain( void *pvParameters );
+#include "vehicle/faults.h"
+#include "vehicle/motor.h"
+#include "vehicle/telemetry.h"
 
+void threadMain( void *pvParameters );
 void setup() {
-  xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
 }
 
 void threadMain( void *pvParameters ) {
-  Peripherals_init();
-  while (true) {
-    // Main loop
-  }
+    Peripherals_Init();
+
+    Faults_Init();
+    Telemetry_Init();
+
+    while (true) {
+        // Main loop
+    }
 }
 
 void loop() {}
