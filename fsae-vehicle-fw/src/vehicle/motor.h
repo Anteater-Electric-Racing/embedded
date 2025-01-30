@@ -13,8 +13,9 @@ typedef enum {
 
 void Motor_Init();
 void Motor_UpdateMotor();
+bool Motor_CheckReadyToDrive();
 
-float Motor_GetTorqueDemand();
+float Motor_GetTorqueDemand(); // implemented under the PID controller
 
 void Motor_SetFaultState();
 
