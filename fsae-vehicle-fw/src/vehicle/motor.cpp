@@ -14,7 +14,7 @@ MotorData motorData;
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF;
 }
-// state transition functions
+// state transition functions (check if conditions are met to initiate transition)
 static bool Motor_TransitionToPrecharging() {
     // can't transition to precharging if the motor is still running
     if (motorData.state != MOTOR_STATE_OFF) {
@@ -22,8 +22,13 @@ static bool Motor_TransitionToPrecharging() {
     }
 
     // check if systems are ready
-    TelemetryData* telemetry = Telemetry_GetData();
-    if (telemetry->accumulatorVoltage < 10.0F || telemetry->accumulatorTemp > 100.0F || telemetry->tractiveSystemVoltage < 10.0F) {
+    TelemetryData* telemetry = Telemetry_GetData(); // TODO: might not be ideal to pull data each time we transition to another state
+    if (telemetry->accumulatorVoltage < 10.0F || telemetry->accumulatorTemp > 100.0F || telemetry->tractiveSystemVoltage < 10.0F) { // TODO: change thresholds
+        return false;
+    }
+
+    // if the car is not ready to drive or turned off
+    if (!Motor_CheckReadyToDrive()) {
         return false;
     }
 
@@ -32,8 +37,42 @@ static bool Motor_TransitionToPrecharging() {
         return false;
     }
 
-    // motor is idle and ready to precharge
-    motorData.state = MOTOR_STATE_IDLE;
+    // transition to precharging after all checks are passed
+    motorData.state = MOTOR_STATE_PRECHARGING; // TODO: check the state dependencies
+    return true;
+}
+
+static bool Motor_TransitionToIdle() {
+    // check that precharging is complete
+    if (motorData.state != MOTOR_STATE_PRECHARGING) {
+        return false;
+    }
+
+    // check precharge completion
+    TelemetryData* telemetry = Telemetry_GetData();
+    if (telemetry->tractiveSystemVoltage < 10.0F) { // TODO: change threshold to reflect precharge completion
+        return false;
+    }
+
+    if (!Faults_CheckAllClear()) {
+        return false;
+    }
+
+    // transition to idle state after precharging
+    motorData.state = MOTOR_STATE_IDLE; // TODO: check the state dependencies
+    return true;
+}
+
+static bool Motor_TransitionToDriving() {
+    if (motorData.state != MOTOR_STATE_IDLE) {
+        return false;
+    }
+
+    if (!Faults_CheckAllClear()) {
+        return false;
+    }
+
+    motorData.state = MOTOR_STATE_DRIVING;
     return true;
 }
 
