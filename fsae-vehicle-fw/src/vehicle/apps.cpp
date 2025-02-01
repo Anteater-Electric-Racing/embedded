@@ -101,5 +101,6 @@ void BSE::BSE_UpdateData(APPSData* data) {
 
 float BSE::BSE_GetBSEReading() {
     // regen braking
+    Motor_CalculateRegenBraking();
     return (_BSEdata.BSEReading1 + _BSEdata.BSEReading2) / 2;
 }
