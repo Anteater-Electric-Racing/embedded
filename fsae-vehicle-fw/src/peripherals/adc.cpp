@@ -8,6 +8,7 @@
 
 void ADC1_init() {
 
+
     adc->adc1->setAveraging(1); // set number of averages
     adc->adc1->setResolution(12); // set bits of resolution
     adc->adc1->setConversionSpeed(ADC_CONVERSION_SPEED::ADACK_20); // change the conversion speed
@@ -23,7 +24,6 @@ void ADC1_start() {
     Serial.println(currentPin);
 
     adc->adc1->startSingleRead(currentPin); // in callbacks.h
-    // adc->adc1->enableInterrupts(callbacks);
-    adc->adc1->startTimer(10000); // every 0.001 seconds. starts single read every time period
+    adc->adc1->startTimer(10000); // every 0.0001 seconds. each read takes this long
     begin = std::chrono::steady_clock::now();
 }
