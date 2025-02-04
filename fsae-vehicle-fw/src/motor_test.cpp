@@ -1,6 +1,6 @@
-#include <FlexCAN.h>
+#include <FlexCAN_T4.h>
 
-#define CAN_INSTANCE CAN0
+#define CAN_INSTANCE CAN1
 #define CAN_BAUD_RATE 500000
 #define VCU1_ID 0x101
 #define VCU1_LEN 8 // bytes
@@ -27,12 +27,13 @@ typedef struct {
 	uint64_t Checksum : 8;
 } VCU1;
 
-FlexCAN CANbus(static_cast<uint8_t>(CAN_BAUD_RATE));
+FlexCAN_T4<CAN_INSTANCE, RX_SIZE_256, TX_SIZE_16> CANbus;
 
-void Motor_Init()
+void MotorTest_Init()
 {
 	Serial.begin(115200);
 	CANbus.begin();
+	CANbus.setBaudRate(CAN_BAUD_RATE);
 	Serial.println("CANbus init");
 }
 
@@ -48,17 +49,16 @@ uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
 void Motor_SendVCU1Message(uint8_t torqueValue)
 {
 	CAN_message_t msg;
-	memset(&msg, 0, sizeof(msg));
 
 	msg.id = VCU1_ID;
 	msg.len = VCU1_LEN;
-	
+
 	VCU1 vcu1 = {0};
 	vcu1.TorqueReq = static_cast<uint8_t>(round(torqueValue / 0.392));
 
 	memcpy(msg.buf, &vcu1, sizeof(vcu1));
 	msg.buf[7] = ComputeChecksum(msg.buf, 8);
-	
+
 	if (CANbus.write(msg)) {
 		Serial.println("VCU1 message sent");
 	} else {
@@ -66,10 +66,10 @@ void Motor_SendVCU1Message(uint8_t torqueValue)
 	}
 }
 
-int main()
-{
-	Motor_Init();
-	Motor_SendVCU1Message(50);
+// int main()
+// {
+// 	MotorTest_Init();
+// 	Motor_SendVCU1Message(50);
 
-	while (true) {}
-}
+// 	while (true) {}
+// }
