@@ -19,12 +19,11 @@ void setup() { // runs once on bootup
 }
 
 void threadMain( void *pvParameters ) {
-  Serial.println("In main thread func");
-  Peripherals_init();
-  while (true) {
-      // Serial.println("In main thread loop");
-    // Main loop
-  }
+    Peripherals_Init();
+
+    while (true) {
+        // Main loop
+    }
 }
 
 void loop() {}

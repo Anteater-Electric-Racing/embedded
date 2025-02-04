@@ -4,13 +4,14 @@
 #include "callbacks.h"
 #include "peripherals/adc.h"
 
+
 void callbacks () {
     // read from pin
     // store pin reads
     // go to next pin
 
     uint16_t sensorRead = adc->adc1->readSingle();
-    adcReads[adcIndex] = sensorRead;
+    adcReads[adcIndex] = sensorRead*3.3/adc->adc0->getMaxValue(); // Changing to this formula for now to see if it helps w apps fault sensorRead;
     Serial.print( "In callbacks pin is ");
     Serial.println(pins[adcIndex]);
     Serial.print( "In callbacks sensorRead is ");
@@ -22,10 +23,12 @@ void callbacks () {
     ++adcIndex;
     if(adcIndex == SENSOR_PIN_AMT){ // Do here so we don't start a read for an invalid pin
         adcIndex = 0;
-        end = std::chrono::steady_clock::now();
+        Serial.print("end of loop thinks value of begin is ");
+        Serial.println(begin);
         Serial.print("duration of all reads: ");
-        Serial.println(std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count());
-        begin = std::chrono::steady_clock::now();
+        uint32_t end = micros();
+        Serial.println(end - begin);
+        return;
     }
     uint16_t currentPin = pins[adcIndex];
     adc->adc1->enableInterrupts(callbacks);
