@@ -4,7 +4,6 @@
 #define PID_H
 
 struct PIDConfig {
-    float dt;
     float max;
     float min;
     float kP;
@@ -21,7 +20,7 @@ class PID {
   public:
     PID(const PIDConfig &config);
 
-    float PID_Calculate(float &setpoint, float &currentvalue);
+    static float PID_Calculate(float &setpoint, float &currentvalue);
 
     void PID_SetConfig(const PIDConfig &config);
 

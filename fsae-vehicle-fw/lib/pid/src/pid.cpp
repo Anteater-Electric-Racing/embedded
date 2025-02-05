@@ -1,51 +1,41 @@
 // Anteater Racing 2025
 
-//TODO: add integral anti-windup
 
 #include "pid.h"
 
-PID::PID(const PIDConfig &config):
-    _config(config),
-    pre_error(0),
-    sum(0),
-    dt_inverse(1/_config.dt)
-    {}
+static float pre_error = 0;
+static float sum = 0;
+static float dt_inverse;
 
-PID::~PID() {}
+static float PID_Calculate(const PIDConfig &config, float &setpoint, float &currentValue, float &dt){
 
-void PID::PID_SetConfig(const PIDConfig &config){
-    _config = config;
-}
-
-float PID::PID_Calculate(float &setpoint, float &currentValue){
 
     //error calculation
     float error = setpoint - currentValue;
+    sum += error * dt; //I
 
-    sum += error * _config.dt; //I
+    //integral anti-wind-up
+    if (sum > config.integral_max)
+        sum = config.integral_max;
+    else if (sum < config.integral_min)
+        sum = config.integral_min;
 
-    //anti integral wind-up
-    if (sum > _config.integral_max) sum = _config.integral_max;
-    else if (sum < _config.integral_min) sum = _config.integral_min;
-
+    dt_inverse = 1 / dt;
     float derivative = (error - pre_error) * dt_inverse;  //D
 
-    float feedback = (_config.kP * error) + (_config.kI  * sum) + (_config.kD  * derivative); //PID output
+    float feedback = (config.kP * error) + (config.kI  * sum) + (config.kD  * derivative); //PID output
 
-    float feedforward =  (_config.kV  * setpoint) + _config.kS  * (setpoint > 0 ? 1 : -1); //FF output
+    float feedforward =  (config.kV  * setpoint) + config.kS  * (setpoint > 0 ? 1 : -1); //FF output
 
     float output = feedback + feedforward;
 
-
     // set output range
-    if( output > _config.max )
-        output = _config.max;
-    else if( output < _config.min )
-        output = _config.min;
+    if( output > config.max )
+        output = config.max;
+    else if( output < config.min )
+        output = config.min;
 
     pre_error = error;
 
     return output;
 }
-
-
