@@ -9,7 +9,6 @@ static float dt_inverse;
 
 static float PID_Calculate(const PIDConfig &config, float &setpoint, float &currentValue, float &dt){
 
-
     //error calculation
     float error = setpoint - currentValue;
     sum += error * dt; //I
