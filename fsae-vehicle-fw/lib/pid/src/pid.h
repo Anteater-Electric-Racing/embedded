@@ -12,12 +12,14 @@ struct PIDConfig {
     float kI;
     float kS;
     float kV;
+    float integral_max;
+    float integral_min;
 };
 
 class PID {
 
   public:
-    PID(const PIDConfig &config, float &inversedt);
+    PID(const PIDConfig &config);
 
     float PID_Calculate(float &setpoint, float &currentvalue);
 
@@ -28,6 +30,7 @@ class PID {
   private:
     float pre_error;
     float sum;
+    float dt_inverse;
     PIDConfig _config;
 };
 

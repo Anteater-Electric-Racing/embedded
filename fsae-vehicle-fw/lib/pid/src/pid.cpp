@@ -23,6 +23,11 @@ float PID::PID_Calculate(float &setpoint, float &currentValue){
     float error = setpoint - currentValue;
 
     sum += error * _config.dt; //I
+
+    //anti integral wind-up
+    if (sum > _config.integral_max) sum = _config.integral_max;
+    else if (sum < _config.integral_min) sum = _config.integral_min;
+
     float derivative = (error - pre_error) * dt_inverse;  //D
 
     float feedback = (_config.kP * error) + (_config.kI  * sum) + (_config.kD  * derivative); //PID output
@@ -30,6 +35,7 @@ float PID::PID_Calculate(float &setpoint, float &currentValue){
     float feedforward =  (_config.kV  * setpoint) + _config.kS  * (setpoint > 0 ? 1 : -1); //FF output
 
     float output = feedback + feedforward;
+
 
     // set output range
     if( output > _config.max )
