@@ -4,19 +4,33 @@
 #include "callbacks.h"
 #include "peripherals/adc.h"
 
+#define LOGIC_LEVEL_V 3.3
+#define ADC1_MAX_VALUE adc->adc1->getMaxValue()
 
-void callbacks () {
+void StartADCPinReadings() {
+    uint8_t currentPin = pins[adcIndex];
+    Serial.print( "Starting read for ");
+    Serial.println(currentPin);
+    Serial.print("time since prev start of read");
+    uint32_t currentTime = micros();
+    Serial.println(currentTime - begin);
+    begin = micros();
+    adc->adc1->startSingleRead(currentPin); // in callbacks.h
+
+}
+
+void ADCReadingCompleteCallback () {
     // read from pin
     // store pin reads
     // go to next pin
 
     uint16_t sensorRead = adc->adc1->readSingle();
-    adcReads[adcIndex] = sensorRead*3.3/adc->adc0->getMaxValue(); // Changing to this formula for now to see if it helps w apps fault sensorRead;
-    Serial.print( "In callbacks pin is ");
+    adcReads[adcIndex] = sensorRead*LOGIC_LEVEL_V/ADC1_MAX_VALUE; // Changing to this formula for now to see if it helps w apps fault sensorRead;
+    Serial.print( "In ADCReadingCompleteCallback pin is ");
     Serial.println(pins[adcIndex]);
-    Serial.print( "In callbacks sensorRead is ");
+    Serial.print( "In ADCReadingCompleteCallback sensorRead is ");
     Serial.println(sensorRead);
-    Serial.print( "In callbacks value is ");
+    Serial.print( "In ADCReadingCompleteCallback value is ");
     Serial.println(sensorRead*3.3/adc->adc0->getMaxValue(), DEC);
 
     // increment to next sensor pin & start read
@@ -31,7 +45,7 @@ void callbacks () {
         return;
     }
     uint16_t currentPin = pins[adcIndex];
-    adc->adc1->enableInterrupts(callbacks);
+    adc->adc1->enableInterrupts(ADCReadingCompleteCallback);
     bool successfulStart = adc->adc1->startSingleRead(currentPin); // in callbacks.h
 }
 
