@@ -1,5 +1,5 @@
 
 #include <IntervalTimer.h>
 
-void startTimer();
+void Timer_StartADCScan();
 static IntervalTimer readPinTimer;

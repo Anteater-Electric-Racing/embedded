@@ -1,6 +1,6 @@
 #include "peripherals/timer.h"
 #include "callbacks.h"
 
-void startTimer(){
+void Timer_StartADCScan(){
     int result = readPinTimer.begin(StartADCPinReadings, 1000);
 }

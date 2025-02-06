@@ -10,5 +10,5 @@ void Peripherals_Init() {
     ADC1_init();
     Serial.print("initialized ADCs");
     // init the rest of peripherals
-    startTimer();
+    Timer_StartADCScan();
 }
