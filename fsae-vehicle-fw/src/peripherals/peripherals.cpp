@@ -8,7 +8,6 @@
 void Peripherals_Init() {
     GPIO_Init();
     ADC1_init();
-    Serial.print("initialized ADCs");
     // init the rest of peripherals
     Timer_StartADCScan();
 }
