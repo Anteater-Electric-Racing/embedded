@@ -64,25 +64,25 @@ impl Dashboard {
     }
 
     fn view(&self) -> Column<Message> {
-        return column![
+        column![
             row![
-                grid_cell(format!("{}", self.power), " W"),
-                grid_cell(format!("{}", self.energy_left), " Wh"),
+                grid_cell(self.power.to_string(), " W", "Power"),
+                grid_cell(self.energy_left.to_string(), " Wh", "Energy Left"),
             ]
             .spacing(20),
             row![
-                grid_cell(format!("{}", self.battery_temp), "°C"),
-                grid_cell(format!("{}", self.motor_temp), "°C"),
+                grid_cell(self.battery_temp.to_string(), "°C", "Battery Temp"),
+                grid_cell(self.motor_temp.to_string(), "°C", "Motor Temp"),
             ]
             .spacing(20),
             row![
-                grid_cell(format!("{}", self.inverter_temp), "°C"),
-                grid_cell(format!("{:.2}", self.lap_time.as_secs_f64()), " s",),
+                grid_cell(self.inverter_temp.to_string(), "°C", "Inverter Temp"),
+                grid_cell(format!("{:.2}", self.lap_time.as_secs_f64()), " s", "Lap Time"),
             ]
             .spacing(20),
         ]
         .spacing(20)
-        .padding(20);
+        .padding(20)
     }
     fn theme(&self) -> Theme {
         Theme::CatppuccinMocha
