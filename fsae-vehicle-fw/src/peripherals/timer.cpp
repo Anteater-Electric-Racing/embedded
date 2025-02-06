@@ -2,5 +2,5 @@
 #include "callbacks.h"
 
 void Timer_StartADCScan(){
-    readPinTimer.begin(StartADCPinReadings, 1000);
+    readPinTimer.begin(StartADCScanCallback, 1000);
 }

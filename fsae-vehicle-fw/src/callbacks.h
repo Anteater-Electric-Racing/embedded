@@ -5,6 +5,6 @@
 
 extern uint32_t begin; // to track duration of cycles, currently just used for info
 
-void StartADCPinReadings();
+void StartADCScanCallback();
 void ADCConversionCompleteCallback ();
 
