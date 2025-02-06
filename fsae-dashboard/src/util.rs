@@ -23,16 +23,26 @@ use crate::{pallate, Message};
 //     }
 // }
 
-pub fn grid_cell<'a>(value: String, label: &'a str, name: &'a str) -> Container<'a, Message> {
+pub fn grid_cell<'a>(
+    value: String,
+    label: &'a str,
+    name: &'a str,
+    warning: bool,
+    critical: bool,
+) -> Container<'a, Message> {
     container(stack![
         container(row![
-            text(value).size(128),
+            text(value).size(128).color(if critical {
+                pallate::ROSE_500
+            } else if warning {
+                pallate::AMBER_500
+            } else {
+                pallate::GRAY_500
+            }),
             text(label).color(pallate::GRAY_500).size(128),
         ])
         .center(Fill),
-        container(
-            text(name).color(pallate::GRAY_500).size(48)
-        ).center_x(Fill)
+        container(text(name).color(pallate::GRAY_500).size(48)).center_x(Fill)
     ])
     .style(|_theme| {
         container::Style::default().border(border::color(pallate::GRAY_500).width(4).rounded(15))

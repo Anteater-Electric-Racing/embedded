@@ -66,18 +66,54 @@ impl Dashboard {
     fn view(&self) -> Column<Message> {
         column![
             row![
-                grid_cell(self.power.to_string(), " W", "Power"),
-                grid_cell(self.energy_left.to_string(), " Wh", "Energy Left"),
+                grid_cell(
+                    self.power.to_string(),
+                    " W",
+                    "Power",
+                    self.power > 120000 || self.power < -500,
+                    self.power > 180000 || self.power < -1000
+                ),
+                grid_cell(
+                    self.energy_left.to_string(),
+                    " Wh",
+                    "Energy Left",
+                    self.energy_left < 5000,
+                    self.energy_left < 2000
+                ),
             ]
             .spacing(20),
             row![
-                grid_cell(self.battery_temp.to_string(), "°C", "Battery Temp"),
-                grid_cell(self.motor_temp.to_string(), "°C", "Motor Temp"),
+                grid_cell(
+                    self.battery_temp.to_string(),
+                    "°C",
+                    "Battery Temp",
+                    self.battery_temp > 40,
+                    self.battery_temp > 50
+                ),
+                grid_cell(
+                    self.motor_temp.to_string(),
+                    "°C",
+                    "Motor Temp",
+                    self.motor_temp > 40,
+                    self.motor_temp > 50
+                ),
             ]
             .spacing(20),
             row![
-                grid_cell(self.inverter_temp.to_string(), "°C", "Inverter Temp"),
-                grid_cell(format!("{:.2}", self.lap_time.as_secs_f64()), " s", "Lap Time"),
+                grid_cell(
+                    self.inverter_temp.to_string(),
+                    "°C",
+                    "Inverter Temp",
+                    self.inverter_temp > 40,
+                    self.inverter_temp > 50
+                ),
+                grid_cell(
+                    format!("{:.2}", self.lap_time.as_secs_f64()),
+                    " s",
+                    "Lap Time",
+                    false,
+                    false
+                ),
             ]
             .spacing(20),
         ]
