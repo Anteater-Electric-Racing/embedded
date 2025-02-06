@@ -5,7 +5,8 @@
 #include "peripherals/adc.h"
 
 #define LOGIC_LEVEL_V 3.3
-#define ADC1_MAX_VALUE adc->adc1->getMaxValue()
+#define ADC_RESOLUTION 10
+#define ADC1_MAX_VALUE (1 << ADC_RESOLUTION) - 1
 
 void StartADCPinReadings() {
     uint8_t currentPin = pins[adcIndex];
@@ -25,10 +26,11 @@ void ADCReadingCompleteCallback () {
     // go to next pin
 
     uint16_t sensorRead = adc->adc1->readSingle();
-    adcReads[adcIndex] = sensorRead*LOGIC_LEVEL_V/ADC1_MAX_VALUE; // Changing to this formula for now to see if it helps w apps fault sensorRead;
-    Serial.print( "In ADCReadingCompleteCallback pin is ");
-    Serial.println(pins[adcIndex]);
-    Serial.print( "In ADCReadingCompleteCallback sensorRead is ");
+    Serial.println( "In callback func");
+    adcReads[adcIndex] = sensorRead*LOGIC_LEVEL_V/ADC1_MAX_VALUE; // Get value within 0V to 3.3V range
+    Serial.print( "In ADCConversionCompleteCallback pin is ");
+    Serial.println(adcPins[adcIndex]);
+    Serial.print( "In ADCConversionCompleteCallback sensorRead is ");
     Serial.println(sensorRead);
     Serial.print( "In ADCReadingCompleteCallback value is ");
     Serial.println(sensorRead*3.3/adc->adc0->getMaxValue(), DEC);
