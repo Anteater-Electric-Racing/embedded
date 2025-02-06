@@ -9,18 +9,18 @@
 #define ADC1_MAX_VALUE (1 << ADC_RESOLUTION) - 1
 
 void StartADCPinReadings() {
-    uint8_t currentPin = pins[adcIndex];
+    uint16_t startPin = adcPins[0];
     Serial.print( "Starting read for ");
-    Serial.println(currentPin);
+    Serial.println(startPin);
     Serial.print("time since prev start of read");
     uint32_t currentTime = micros();
     Serial.println(currentTime - begin);
     begin = micros();
-    adc->adc1->startSingleRead(currentPin); // in callbacks.h
-
+    adc->adc1->enableInterrupts(ADCConversionCompleteCallback);
+    adc->adc1->startSingleRead(startPin); // in callbacks.h
 }
 
-void ADCReadingCompleteCallback () {
+void ADCConversionCompleteCallback () {
     // read from pin
     // store pin reads
     // go to next pin
@@ -32,7 +32,7 @@ void ADCReadingCompleteCallback () {
     Serial.println(adcPins[adcIndex]);
     Serial.print( "In ADCConversionCompleteCallback sensorRead is ");
     Serial.println(sensorRead);
-    Serial.print( "In ADCReadingCompleteCallback value is ");
+    Serial.print( "In ADCConversionCompleteCallback value is ");
     Serial.println(sensorRead*3.3/adc->adc0->getMaxValue(), DEC);
 
     // increment to next sensor pin & start read
@@ -46,8 +46,8 @@ void ADCReadingCompleteCallback () {
         Serial.println(end - begin);
         return;
     }
-    uint16_t currentPin = pins[adcIndex];
-    adc->adc1->enableInterrupts(ADCReadingCompleteCallback);
-    bool successfulStart = adc->adc1->startSingleRead(currentPin); // in callbacks.h
+    uint16_t currentPin = adcPins[adcIndex];
+    adc->adc1->enableInterrupts(ADCConversionCompleteCallback);
+    adc->adc1->startSingleRead(currentPin); // in callbacks.h
 }
 
