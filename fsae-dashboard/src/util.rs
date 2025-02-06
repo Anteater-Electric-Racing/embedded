@@ -1,12 +1,13 @@
-use iced::{widget::{text, Text}, Alignment::Center, Font};
+use iced::{
+    border,
+    widget::{container, horizontal_space, row, text, Container, Text},
+    Alignment::Center,
+    Font,
+    Length::Fill,
+};
 
-pub const VOLTAGE_MIN: f64 = 70.0;
-pub const VOLTAGE_MAX: f64 = 90.0;
-pub const CURRENT_MIN: f64 = -10.0;
-pub const CURRENT_MAX: f64 = 250.0;
-pub const TEMP_MIN: f64 = 0.0;
-pub const TEMP_MAX: f64 = 50.0;
-pub const SPEED_TO_RPM: f64 = 60.0 / 6000.0;
+use crate::{pallate, Message};
+
 pub const ICONS: Font = Font::with_name("Material Symbols Rounded");
 
 pub fn icon(unicode: char) -> Text<'static> {
@@ -17,9 +18,24 @@ pub fn clamped_stepping_function(value: f64, min: f64, max: f64, steps: i16) -> 
     if value < min {
         -1
     } else if value > max {
-        steps+1
+        steps + 1
     } else {
         let normalized = (value - min) / (max - min);
         (normalized * steps as f64).round() as i16
     }
+}
+
+pub fn grid_cell(value: String, label: &str) -> Container<Message> {
+    container(
+        container(row![
+            text(value).size(128),
+            text(label).color(pallate::GRAY_500).size(128),
+        ])
+        .center(Fill),
+    )
+    .style(|_theme| {
+        container::Style::default().border(border::color(pallate::GRAY_500).width(4).rounded(15))
+    })
+    .height(Fill)
+    .width(Fill)
 }
