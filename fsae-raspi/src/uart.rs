@@ -8,6 +8,7 @@ use tokio_serial::SerialPortBuilderExt;
 // constants
 const SERIAL_PORT: &str = "/dev/ttyACM0";
 const SERIAL_BAUD_RATE: u32 = 9600;
+const SIZE: usize = 4;
 
 // UART reading struct
 #[derive(InfluxDbWriteable)]
@@ -19,14 +20,9 @@ struct UARTReading {
     shock_b: u16,
 }
 
-// expected number of parts in a UART reading
-impl UARTReading {
-    const SIZE: usize = 4;
-}
-
 // check the UART reading and write to InfluxDB
 async fn check_uart(client: &Client, parts: Vec<&str>) {
-    if parts.len() != UARTReading::SIZE {
+    if parts.len() != SIZE {
         eprintln!("Invalid number of parts: {:?}", parts);
         return;
     }
@@ -50,7 +46,7 @@ async fn check_uart(client: &Client, parts: Vec<&str>) {
     let client = client.clone();
     tokio::spawn(async move {
         if let Err(e) = client
-            .query(reading.into_query(type_name::<UARTReading>()))
+            .query(reading.into_query("uart_reading"))
             .await
         {
             eprintln!("Failed to write to InfluxDB: {}", e);
@@ -62,22 +58,21 @@ async fn check_uart(client: &Client, parts: Vec<&str>) {
 pub async fn read_uart() {
     let client = Client::new(INFLUXDB_URL, INFLUXDB_DATABASE);
 
-    if cfg!(not(debug_assertions)) {
-        loop {
-            let Ok(serial) = tokio_serial::new(SERIAL_PORT, SERIAL_BAUD_RATE).open_native_async()
-            else {
-                eprintln!("Failed to open serial port, retrying...");
+    loop {
+        let serial = match tokio_serial::new(SERIAL_PORT, SERIAL_BAUD_RATE).open_native_async() {
+            Ok(serial) => serial,
+            Err(e) => {
+                eprintln!("Failed to open serial port: {}", e);
                 tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
                 continue;
-            };
-
-            let reader = BufReader::new(serial);
-            let mut lines = reader.lines();
-
-            while let Ok(Some(line)) = lines.next_line().await {
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                check_uart(&client, parts).await;
             }
+        };
+
+        let mut lines = BufReader::new(serial).lines();
+
+        while let Ok(Some(line)) = lines.next_line().await {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            check_uart(&client, parts).await;
         }
     }
 }
