@@ -1,5 +1,5 @@
 mod mqtt;
-mod pallate;
+mod palette;
 mod util;
 
 use std::time::{Duration, Instant};
@@ -109,7 +109,7 @@ impl Dashboard {
                 ),
                 grid_cell(
                     format!("{:.2}", self.lap_time.as_secs_f64()),
-                    " s",
+                    "s",
                     "Lap Time",
                     false,
                     false
