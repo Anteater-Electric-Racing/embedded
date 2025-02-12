@@ -120,6 +120,7 @@ impl Dashboard {
         .spacing(20)
         .padding(20)
     }
+
     fn theme(&self) -> Theme {
         Theme::CatppuccinMocha
     }
