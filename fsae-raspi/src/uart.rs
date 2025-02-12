@@ -1,9 +1,10 @@
-use crate::influx::{INFLUXDB_DATABASE, INFLUXDB_URL};
 use chrono::{DateTime, Utc};
 use influxdb::{Client, InfluxDbWriteable};
-use std::any::type_name;
+use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_serial::SerialPortBuilderExt;
+
+use crate::send::{Sender, Reading};
 
 // constants
 const SERIAL_PORT: &str = "/dev/ttyACM0";
@@ -11,7 +12,7 @@ const SERIAL_BAUD_RATE: u32 = 9600;
 const SIZE: usize = 4;
 
 // UART reading struct
-#[derive(InfluxDbWriteable)]
+#[derive(InfluxDbWriteable, Serialize)]
 struct UARTReading {
     time: DateTime<Utc>,
     brake_a: u16,
@@ -20,43 +21,15 @@ struct UARTReading {
     shock_b: u16,
 }
 
-// check the UART reading and write to InfluxDB
-async fn check_uart(client: &Client, parts: Vec<&str>) {
-    if parts.len() != SIZE {
-        eprintln!("Invalid number of parts: {:?}", parts);
-        return;
+// make UARTReading sendable
+impl Reading for UARTReading {
+    fn topic() -> &'static str {
+        "uart_reading"
     }
-    let (Ok(brake_a), Ok(brake_b), Ok(shock_a), Ok(shock_b)) = (
-        parts[0].parse::<u16>(),
-        parts[1].parse::<u16>(),
-        parts[2].parse::<u16>(),
-        parts[3].parse::<u16>(),
-    ) else {
-        eprintln!("Failed to parse integers from parts: {:?}", parts);
-        return;
-    };
-    let reading = UARTReading {
-        time: Utc::now(),
-        brake_a,
-        brake_b,
-        shock_a,
-        shock_b,
-    };
-
-    let client = client.clone();
-    tokio::spawn(async move {
-        if let Err(e) = client
-            .query(reading.into_query("uart_reading"))
-            .await
-        {
-            eprintln!("Failed to write to InfluxDB: {}", e);
-        }
-    });
 }
 
-// read from the UART port and parse the data
 pub async fn read_uart() {
-    let client = Client::new(INFLUXDB_URL, INFLUXDB_DATABASE);
+    let sender = Sender::new();
 
     loop {
         let serial = match tokio_serial::new(SERIAL_PORT, SERIAL_BAUD_RATE).open_native_async() {
@@ -72,7 +45,31 @@ pub async fn read_uart() {
 
         while let Ok(Some(line)) = lines.next_line().await {
             let parts: Vec<&str> = line.split_whitespace().collect();
-            check_uart(&client, parts).await;
+
+            if parts.len() != SIZE {
+                eprintln!("Invalid number of parts: {:?}", parts);
+                continue;
+            }
+
+            let (Ok(brake_a), Ok(brake_b), Ok(shock_a), Ok(shock_b)) = (
+                parts[0].parse::<u16>(),
+                parts[1].parse::<u16>(),
+                parts[2].parse::<u16>(),
+                parts[3].parse::<u16>(),
+            ) else {
+                eprintln!("Failed to parse integers from parts: {:?}", parts);
+                continue;
+            };
+
+            let reading = UARTReading {
+                time: Utc::now(),
+                brake_a,
+                brake_b,
+                shock_a,
+                shock_b,
+            };
+
+            sender.send_message(reading).await;
         }
     }
 }

@@ -1,20 +1,18 @@
-use crate::influx::{INFLUXDB_DATABASE, INFLUXDB_URL};
-use crate::mqtt::{MQTT_HOST, MQTT_ID, MQTT_PORT};
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
 use influxdb::{Client, InfluxDbWriteable};
-use rand::Rng;
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
 use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
 use std::any::type_name;
 use tokio::time::Duration;
+use crate::send::{Sender, Reading};
 
 // constants
 const CAN_INTERFACE: &str = "can0";
 
 // this sets up a trait that contains necessary information for all CAN messages that follow
-pub trait CanReading: InfluxDbWriteable + Serialize {
+pub trait CanReading: Reading + InfluxDbWriteable + Serialize {
     // a function to get the expected ID of a CAN message
     fn id() -> Id;
     // a function to construct a CAN reading from the raw data
@@ -45,6 +43,12 @@ impl CanReading for BMSReading1 {
     const SIZE: usize = 4;
 }
 
+impl Reading for BMSReading1 {
+    fn topic() -> &'static str {
+        "bms_reading1"
+    }
+}
+
 #[derive(InfluxDbWriteable, Serialize)]
 struct BMSReading2 {
     time: DateTime<Utc>,
@@ -70,6 +74,12 @@ impl CanReading for BMSReading2 {
         }
     }
     const SIZE: usize = 5;
+}
+
+impl Reading for BMSReading2 {
+    fn topic() -> &'static str {
+        "bms_reading2"
+    }
 }
 
 #[derive(InfluxDbWriteable, Serialize)]
@@ -101,6 +111,12 @@ impl CanReading for BMSReading3 {
     const SIZE: usize = 8;
 }
 
+impl Reading for BMSReading3 {
+    fn topic() -> &'static str {
+        "bms_reading3"
+    }
+}
+
 #[derive(InfluxDbWriteable, Serialize)]
 struct LeftESCReading1 {
     time: DateTime<Utc>,
@@ -124,6 +140,12 @@ impl CanReading for LeftESCReading1 {
         }
     }
     const SIZE: usize = 8;
+}
+
+impl Reading for LeftESCReading1 {
+    fn topic() -> &'static str {
+        "left_esc_reading1"
+    }
 }
 
 #[derive(InfluxDbWriteable, Serialize)]
@@ -153,6 +175,12 @@ impl CanReading for LeftESCReading2 {
     const SIZE: usize = 8;
 }
 
+impl Reading for LeftESCReading2 {
+    fn topic() -> &'static str {
+        "left_esc_reading2"
+    }
+}
+
 #[derive(InfluxDbWriteable, Serialize)]
 struct RightESCReading1 {
     time: DateTime<Utc>,
@@ -176,6 +204,12 @@ impl CanReading for RightESCReading1 {
         }
     }
     const SIZE: usize = 8;
+}
+
+impl Reading for RightESCReading1 {
+    fn topic() -> &'static str {
+        "right_esc_reading1"
+    }
 }
 
 #[derive(InfluxDbWriteable, Serialize)]
@@ -205,10 +239,15 @@ impl CanReading for RightESCReading2 {
     const SIZE: usize = 8;
 }
 
+impl Reading for RightESCReading2 {
+    fn topic() -> &'static str {
+        "right_esc_reading2"
+    }
+}
+
 // this checks a reading against a specific CAN message, and sends to influx and MQTT if it matches
 async fn check_message<T: CanReading + Send + 'static>(
-    influx_client: &Client,
-    mqtt_client: &AsyncClient,
+    sender: &Sender,
     id: Id,
     data: &[u8],
 ) {
@@ -224,63 +263,13 @@ async fn check_message<T: CanReading + Send + 'static>(
 
         let reading = T::construct(data);
 
-        // Serialize the reading to JSON
-        let json = match serde_json::to_string(&reading) {
-            Ok(j) => j,
-            Err(e) => {
-                eprintln!("Failed to serialize {}: {}", type_name::<T>(), e);
-                return;
-            }
-        };
-
-        // Publish to MQTT
-        let topic = type_name::<T>()
-            .to_string()
-            .to_lowercase()
-            .replace("::", "/"); // e.g. BMSReading1 -> fsae_raspi/can/bmsreading1
-
-        let mqtt_client = mqtt_client.clone();
-        tokio::spawn(async move {
-            if let Err(e) = mqtt_client
-                .publish(topic, QoS::AtLeastOnce, false, json)
-                .await
-            {
-                eprintln!("Failed to publish to MQTT: {}", e);
-            }
-        });
-
-        // Also write to InfluxDB
-        let influx_client = influx_client.clone();
-        tokio::spawn(async move {
-            if let Err(e) = influx_client
-                .query(reading.into_query(type_name::<T>()))
-                .await
-            {
-                eprintln!("Failed to write to InfluxDB: {}", e);
-            }
-        });
+        sender.send_message(reading).await;
     }
 }
 
 // finds all new CAN messages and sends to a check_message function for every possible CAN message
 pub async fn read_can() {
-    // Set up InfluxDB client
-    let influx_client = Client::new(INFLUXDB_URL, INFLUXDB_DATABASE);
-
-    // Set up MQTT client
-    let mut mqttoptions = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
-    mqttoptions.set_keep_alive(Duration::from_secs(5));
-    let (mqtt_client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
-
-    // Spawn a task to handle the MQTT event loop
-    tokio::spawn(async move {
-        loop {
-            if let Err(e) = eventloop.poll().await {
-                eprintln!("MQTT connection error: {:?}", e);
-                tokio::time::sleep(Duration::from_secs(1)).await;
-            }
-        }
-    });
+    let sender = Sender::new();
 
     loop {
         let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
@@ -292,13 +281,13 @@ pub async fn read_can() {
             let data = frame.data();
             let id = frame.id();
 
-            check_message::<BMSReading1>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<BMSReading2>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<BMSReading3>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<LeftESCReading1>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<LeftESCReading2>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<RightESCReading1>(&influx_client, &mqtt_client, id, data).await;
-            check_message::<RightESCReading2>(&influx_client, &mqtt_client, id, data).await;
+            check_message::<BMSReading1>(&sender, id, data).await;
+            check_message::<BMSReading2>(&sender, id, data).await;
+            check_message::<BMSReading3>(&sender, id, data).await;
+            check_message::<LeftESCReading1>(&sender, id, data).await;
+            check_message::<LeftESCReading2>(&sender, id, data).await;
+            check_message::<RightESCReading1>(&sender, id, data).await;
+            check_message::<RightESCReading2>(&sender, id, data).await;
         }
     }
 }
