@@ -1,12 +1,10 @@
+use crate::send::{Reading, Sender};
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
-use influxdb::{Client, InfluxDbWriteable};
-use rumqttc::{AsyncClient, MqttOptions, QoS};
+use influxdb::InfluxDbWriteable;
 use serde::Serialize;
 use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
 use std::any::type_name;
-use tokio::time::Duration;
-use crate::send::{Sender, Reading};
 
 // constants
 const CAN_INTERFACE: &str = "can0";
@@ -246,11 +244,7 @@ impl Reading for RightESCReading2 {
 }
 
 // this checks a reading against a specific CAN message, and sends to influx and MQTT if it matches
-async fn check_message<T: CanReading + Send + 'static>(
-    sender: &Sender,
-    id: Id,
-    data: &[u8],
-) {
+async fn check_message<T: CanReading + Send + 'static>(sender: &Sender, id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
             eprintln!(

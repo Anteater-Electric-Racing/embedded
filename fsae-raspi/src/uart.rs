@@ -1,10 +1,10 @@
 use chrono::{DateTime, Utc};
-use influxdb::{Client, InfluxDbWriteable};
+use influxdb::InfluxDbWriteable;
 use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_serial::SerialPortBuilderExt;
 
-use crate::send::{Sender, Reading};
+use crate::send::{Reading, Sender};
 
 // constants
 const SERIAL_PORT: &str = "/dev/ttyACM0";
