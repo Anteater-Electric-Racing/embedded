@@ -1,3 +1,8 @@
 // Anteater Electric Racing, 2025
 
-void GPIO_init();
+#ifndef GPIO_H
+#define GPIO_H
+
+void GPIO_Init();
+
+#endif // GPIO_H
