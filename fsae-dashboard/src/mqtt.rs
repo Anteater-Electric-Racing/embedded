@@ -8,11 +8,6 @@ struct Connection {
     eventloop: EventLoop,
 }
 
-enum BackgroundState {
-    Disconnected,
-    Connected(Connection),
-}
-
 #[derive(Debug, Clone)]
 pub enum Event {
     Message(rumqttc::Event),
@@ -20,48 +15,31 @@ pub enum Event {
 
 pub fn mqtt() -> impl Stream<Item = Event> {
     stream::channel(100, |mut output| async move {
-        let mut state = BackgroundState::Disconnected;
+        let mut state: Option<Connection> = None;
 
         loop {
             match &mut state {
-                BackgroundState::Disconnected => {
+                None => {
                     let mut mqttoptions = MqttOptions::new("dashboard", "127.0.0.1", 1883);
                     mqttoptions.set_keep_alive(Duration::from_secs(5));
                     let (_client, eventloop) = AsyncClient::new(mqttoptions, 10);
-                    if let Err(e) = _client
-                        .subscribe("fsae_raspi/can/bmsreading1", QoS::AtMostOnce)
-                        .await
-                    {
-                        eprintln!("Failed to subscribe to topic bmsreading1 {}", e);
+                    if let Err(e) = _client.subscribe("data", QoS::AtMostOnce).await {
+                        eprintln!("Failed to subscribe to data. Error: {}", e);
                         continue;
                     };
-                    if let Err(e) = _client
-                        .subscribe("fsae_raspi/can/bmsreading2", QoS::AtMostOnce)
-                        .await
-                    {
-                        eprintln!("Failed to subscribe to topic bmsreading2 {}", e);
-                        continue;
-                    };
-                    if let Err(e) = _client
-                        .subscribe("fsae_raspi/can/leftescreading1", QoS::AtMostOnce)
-                        .await
-                    {
-                        eprintln!("Failed to subscribe to topic leftescreading1 {}", e);
-                        continue;
-                    };
-                    state = BackgroundState::Connected(Connection { _client, eventloop });
+                    state = Some(Connection { _client, eventloop });
                 }
-                BackgroundState::Connected(connection) => {
-                    while let Ok(notification) = connection.eventloop.poll().await {
+                Some(connection) => match connection.eventloop.poll().await {
+                    Ok(notification) => {
                         if let Err(e) = output.send(Event::Message(notification)).await {
                             eprintln!("Failed to send message: {}", e);
-                            break;
                         }
                     }
-                    eprintln!("Connection lost");
-                    tokio::time::sleep(Duration::from_secs(1)).await;
-                    state = BackgroundState::Disconnected;
-                }
+                    Err(e) => {
+                        eprintln!("Failed to poll eventloop: {}", e);
+                        state = None;
+                    }
+                },
             }
         }
     })

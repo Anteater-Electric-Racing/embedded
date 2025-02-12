@@ -8,8 +8,5 @@
     "forwardPorts": [
         8086,
         3000
-    ],
-    "mounts": [
-        "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
     ]
 }
