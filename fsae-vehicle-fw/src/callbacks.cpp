@@ -8,7 +8,7 @@
 #define ADC_RESOLUTION 10
 #define ADC1_MAX_VALUE (1 << ADC_RESOLUTION) - 1
 
-void StartADCCompleteCallback() {
+void StartADCScanCallback() {
     noInterrupts();
     if (adcIndex != 0){ // means it was not reset at the end of the callback cycle: means callbacks did not complete
         _reboot_Teensyduino_();
