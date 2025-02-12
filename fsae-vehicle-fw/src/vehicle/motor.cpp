@@ -1,8 +1,11 @@
 // Anteater Electric Racing, 2025
 
+#include <algorithm>
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/faults.h"
+#include "pid/src/pid.h"
+#include "apps.h"
 
 typedef struct{
     MotorState state;
@@ -10,6 +13,8 @@ typedef struct{
 } MotorData;
 
 MotorData motorData;
+APPS apps;
+PIDConfig config;
 
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF;
@@ -101,7 +106,7 @@ void Motor_UpdateMotor(){
             // apps.getThrottle() from accelerator pedal sensor for setpoint maybe?
             // add safety checks
             // pid.compute() for torque demand
-            motorData.torqueDemand = 69.69F;
+            motorData.torqueDemand = std::min(Motor_DirectTorqueControl(0), Motor_TorqueTractionControl(0,0,0));
             break;
         }
         case MOTOR_STATE_FAULT:
@@ -114,6 +119,14 @@ void Motor_UpdateMotor(){
             break;
         }
     }
+}
+
+float Motor_DirectTorqueControl(float &maxToruqe){
+    return apps.APPS_GetAPPSReading() * maxToruqe; //make maxTorque a constant under utils section
+}
+
+float Motor_TorqueTractionControl(float &target_slip, float &current_slip, float &dt){
+    return PID::PID_Calculate(config, target_slip, current_slip, dt);
 }
 
 float Motor_GetTorqueDemand(){

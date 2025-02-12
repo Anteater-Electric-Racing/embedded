@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "cmath": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }
