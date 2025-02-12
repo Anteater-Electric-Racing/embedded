@@ -7,6 +7,7 @@
 #include <arduino_freertos.h>
 
 #include "peripherals/peripherals.h"
+#include "peripherals/adc.h"
 
 void threadMain( void *pvParameters );
 
