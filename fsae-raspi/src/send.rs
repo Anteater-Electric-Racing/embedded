@@ -35,7 +35,7 @@ static MQTT_CLIENT: Lazy<AsyncClient> = Lazy::new(|| {
     mqtt_client
 });
 
-pub async fn send_message<T: Reading>(message: T) {
+pub async fn send_message<T: Reading + Send + 'static>(message: T) {
     let json = match serde_json::to_string(&message) {
         Ok(j) => j,
         Err(e) => {
@@ -51,7 +51,9 @@ pub async fn send_message<T: Reading>(message: T) {
         eprintln!("Failed to publish to MQTT: {}", e);
     }
 
-    if let Err(e) = INFLUX_CLIENT.query(message.into_query(T::topic())).await {
-        eprintln!("Failed to write to InfluxDB: {}", e);
-    }
+    tokio::spawn(async move {
+        if let Err(e) = INFLUX_CLIENT.query(message.into_query(T::topic())).await {
+            eprintln!("Failed to write to InfluxDB: {}", e);
+        }
+    });
 }
