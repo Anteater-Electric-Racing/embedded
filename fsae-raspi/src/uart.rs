@@ -4,7 +4,7 @@ use serde::Serialize;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_serial::SerialPortBuilderExt;
 
-use crate::send::{Reading, Sender};
+use crate::send::{Reading, send_message};
 
 // constants
 const SERIAL_PORT: &str = "/dev/ttyACM0";
@@ -29,8 +29,6 @@ impl Reading for UARTReading {
 }
 
 pub async fn read_uart() {
-    let sender = Sender::new();
-
     loop {
         let serial = match tokio_serial::new(SERIAL_PORT, SERIAL_BAUD_RATE).open_native_async() {
             Ok(serial) => serial,
@@ -69,7 +67,7 @@ pub async fn read_uart() {
                 shock_b,
             };
 
-            sender.send_message(reading).await;
+            send_message(reading).await;
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::send::{Reading, Sender};
+use crate::send::{Reading, send_message};
 use chrono::{DateTime, Utc};
 use futures_util::StreamExt;
 use influxdb::InfluxDbWriteable;
@@ -244,7 +244,7 @@ impl Reading for RightESCReading2 {
 }
 
 // this checks a reading against a specific CAN message, and sends to influx and MQTT if it matches
-async fn check_message<T: CanReading + Send + 'static>(sender: &Sender, id: Id, data: &[u8]) {
+async fn check_message<T: CanReading + Send + 'static>(id: Id, data: &[u8]) {
     if T::id() == id {
         if data.len() != T::SIZE {
             eprintln!(
@@ -257,14 +257,12 @@ async fn check_message<T: CanReading + Send + 'static>(sender: &Sender, id: Id, 
 
         let reading = T::construct(data);
 
-        sender.send_message(reading).await;
+        send_message(reading).await;
     }
 }
 
 // finds all new CAN messages and sends to a check_message function for every possible CAN message
 pub async fn read_can() {
-    let sender = Sender::new();
-
     loop {
         let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
             eprintln!("Failed to open CAN socket, retrying...");
@@ -275,13 +273,13 @@ pub async fn read_can() {
             let data = frame.data();
             let id = frame.id();
 
-            check_message::<BMSReading1>(&sender, id, data).await;
-            check_message::<BMSReading2>(&sender, id, data).await;
-            check_message::<BMSReading3>(&sender, id, data).await;
-            check_message::<LeftESCReading1>(&sender, id, data).await;
-            check_message::<LeftESCReading2>(&sender, id, data).await;
-            check_message::<RightESCReading1>(&sender, id, data).await;
-            check_message::<RightESCReading2>(&sender, id, data).await;
+            check_message::<BMSReading1>(id, data).await;
+            check_message::<BMSReading2>(id, data).await;
+            check_message::<BMSReading3>(id, data).await;
+            check_message::<LeftESCReading1>(id, data).await;
+            check_message::<LeftESCReading2>(id, data).await;
+            check_message::<RightESCReading1>(id, data).await;
+            check_message::<RightESCReading2>(id, data).await;
         }
     }
 }
