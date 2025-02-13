@@ -15,7 +15,7 @@
 
 // void threadMain( void *pvParameters );
 
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t msg;
 CAN_message_t rx_msg;
 
@@ -26,21 +26,22 @@ void setup() {
 
     delay(1000);
 
-    can1.begin();
-    can1.setBaudRate(125000);
-    can1.setTX(DEF);
-    can1.setRX(DEF);
-    // can1.enableLoopBack();
+    can3.begin();
+    can3.setBaudRate(500000);
+    can3.setTX(DEF);
+    can3.setRX(DEF);
+    // can3.setMaxMB(8);
+    can3.enableFIFO();
+    can3.enableFIFOInterrupt();
+    can3.enableMBInterrupts();
 
-    // can1.setMaxMB(16);
-    // can1.enableFIFO();
-    // can1.enableFIFOInterrupt();
+    // can3.setMaxMB(16);
 
-    msg.id = 0x101;
-    msg.len = 8;
+    // msg.id = 0x101;
+    // msg.len = 8;
 
     Serial.println("CANbus init");
-    // can1.write(msg);
+    // can3.write(msg);
 }
 
 // void threadMain( void *pvParameters ) {
@@ -55,10 +56,9 @@ void setup() {
 // }
 
 void loop() {
-    can1.read(rx_msg);
-    int res = can1.write(msg);
-    can1.mailboxStatus();
+    int res = can3.write(MB0, msg);
+    can3.mailboxStatus();
     Serial.println(res);
-    Serial.println(rx_msg.id);
+    msg.id++;
     delay(1000);
 }
