@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=fsae
 WorkingDirectory=/home/fsae/embedded
-ExecStart=/usr/bin/env cargo run --bin fsae-raspi
+ExecStart=/home/fsae/.cargo/bin/cargo run --bin fsae-raspi
 Restart=always
 RestartSec=10
 
