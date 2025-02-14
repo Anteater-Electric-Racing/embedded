@@ -8,6 +8,15 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+if [ -f "${DEST_DIR}${SERVICE_FILE}" ]; then
+    echo "Stopping existing service..."
+    systemctl stop fsae-raspi.service
+    echo "Disabling existing service..."
+    systemctl disable fsae-raspi.service
+    echo "Removing existing service file..."
+    rm "${DEST_DIR}${SERVICE_FILE}"
+fi
+
 echo "Copying ${SERVICE_FILE} to ${DEST_DIR}..."
 cp "$SERVICE_FILE" "$DEST_DIR" || { echo "Failed to copy service file."; exit 1; }
 
