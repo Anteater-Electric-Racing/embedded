@@ -46,10 +46,12 @@ impl Speedometer {
                  println!("Speed: {} mph", self.speed);
                  if self.speed < 140 {
                     self.speed +=1;
+                    self.speedometer.clear();
                  } else {
                      self.speed = 0;
+                     self.speedometer.clear();
                  }
-                 self.speedometer.clear();
+
 
             }
         }
@@ -69,7 +71,7 @@ impl Speedometer {
         Theme::CatppuccinMocha
     }
     fn subscription(&self) -> Subscription<Message> {
-        iced::time::every(Duration::from_millis(10)).map(|_| Message::GetSpeed)
+        iced::time::every(Duration::from_millis(20)).map(|_| Message::GetSpeed)
     }
 
 
@@ -119,12 +121,12 @@ impl<Message> canvas::Program<Message> for Speedometer {
             frame.translate(Vector::new(center.x, center.y));
 
             // Draw the speedometer needle
-            let needle_angle = hand_rotation(self.speed, 140);
+            let needle_angle = Radians::from(hand_rotation(self.speed, 160)) + Radians::from(Degrees(45.0));
             frame.with_save(|frame| {
                 frame.rotate(needle_angle);
                 let needle = Path::line(
-                    Point::new(0.0, -0.2 * radius),
-                    Point::new(0.0, -0.8 * radius),
+                    Point::new(0.0, 0.2 * radius),
+                    Point::new(0.0, 0.8 * radius),
                 );
                 frame.stroke(&needle, Stroke {
                     style: stroke::Style::Solid(palette.secondary.strong.text),
