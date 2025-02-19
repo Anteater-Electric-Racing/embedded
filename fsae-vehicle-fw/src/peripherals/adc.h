@@ -14,8 +14,6 @@ static uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {A7, A6, A5, A4, A3, A2, A1, A0}
 static volatile uint16_t adc1Index = 0;
 static volatile uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
-
-
 static ADC *adc = new ADC();
 
 void ADC1_init();

@@ -33,8 +33,6 @@ enum SensorIndexesADC1 { // TODO: Update with real values
 void StartADCScanCallback() {
     noInterrupts();
     if (adc0Index != 0 || adc1Index != 0){ // means it was not reset at the end of the callback cycle: means callbacks did not complete
-    //    Serial.println(adc0Index);
-    //    Serial.println(adc1Index);
         _reboot_Teensyduino_();
     }
     adc0Index = 0;
@@ -45,19 +43,6 @@ void StartADCScanCallback() {
     adc->adc0->enableInterrupts(ADCConversionCompleteCallback);
     adc->startSynchronizedSingleRead(startPinADC0, startPinADC1); // in callbacks.h
     interrupts();
-    Serial.print("ADC 0 reading is ");
-    for (int i = 0; i < SENSOR_PIN_AMT_ADC0; ++i){
-        Serial.print(adc0Reads[i]);
-        Serial.print(", ");
-    }
-    Serial.println();
-
-    Serial.print("ADC 1 reading is ");
-    for (int i = 0; i < SENSOR_PIN_AMT_ADC1; ++i){
-        Serial.print(adc1Reads[i]);
-        Serial.print(", ");
-    }
-    Serial.println();
 }
 
 void ADCConversionCompleteCallback () {
@@ -66,16 +51,13 @@ void ADCConversionCompleteCallback () {
     // go to next pin
     noInterrupts();
 
-    // TODO clear ADC data field if that's possible because otherwise there might be a bug with it reading two values close together too quickly?
-
-
     // if both are less than the range, read both
-    //  if next index is in both ranges, start sync read
-    //  if next index in 0 range, start read
-    //  if next index in 1 range, start read
+    //    if next index is in both ranges, start sync read
+    //    if next index in 0 range, start read
+    //    if next index in 1 range, start read
     // if 0 is less than the range and 1 is out of range, read 0 and start 0
     // if 1 is less than the range and 0 is out of range, read 1 and start 1
-    // if both out of range, move both to 0 and return
+    // if both out of range, make both indexes to 0 and end
 
     if(adc0Index <= SENSOR_PIN_AMT_ADC0 && adc1Index <= SENSOR_PIN_AMT_ADC1){
         ADC::Sync_result result = adc->readSynchronizedSingle();
@@ -110,19 +92,6 @@ void ADCConversionCompleteCallback () {
         adc->adc1->enableInterrupts(ADCConversionCompleteCallback, adc1Index); // Priority gets lower as it's further in the index array
         adc->adc1->startSingleRead(adc1Pins[adc1Index]); // in callbacks.h
     }
-
     interrupts();
-
-
-    // increment to next sensor pin & start read
-    // ++adc0Index;
-    // if(adc0Index >= SENSOR_PIN_AMT_ADC0){ // Do here so we don't start a read for an invalid pin
-    //     adc0Index = 0;
-    // } else {
-    //     uint16_t currentPin = adc0Pins[adc0Index];
-    //     adc->adc0->enableInterrupts(ADCConversionCompleteCallback, adc0Index); // Priority gets lower as it's further in the index array
-    //     adc->adc0->startSingleRead(currentPin); // in callbacks.h
-    // }
-    // interrupts();
 }
 
