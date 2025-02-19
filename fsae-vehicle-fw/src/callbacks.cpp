@@ -8,7 +8,7 @@
 #define ADC_RESOLUTION 10
 #define adc0_MAX_VALUE (1 << ADC_RESOLUTION) - 1
 
-enum SensorIndexesADC0 {
+enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
     APPS_2_INDEX,
     BSE_1_INDEX,
@@ -19,7 +19,7 @@ enum SensorIndexesADC0 {
     SUSP_TRAV_LINPOT4
 };
 
-enum SensorIndexesADC1 {
+enum SensorIndexesADC1 { // TODO: Update with real values
     APPS_1_INDEX2,
     APPS_2_INDEX2,
     BSE_1_INDEX2,
