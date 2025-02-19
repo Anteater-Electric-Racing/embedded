@@ -8,12 +8,34 @@
 #define ADC_RESOLUTION 10
 #define adc0_MAX_VALUE (1 << ADC_RESOLUTION) - 1
 
+enum SensorIndexesADC0 {
+    APPS_1_INDEX,
+    APPS_2_INDEX,
+    BSE_1_INDEX,
+    BSE_2_INDEX,
+    SUSP_TRAV_LINPOT1,
+    SUSP_TRAV_LINPOT2,
+    SUSP_TRAV_LINPOT3,
+    SUSP_TRAV_LINPOT4
+};
+
+enum SensorIndexesADC1 {
+    APPS_1_INDEX2,
+    APPS_2_INDEX2,
+    BSE_1_INDEX2,
+    BSE_2_INDEX2,
+    SUSP_TRAV_LINPOT12,
+    SUSP_TRAV_LINPOT22,
+    SUSP_TRAV_LINPOT32,
+    SUSP_TRAV_LINPOT42
+};
+
 void StartADCScanCallback() {
     noInterrupts();
     if (adc0Index != 0 || adc1Index != 0){ // means it was not reset at the end of the callback cycle: means callbacks did not complete
-       Serial.println(adc0Index);
-       Serial.println(adc1Index);
-        // _reboot_Teensyduino_();
+    //    Serial.println(adc0Index);
+    //    Serial.println(adc1Index);
+        _reboot_Teensyduino_();
     }
     adc0Index = 0;
     adc1Index = 0;
