@@ -93,8 +93,8 @@ void BSE::verifySensorAgreement() {
 }
 
 void BSE::BSE_UpdateData(APPSData* data) {
-    _BSEdata.BSEReading1 = data->appsReading1;
-    _BSEdata.BSEReading2 = data->appsReading2;
+    _BSEdata.BSEReading1 = data->BSEReading1;
+    _BSEdata.BSEReading2 = data->BSEReading2;
 
     checkAndHandleBSEFault();
     verifySensorAgreement();

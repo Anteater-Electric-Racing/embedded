@@ -88,7 +88,26 @@ void Motor_UpdateMotor(){
         }
         case MOTOR_STATE_DRIVING:
         {
-           
+            TelemetryData* telemetry = Telemetry_GetData();
+            float currentSpeed = telemetry->vehicleSpeed
+            float initialSpeed = telemetry->initialSpeed
+            float brakePressure = BSE_GetBSEReading();
+            float torqueDemand = motorData.torqueDemand;
+            float vehicleMass = 180.0F // TODO: change this to the actual mass. should include this directly in the regen file or on the top level
+
+            // only applied when braking
+           if (brakePressure > REGEN_BRAKE_THRESHOLD) { // If brakes are applied
+                float regenTorque = Motor_CalculateRegenBraking(
+                    brakePressure,
+                    currentSpeed,
+                    vehicleMass,
+                    initialSpeed,
+                    torqueDemand
+                )
+
+                // apply to rear wheels
+                Motor_SetRearMotorTorque(regenTorque);
+           }
             // apps.getThrottle() from accelerator pedal sensor for setpoint maybe?
             // add safety checks
             // pid.compute() for torque demand
@@ -109,7 +128,7 @@ void Motor_UpdateMotor(){
     }
 }
 
-
+// helper functions
 float Motor_DirectTorqueControl(float &maxToruqe){
     return apps.APPS_GetAPPSReading() * maxToruqe; //make maxTorque a constant under utils section
 }
@@ -122,6 +141,13 @@ float Motor_GetTorqueDemand(){
     return motorData.torqueDemand;
 }
 
+float Motor_SetRearMotorTorque(float regenTorque){
+    if (regenTorque > 0) 
+        regenTorque = -regenTorque;
+    
+    // TODO: create function to apply regen torque to back wheels
+    Motor_SetRearMotorTorque(regenTorque);
+}
 void Motor_SetFaultState(){
     motorData.state = MOTOR_STATE_FAULT;
 }

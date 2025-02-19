@@ -24,10 +24,7 @@ float Motor_CalculateRegenBraking(float brakePressure, float currentSpeed, float
         // check limit
         regenTorque = fminf(regenTorque, MAX_REGEN_TORQUE);
 
-        // only apply on back wheels
-        float rearRegenTorque = regenTorque / 2;
-
-        return rearRegenTorque;
+        return regenTorque;
     }
 
     return 0.0F;
