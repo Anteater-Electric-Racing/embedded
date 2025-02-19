@@ -5,12 +5,18 @@ typedef struct{
     float appsReading2;
 } APPSData;
 
+typedef struct{
+    float BSEReading1;
+    float BSEReading2;
+} BSEData;
+
+
 class APPS {
     private:
         APPSData _APPSdata;
 
-        void APPS::checkAndHandleAPPSFault();
-        void APPS::checkAndHandlePlausibilityFault(BSE* bse);
+        void checkAndHandleAPPSFault();
+        void checkAndHandlePlausibilityFault(BSEData* bse);
 
     public:
         APPS();
@@ -20,17 +26,13 @@ class APPS {
         float APPS_GetAPPSReading();
 };
 
-typedef struct{
-    float BSEReading1;
-    float BSEReading2;
-} BSEData;
 
 class BSE {
     private:
         BSEData _BSEdata;
 
-        void BSE::checkAndHandleBSEFault();
-        void BSE::verifySensorAgreement();
+        void checkAndHandleBSEFault();
+        void verifySensorAgreement();
 
     public:
         BSE();
