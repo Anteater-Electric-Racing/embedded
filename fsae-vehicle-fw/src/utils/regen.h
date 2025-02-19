@@ -11,5 +11,5 @@
 
 float Motor_CalculateRegenBraking(float brakePosition, float currentSpeed );
 
-bool Motor_EnableRegenBraking(float currentSpeed);
+bool Motor_EnableRegenBraking(float currentSpeed, float brakePosition);
 #endif
