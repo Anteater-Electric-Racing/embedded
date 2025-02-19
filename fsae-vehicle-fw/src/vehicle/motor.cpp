@@ -1,11 +1,11 @@
 // Anteater Electric Racing, 2025
 
-#include <algorithm>
-#include "vehicle/motor.h"
-#include "vehicle/telemetry.h"
-#include "vehicle/faults.h"
-#include "pid/src/pid.h"
+#include "motor.h"
+#include "telemetry.h"
+#include "faults.h"
+#include "../utils/pid.h"
 #include "apps.h"
+#include <algorithm>
 
 typedef struct{
     MotorState state;
@@ -82,6 +82,7 @@ static bool Motor_TransitionToDriving() {
 }
 
 // handle state transitions
+//TODO: add freeRTOS tasks for this
 void Motor_UpdateMotor(){
     switch(motorData.state){
         case MOTOR_STATE_OFF:
@@ -106,7 +107,9 @@ void Motor_UpdateMotor(){
             // apps.getThrottle() from accelerator pedal sensor for setpoint maybe?
             // add safety checks
             // pid.compute() for torque demand
-            motorData.torqueDemand = std::min(Motor_DirectTorqueControl(0), Motor_TorqueTractionControl(0,0,0));
+         //   motorData.torqueDemand = std::min(
+          //      Motor_DirectTorqueControl(0.0F),
+          //      Motor_TorqueTractionControl(0.0F,0.0F,0.0F)); //dt comes from freeRTOS ticks
             break;
         }
         case MOTOR_STATE_FAULT:
@@ -120,6 +123,7 @@ void Motor_UpdateMotor(){
         }
     }
 }
+
 
 float Motor_DirectTorqueControl(float &maxToruqe){
     return apps.APPS_GetAPPSReading() * maxToruqe; //make maxTorque a constant under utils section
