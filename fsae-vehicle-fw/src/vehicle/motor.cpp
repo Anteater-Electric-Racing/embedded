@@ -14,6 +14,7 @@ MotorData motorData;
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF;
 }
+
 // state transition functions (check if conditions are met to initiate transition)
 static bool Motor_TransitionToPrecharging() {
     // can't transition to precharging if the motor is still running
@@ -27,16 +28,6 @@ static bool Motor_TransitionToPrecharging() {
         return false;
     }
 
-    // if the car is not ready to drive or turned off
-    if (!Motor_CheckReadyToDrive()) {
-        return false;
-    }
-
-    // check if faults are clear
-    if (!Faults_CheckAllClear()) {
-        return false;
-    }
-
     // transition to precharging after all checks are passed
     motorData.state = MOTOR_STATE_PRECHARGING; // TODO: check the state dependencies
     return true;
@@ -44,6 +35,7 @@ static bool Motor_TransitionToPrecharging() {
 
 static bool Motor_TransitionToIdle() {
     // check that precharging is complete
+    // low voltage on high voltage not on
     if (motorData.state != MOTOR_STATE_PRECHARGING) {
         return false;
     }
@@ -54,10 +46,6 @@ static bool Motor_TransitionToIdle() {
         return false;
     }
 
-    if (!Faults_CheckAllClear()) {
-        return false;
-    }
-
     // transition to idle state after precharging
     motorData.state = MOTOR_STATE_IDLE; // TODO: check the state dependencies
     return true;
@@ -65,10 +53,6 @@ static bool Motor_TransitionToIdle() {
 
 static bool Motor_TransitionToDriving() {
     if (motorData.state != MOTOR_STATE_IDLE) {
-        return false;
-    }
-
-    if (!Faults_CheckAllClear()) {
         return false;
     }
 
@@ -98,6 +82,7 @@ void Motor_UpdateMotor(){
         }
         case MOTOR_STATE_DRIVING:
         {
+           
             // apps.getThrottle() from accelerator pedal sensor for setpoint maybe?
             // add safety checks
             // pid.compute() for torque demand
@@ -124,3 +109,12 @@ void Motor_SetFaultState(){
     motorData.state = MOTOR_STATE_FAULT;
 }
 
+bool Motor_CheckReadyToDrive() {
+    // check if faults are clear
+    if (!Faults_CheckAllClear() || !Motor_CheckReadyToDrive()) {
+        Motor_SetFaultState();
+        break;
+    }
+    // check if systems are ready
+    Tele
+}

@@ -1,5 +1,5 @@
 // Anteater Electric Racing, 2025
-
+// free rtos
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
 

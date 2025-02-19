@@ -11,6 +11,7 @@
 #include <cmath>
 
 #include "apps.h"
+#include "../utils/regen.h"
 
 #include "vehicle/faults.h"
 
@@ -101,6 +102,7 @@ void BSE::BSE_UpdateData(APPSData* data) {
 
 float BSE::BSE_GetBSEReading() {
     // regen braking
-    Motor_CalculateRegenBraking();
+    // ? Where do we pull the parameters from?
+    // Motor_CalculateRegenBraking(brakePosition, currentSpeed, mass, initialSpeed, torqueDemand);
     return (_BSEdata.BSEReading1 + _BSEdata.BSEReading2) / 2;
 }
