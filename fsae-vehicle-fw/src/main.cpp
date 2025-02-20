@@ -51,6 +51,7 @@ void threadMain( void *pvParameters ) {
     if (checkSensors()) {
         Watchdog_Pet();
     }
+  }
 }
 
 void loop() {}
