@@ -1,3 +1,5 @@
+// Anteater Electric Racing, 2025
+
 #include "watchdog.h"
 #include <Arduino.h>
 // #include <imxrt.h> Uncomment if Teensy provides correct header
