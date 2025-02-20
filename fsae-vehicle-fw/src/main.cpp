@@ -10,6 +10,7 @@
 #include <arduino_freertos.h>
 
 #include "peripherals/peripherals.h"
+#include "peripherals/watchdog.h"
 
 // Struct to track sensor last update timestamps
 static struct {
@@ -22,58 +23,14 @@ static struct {
 
 
 void threadMain( void *pvParameters );
-void initWatchdog();
-void kickWatchdog();
 bool checkSensors();
 
-void initWatchdog(){
-  // Clear Wide Mode Register 
-  WDOG1_WMCR = 0;
-
-  // Set timeout period (1 sec)
-  WDOG1_WCR = WDOG_WCR_WT(0x3FF);
-
-  WDOG1_WCR |= WDOG_WCR_WDE;  // Enable WDT
-  WDOG1_WCR |= WDOG_WCR_SRE;  // System Reset Enable
-  WDOG1_WCR &= ~WDOG_WCR_WDA; // Disable alt reset signal WDOG_B
-
-  // Start timer
-  kickWatchdog();
-}
-
-void kickWatchdog(){
-  // First service key, pause
-  __asm__ volatile ("nop");
-  WDOG1_WSR = 0x5555;
-
-  // Second, pause
-  __asm__ volatile ("nop");
-  WDOG1_WSR = 0xAAAA;
-}
-
 bool checkSensors(){
-  // Start time
   unsigned long currentTime = millis();
 
-  const unsigned long BRAKE_TIMEOUT = 200;
-  const unsigned long LINEAR_POTS_TIMEOUT = 300;
-  const unsigned long APPS_TIMEOUT = 200;
   const unsigned long IMU_TIMEOUT = 300;
   const unsigned long GPS_TIMEOUT = 1000;
 
-  // Check sensors, return false if not working
-  if (currentTime - sensorLastUpdate.brake > BRAKE_TIMEOUT){
-    Serial.println("Brake sensor timeout");
-    return false;
-  }
-  if (currentTime - sensorLastUpdate.linear_pots > LINEAR_POTS_TIMEOUT){
-    Serial.println("Linear potentiometer sensors timeout");
-    return false;
-  }
-  if (currentTime - sensorLastUpdate.apps > APPS_TIMEOUT){
-    Serial.println("APPS timeout");
-    return false;
-  }
   if (currentTime - sensorLastUpdate.imu > IMU_TIMEOUT){
     Serial.println("IMU timeout");
     return false;
@@ -96,23 +53,21 @@ void setup() {
 void threadMain( void *pvParameters ) {
   Peripherals_init();
 
-  TickType_t xLastWakeTime;
-  const TickType_t xCheckInterval = pdMS_TO_TICKS(WDT_CHECK_INTERVAL_MS);
-  xLastWakeTime = xTaskGetTickCount();
-
+  // Main loop
   while (true) {
-    // Main loop
-    vTaskDelayUntil(&xLastWakeTime, xCheckInterval);
+    // Tells the computer to wait
+    vTaskDelay(pdMS_TO_TICKS(WDT_CHECK_INTERVAL_MS));
 
-    // Only kick the watchdog if all sensors are working
+    // Only pet the watchdog if all sensors are working
     if (checkSensors()) {
-        kickWatchdog();
+        Watchdog_Pet();
     }
   }
 }
 
 void loop() {}
 
+// Update sensor last updates
 void updateBrakeSensor() {
     sensorLastUpdate.brake = millis();
 }
