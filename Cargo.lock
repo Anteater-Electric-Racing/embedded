@@ -1559,6 +1559,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fsae-wireless-test"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "config 0.15.8",
+ "rumqttc",
+ "rumqttd",
+ "tokio",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "futures"
 version = "0.3.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
