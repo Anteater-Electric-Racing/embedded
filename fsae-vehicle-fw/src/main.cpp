@@ -7,18 +7,24 @@
 #include <arduino_freertos.h>
 
 #include "peripherals/peripherals.h"
+#include "peripherals/adc.h"
 
 void threadMain( void *pvParameters );
 
-void setup() {
+void setup() { // runs once on bootup
+  Serial.begin(9600);
+  Serial.println("In setup");
   xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+  vTaskStartScheduler();
+  Serial.println("Main task started");
 }
 
 void threadMain( void *pvParameters ) {
-  Peripherals_init();
-  while (true) {
-    // Main loop
-  }
+    Peripherals_Init();
+
+    while (true) {
+        // Main loop
+    }
 }
 
 void loop() {}
