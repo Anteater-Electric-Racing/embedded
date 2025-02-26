@@ -1,7 +1,8 @@
 {
     "files.associations": {
         "cmath": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "iosfwd": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

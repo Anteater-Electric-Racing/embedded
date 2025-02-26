@@ -46,20 +46,33 @@ void stateMachineTask(void *pvParameters){
      */
 
     while (true){
+        vTaskDelay(pdMS_TO_TICKS(100))
         switch (motorData.state) // state transition conditions go here
         {
         case MOTOR_STATE_OFF:
+            if (Motor_TransitionToPrecharging()){
+                motorData.state = MOTOR_STATE_PRECHARGING;
+            }
             break;
         case MOTOR_STATE_PRECHARGING:
+            if (Motor_TransitionToIdle()){
+                motorData.state = MOTOR_STATE_IDLE;
+            }
             break;
         case MOTOR_STATE_IDLE:
+            if(Motor_TransitionToDriving()){
+                motorData.state = MOTOR_STATE_DRIVING;
+            }
             break;
         case MOTOR_STATE_DRIVING:
+            if (!Motor_CheckReadyToDrive()){
+                motorData.state = MOTOR_STATE_FAULT;
+            }
             break;
         case MOTOR_STATE_FAULT:
             break;
-
         default:
+            motorData.state = MOTOR_STATE_OFF;
             break;
         }
         //fill with state changes.
@@ -83,8 +96,8 @@ static bool Motor_TransitionToPrecharging() {
     }
 
     // transition to precharging after all checks are passed
-    motorData.state =
-        MOTOR_STATE_PRECHARGING; // TODO: check the state dependencies
+    // TODO: check the state dependencies
+    //motorData.state =  MOTOR_STATE_PRECHARGING;
     return true;
 }
 
@@ -103,7 +116,7 @@ static bool Motor_TransitionToIdle() {
     }
 
     // transition to idle state after precharging
-    motorData.state = MOTOR_STATE_IDLE; // TODO: check the state dependencies
+    //motorData.state = MOTOR_STATE_IDLE; // TODO: check the state dependencies
     return true;
 }
 
