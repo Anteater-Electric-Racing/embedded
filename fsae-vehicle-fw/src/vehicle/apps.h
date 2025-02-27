@@ -16,7 +16,7 @@ class APPS {
         APPSData _APPSdata;
 
         void checkAndHandleAPPSFault();
-        void checkAndHandlePlausibilityFault(BSEData* bse);
+        void checkAndHandlePlausibilityFault(BSE* bse);
 
     public:
         APPS();

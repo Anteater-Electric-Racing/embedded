@@ -38,48 +38,7 @@ void Motor_Init() {
     motorData.state = MOTOR_STATE_OFF;
 }
 
-void stateMachineTask(void *pvParameters){
-    /**TODO:
-     * 1) Pull telemetry data here as a pointer - acess through whole class from here
-     * 2) remove uneeded functions and put into each case
-     * 3) add vTask delay (100 ms?)
-     */
-
-    while (true){
-        vTaskDelay(pdMS_TO_TICKS(100))
-        switch (motorData.state) // state transition conditions go here
-        {
-        case MOTOR_STATE_OFF:
-            if (Motor_TransitionToPrecharging()){
-                motorData.state = MOTOR_STATE_PRECHARGING;
-            }
-            break;
-        case MOTOR_STATE_PRECHARGING:
-            if (Motor_TransitionToIdle()){
-                motorData.state = MOTOR_STATE_IDLE;
-            }
-            break;
-        case MOTOR_STATE_IDLE:
-            if(Motor_TransitionToDriving()){
-                motorData.state = MOTOR_STATE_DRIVING;
-            }
-            break;
-        case MOTOR_STATE_DRIVING:
-            if (!Motor_CheckReadyToDrive()){
-                motorData.state = MOTOR_STATE_FAULT;
-            }
-            break;
-        case MOTOR_STATE_FAULT:
-            break;
-        default:
-            motorData.state = MOTOR_STATE_OFF;
-            break;
-        }
-        //fill with state changes.
-    }
-}
-
-static bool Motor_TransitionToPrecharging() {
+ bool Motor_TransitionToPrecharging() {
     // can't transition to precharging if the motor is still running
     if (motorData.state != MOTOR_STATE_OFF) {
         return false;
@@ -129,6 +88,47 @@ static bool Motor_TransitionToDriving() {
     return true;
 }
 
+void stateMachineTask(void *pvParameters){
+    /**TODO:
+     * 1) Pull telemetry data here as a pointer - acess through whole class from here
+     * 2) remove uneeded functions and put into each case
+     * 3) add vTask delay (100 ms?)
+     */
+
+    while (true){
+        vTaskDelay(pdMS_TO_TICKS(100));
+        switch (motorData.state) // state transition conditions go here
+        {
+        case MOTOR_STATE_OFF:
+            if (Motor_TransitionToPrecharging()){
+                motorData.state = MOTOR_STATE_PRECHARGING;
+            }
+            break;
+        case MOTOR_STATE_PRECHARGING:
+            if (Motor_TransitionToIdle()){
+                motorData.state = MOTOR_STATE_IDLE;
+            }
+            break;
+        case MOTOR_STATE_IDLE:
+            if(Motor_TransitionToDriving()){
+                motorData.state = MOTOR_STATE_DRIVING;
+            }
+            break;
+        case MOTOR_STATE_DRIVING:
+            if (!Motor_CheckReadyToDrive()){
+                motorData.state = MOTOR_STATE_FAULT;
+            }
+            break;
+        case MOTOR_STATE_FAULT:
+            break;
+        default:
+            motorData.state = MOTOR_STATE_OFF;
+            break;
+        }
+        //fill with state changes.
+    }
+}
+
 // handle state transitions
 //TODO: call in ISR with ADC readings
 void Motor_UpdateMotor() {
@@ -158,7 +158,7 @@ void Motor_UpdateMotor() {
             float regenTorque =
                 Motor_CalculateRegenBraking(brakePressure, currentSpeed,
                                             vehicleMass, initialSpeed,
-                                            torqueDemand)
+                                            torqueDemand);
 
                 // apply to rear wheels
                 Motor_SetRearMotorTorque(regenTorque);

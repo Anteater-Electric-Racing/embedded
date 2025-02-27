@@ -6,13 +6,7 @@ TelemetryData telemetryData;
 
 void Telemetry_Init() {
     // fill with reasonable default values
-    telemetryData = {
-        .accumulatorVoltage = 0,
-        .accumulatorTemp = 0,
-        .tractiveSystemVoltage = 0,
-        .vehicleSpeed = 0, // current speed
-        .initialSpeed = 0 // starting speed
-    };
+    telemetryData = {0,0,0,0,0}; // current speed0 // starting speed
 }
 
 TelemetryData* Telemetry_GetData() {

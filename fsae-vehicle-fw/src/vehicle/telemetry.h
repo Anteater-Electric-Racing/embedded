@@ -8,6 +8,8 @@ typedef struct {
     float accumulatorTemp;
 
     float tractiveSystemVoltage;
+    float vehicleSpeed;
+    float initialSpeed;
 } TelemetryData;
 
 void Telemetry_Init();

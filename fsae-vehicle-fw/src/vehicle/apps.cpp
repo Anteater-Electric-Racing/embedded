@@ -31,7 +31,7 @@ APPS::~APPS() {}
 
 void APPS::checkAndHandleAPPSFault() {
     float difference = abs(_APPSdata.appsReading1 - _APPSdata.appsReading2);
-    
+
     if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
         Faults_SetFault(FAULT_APPS);
     } else {
@@ -42,7 +42,7 @@ void APPS::checkAndHandleAPPSFault() {
 
 void APPS::checkAndHandlePlausibilityFault(BSE* bse) {
     float BSEReading = bse->BSE_GetBSEReading();
-    
+
     if (APPS_GetAPPSReading() > APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD && BSEReading > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD) {
         Faults_SetFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
     } else {
