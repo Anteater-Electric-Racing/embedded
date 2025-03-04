@@ -74,21 +74,21 @@ impl Dashboard {
                     self.power > 180000 || self.power < -1000
                 ),
                 grid_cell(
-                    self.energy_left.to_string(),
-                    " Wh",
-                    "Energy Left",
-                    self.energy_left < 5000,
-                    self.energy_left < 2000
-                ),
-            ]
-            .spacing(20),
-            row![
-                grid_cell(
                     self.battery_temp.to_string(),
                     "°C",
                     "Battery Temp",
                     self.battery_temp > 40,
                     self.battery_temp > 50
+                ),
+            ]
+            .spacing(20),
+            row![
+                grid_cell(
+                    self.energy_left.to_string(),
+                    " Wh",
+                    "Energy Left",
+                    self.energy_left < 5000,
+                    self.energy_left < 2000
                 ),
                 grid_cell(
                     self.motor_temp.to_string(),
@@ -101,18 +101,18 @@ impl Dashboard {
             .spacing(20),
             row![
                 grid_cell(
-                    self.inverter_temp.to_string(),
-                    "°C",
-                    "Inverter Temp",
-                    self.inverter_temp > 40,
-                    self.inverter_temp > 50
-                ),
-                grid_cell(
                     format!("{:.2}", self.lap_time.as_secs_f64()),
                     "s",
                     "Lap Time",
                     false,
                     false
+                ),
+                grid_cell(
+                    self.inverter_temp.to_string(),
+                    "°C",
+                    "Inverter Temp",
+                    self.inverter_temp > 40,
+                    self.inverter_temp > 50
                 ),
             ]
             .spacing(20),
