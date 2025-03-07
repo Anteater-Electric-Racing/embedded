@@ -1,26 +1,26 @@
 // Anteater Electric Racing, 2025
 
-// #define THREAD_MAIN_STACK_SIZE 128
-// #define THREAD_MAIN_PRIORITY 1
+#define THREAD_MAIN_STACK_SIZE 128
+#define THREAD_MAIN_PRIORITY 1
 
-// #include <Arduino.h>
+#include <Arduino.h>
 #include <FlexCAN_T4.h>
-// #include <arduino_freertos.h>
+#include <arduino_freertos.h>
 
-// #include "peripherals/peripherals.h"
+#include "peripherals/peripherals.h"
 
-// #include "vehicle/faults.h"
-// #include "vehicle/motor.h"
-// #include "vehicle/telemetry.h"
+#include "vehicle/faults.h"
+#include "vehicle/motor.h"
+#include "vehicle/telemetry.h"
 
-// void threadMain( void *pvParameters );
+void threadMain( void *pvParameters );
 
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t msg;
 CAN_message_t rx_msg;
 
 void setup() {
-    // xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
 
     Serial.begin(9600);
 
@@ -44,21 +44,21 @@ void setup() {
     // can3.write(msg);
 }
 
-// void threadMain( void *pvParameters ) {
-//     Peripherals_Init();
+void threadMain( void *pvParameters ) {
+    Peripherals_Init();
 
-//     Faults_Init();
-//     Telemetry_Init();
+    Faults_Init();
+    Telemetry_Init();
 
-//     while (true) {
-//         // Main loop
-//     }
-// }
+    while (true) {
+        // Main loop
+    }
+}
 
 void loop() {
-    int res = can3.write(MB0, msg);
-    can3.mailboxStatus();
-    Serial.println(res);
-    msg.id++;
-    delay(1000);
+//     int res = can3.write(MB0, msg);
+//     can3.mailboxStatus();
+//     Serial.println(res);
+//     msg.id++;
+//     delay(1000);
 }
