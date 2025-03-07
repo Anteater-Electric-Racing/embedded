@@ -21,11 +21,16 @@ CAN_message_t msg;
 CAN_message_t rx_msg;
 
 void setup() { // runs once on bootup
-    Serial.begin(9600);
-    Serial.println("In setup");
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
-    Serial.println("Main task started");
+    vTaskStartScheduler();
+}
 
+void threadMain( void *pvParameters ) {
+    Serial.begin(9600);
+
+    Serial.println("In setup");
+    Serial.println("Main task started");
+    Serial.println("CANbus init");
 
     can3.begin();
     can3.setBaudRate(500000);
@@ -36,32 +41,28 @@ void setup() { // runs once on bootup
     can3.enableFIFOInterrupt();
     can3.enableMBInterrupts();
 
-    // can3.setMaxMB(16);
+    can3.setMaxMB(16);
 
     // msg.id = 0x101;
     // msg.len = 8;
 
-    Serial.println("CANbus init");
+
     // can3.write(msg);
-    vTaskStartScheduler();
-
-}
-
-void threadMain( void *pvParameters ) {
     Peripherals_Init();
 
     Faults_Init();
     Telemetry_Init();
 
     while (true) {
+        // Serial.println("In main");
+        // int res = can3.write(MB0, msg);
+        // can3.mailboxStatus();
+        // Serial.println(res);
+        // msg.id++;
+        // vTaskDelay(1000);
         // Main loop
     }
 }
 
 void loop() {
-//     int res = can3.write(MB0, msg);
-//     can3.mailboxStatus();
-//     Serial.println(res);
-//     msg.id++;
-//     delay(1000);
 }

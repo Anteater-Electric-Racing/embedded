@@ -1,7 +1,5 @@
 // Anteater Electric Racing, 2025
 
-#include <ADC.h>
-
 #include "peripherals/adc.h"
 #include "callbacks.h"
 
