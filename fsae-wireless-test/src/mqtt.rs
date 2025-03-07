@@ -11,7 +11,7 @@ pub fn mqttd() {
 
     builder
         .try_init()
-        .expect("initialized subscriber succesfully");
+        .expect("initialized subscriber successfully");
 
     let config = match config::Config::builder()
         .add_source(config::File::from_str(

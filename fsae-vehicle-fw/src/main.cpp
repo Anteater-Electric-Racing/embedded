@@ -8,6 +8,7 @@
 #include <arduino_freertos.h>
 
 #include "peripherals/peripherals.h"
+#include "peripherals/adc.h"
 
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
@@ -19,12 +20,12 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t msg;
 CAN_message_t rx_msg;
 
-void setup() {
-    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
-
+void setup() { // runs once on bootup
     Serial.begin(9600);
+    Serial.println("In setup");
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+    Serial.println("Main task started");
 
-    delay(1000);
 
     can3.begin();
     can3.setBaudRate(500000);
@@ -42,6 +43,8 @@ void setup() {
 
     Serial.println("CANbus init");
     // can3.write(msg);
+    vTaskStartScheduler();
+
 }
 
 void threadMain( void *pvParameters ) {
