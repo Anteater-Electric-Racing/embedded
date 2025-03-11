@@ -1,42 +1,41 @@
 // Anteater Electric Racing, 2025
 
-typedef struct{
+typedef struct {
     float appsReading1;
     float appsReading2;
 } APPSData;
 
-typedef struct{
+typedef struct {
     float BSEReading1;
     float BSEReading2;
 } BSEData;
 
+class APPS {
+  private:
+    APPSData _APPSdata;
 
-class BSE {
-    private:
-        BSEData _BSEdata;
+    void checkAndHandleAPPSFault();
+    void checkAndHandlePlausibilityFault(BSE *bse);
 
-        void checkAndHandleBSEFault();
-        void verifySensorAgreement();
+  public:
+    APPS();
+    ~APPS();
 
-    public:
-        BSE();
-        ~BSE();
-
-        void BSE_UpdateData(APPSData* data);
-        float BSE_GetBSEReading();
+    void APPS_UpdateData(APPSData *data);
+    float APPS_GetAPPSReading();
 };
 
-class APPS {
-    private:
-        APPSData _APPSdata;
+class BSE {
+  private:
+    BSEData _BSEdata;
 
-        void checkAndHandleAPPSFault();
-        void checkAndHandlePlausibilityFault(BSE* bse);
+    void checkAndHandleBSEFault();
+    void verifySensorAgreement();
 
-    public:
-        APPS();
-        ~APPS();
+  public:
+    BSE();
+    ~BSE();
 
-        void APPS_UpdateData(APPSData* data);
-        float APPS_GetAPPSReading();
+    void BSE_UpdateData(APPSData *data);
+    float BSE_GetBSEReading();
 };
