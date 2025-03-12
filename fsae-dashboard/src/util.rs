@@ -37,15 +37,15 @@ pub fn grid_cell<'a>(
             } else if warning {
                 palette::AMBER_500
             } else {
-                palette::GRAY_500
+                palette::GRAY_200
             }),
-            text(label).color(palette::GRAY_500).size(128),
+            text(label).color(palette::GRAY_200).size(128),
         ])
         .center(Fill),
-        container(text(name).color(palette::GRAY_500).size(48)).center_x(Fill)
+        container(text(name).color(palette::GRAY_200).size(48)).center_x(Fill)
     ])
     .style(|_theme| {
-        container::Style::default().border(border::color(palette::GRAY_500).width(4).rounded(15))
+        container::Style::default().border(border::color(palette::GRAY_200).width(4).rounded(15))
     })
     .height(Fill)
     .width(Fill)
