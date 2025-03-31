@@ -38,6 +38,6 @@ class BSE {
         BSE();
         ~BSE();
 
-        void BSE_UpdateData(APPSData* data);
+        void BSE_UpdateData(BSEData* data);
         float BSE_GetBSEReading();
 };

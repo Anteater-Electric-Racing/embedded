@@ -5,13 +5,17 @@
 
 #include <Arduino.h>
 #include <arduino_freertos.h>
+#include <algorithm>
+
+#include "../utils/pid.h"
+#include "../utils/regen.h"
 
 #include "motor.h"
-#include "../utils/pid.h"
 #include "apps.h"
 #include "faults.h"
 #include "telemetry.h"
-#include <algorithm>
+
+
 
 typedef struct {
     MotorState state;
@@ -20,7 +24,18 @@ typedef struct {
 
 MotorData motorData;
 APPS apps;
+BSE bse;
 PIDConfig config;
+TelemetryData *telemetry;
+
+/**
+ * 3/31 Task List:
+ * 1) DONE (Consilidate Telemetry data)
+ * 2) stateMachine Edge Cases
+ * 3) remove redundant comments
+ * 4) Implement Motor Torque commands
+ * 5) Send for Review (4/2)
+ */
 
 
 void stateMachineTask(void *pvParameters);
@@ -43,20 +58,13 @@ void Motor_Init() {
     if (motorData.state != MOTOR_STATE_OFF) {
         return false;
     }
-
     // check if systems are ready
-    TelemetryData *telemetry =
-        Telemetry_GetData(); // TODO: might not be ideal to pull data each time
-                             // we transition to another state
     if (telemetry->accumulatorVoltage < 10.0F ||
         telemetry->accumulatorTemp > 100.0F ||
         telemetry->tractiveSystemVoltage < 10.0F) { // TODO: change thresholds
         return false;
     }
-
     // transition to precharging after all checks are passed
-    // TODO: check the state dependencies
-    //motorData.state =  MOTOR_STATE_PRECHARGING;
     return true;
 }
 
@@ -66,16 +74,11 @@ static bool Motor_TransitionToIdle() {
     if (motorData.state != MOTOR_STATE_PRECHARGING) {
         return false;
     }
-
     // check precharge completion
-    TelemetryData *telemetry = Telemetry_GetData();
     if (telemetry->tractiveSystemVoltage <
         10.0F) { // TODO: change threshold to reflect precharge completion
         return false;
     }
-
-    // transition to idle state after precharging
-    //motorData.state = MOTOR_STATE_IDLE; // TODO: check the state dependencies
     return true;
 }
 
@@ -92,10 +95,10 @@ void stateMachineTask(void *pvParameters){
     /**TODO:
      * 1) Pull telemetry data here as a pointer - acess through whole class from here
      * 2) remove uneeded functions and put into each case
-     * 3) add vTask delay (100 ms?)
      */
 
     while (true){
+        telemetry = Telemetry_GetData();
         vTaskDelay(pdMS_TO_TICKS(100));
         switch (motorData.state) // state transition conditions go here
         {
@@ -125,7 +128,6 @@ void stateMachineTask(void *pvParameters){
             motorData.state = MOTOR_STATE_OFF;
             break;
         }
-        //fill with state changes.
     }
 }
 
@@ -144,10 +146,9 @@ void Motor_UpdateMotor() {
 
         // Regen Braking Code (to be updated - has syntax errors)
 
-        TelemetryData *telemetry = Telemetry_GetData();
         float currentSpeed = telemetry->vehicleSpeed;
         float initialSpeed = telemetry->initialSpeed;
-        float brakePressure = BSE_GetBSEReading();
+        float brakePressure = bse.BSE_GetBSEReading();
         float torqueDemand = motorData.torqueDemand;
         float vehicleMass =
             180.0F; // TODO: change this to the actual mass. should include this
@@ -156,10 +157,8 @@ void Motor_UpdateMotor() {
         // only applied when braking
         if (brakePressure > REGEN_BRAKE_THRESHOLD) { // If brakes are applied
             float regenTorque =
-                Motor_CalculateRegenBraking(brakePressure, currentSpeed,
-                                            vehicleMass, initialSpeed,
-                                            torqueDemand);
-
+                Motor_CalculateRegenBraking(brakePressure, currentSpeed);
+                                            //vehicleMass, initialSpeed,torqueDemand);
                 // apply to rear wheels
                 Motor_SetRearMotorTorque(regenTorque);
         }

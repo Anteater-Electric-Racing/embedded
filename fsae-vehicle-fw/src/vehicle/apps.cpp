@@ -92,7 +92,7 @@ void BSE::verifySensorAgreement() {
     }
 }
 
-void BSE::BSE_UpdateData(APPSData* data) {
+void BSE::BSE_UpdateData(BSEData* data) {
     _BSEdata.BSEReading1 = data->BSEReading1;
     _BSEdata.BSEReading2 = data->BSEReading2;
 
