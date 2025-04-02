@@ -15,8 +15,6 @@
 #include "faults.h"
 #include "telemetry.h"
 
-
-
 typedef struct {
     MotorState state;
     float torqueDemand;
@@ -31,9 +29,9 @@ TelemetryData *telemetry;
 /**
  * 3/31 Task List:
  * 1) DONE (Consilidate Telemetry data)
- * 2) stateMachine Edge Cases
- * 3) remove redundant comments
- * 4) Implement Motor Torque commands
+ * 2) stateMachine full path of execution
+ * 3) Implement Motor Torque commands
+ * 4) Put constants in motor.h file
  * 5) Send for Review (4/2)
  */
 
@@ -144,15 +142,18 @@ void Motor_UpdateMotor() {
     }
     case MOTOR_STATE_DRIVING: {
 
-        // Regen Braking Code (to be updated - has syntax errors)
+
+        //review this 4/2
+        float target = 0;
+        float current = 0;
+        float dt = 0;
+        motorData.torqueDemand = std::min(Motor_DirectTorqueControl(20.0F), Motor_TorqueTractionControl(target,current,dt));
 
         float currentSpeed = telemetry->vehicleSpeed;
         float initialSpeed = telemetry->initialSpeed;
         float brakePressure = bse.BSE_GetBSEReading();
-        float torqueDemand = motorData.torqueDemand;
-        float vehicleMass =
-            180.0F; // TODO: change this to the actual mass. should include this
-                    // directly in the regen file or on the top level
+        float vehicleMass = 180.0F; // TODO: change this to the actual mass. should include this
+        // directly in the regen file or on the top level
 
         // only applied when braking
         if (brakePressure > REGEN_BRAKE_THRESHOLD) { // If brakes are applied
@@ -177,14 +178,14 @@ void Motor_UpdateMotor() {
 }
 
 // helper functions
-float Motor_DirectTorqueControl(float &maxToruqe) {
+float Motor_DirectTorqueControl(float const &maxTorque) {
     return apps.APPS_GetAPPSReading() *
-           maxToruqe; // make maxTorque a constant under utils section
+           maxTorque; // make maxTorque a constant under utils section
 }
 
-float Motor_TorqueTractionControl(float &target_slip, float &current_slip,
+float Motor_TorqueTractionControl(float &target_value, float &current_value,
                                   float &dt) {
-    return PID::PID_Calculate(config, target_slip, current_slip, dt);
+    return PID::PID_Calculate(config, target_value, current_value, dt);
 }
 
 float Motor_GetTorqueDemand() { return motorData.torqueDemand; }
