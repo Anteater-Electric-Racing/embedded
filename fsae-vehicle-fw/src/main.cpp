@@ -25,9 +25,6 @@ void setup() { // runs once on bootup
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
-    Serial.println("In setup");
-    Serial.println("Main task started");
-
     Peripherals_Init();
 
     Faults_Init();
