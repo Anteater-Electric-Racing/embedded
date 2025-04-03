@@ -69,7 +69,7 @@ void ADCConversionCompleteCallback() {
 
         adc0Reads[adc0Index] =
             sensorReadADC0; //*LOGIC_LEVEL_V/adc0_MAX_VALUE; // Get value within
-                            //0V to 3.3V range
+                            // 0V to 3.3V range
         adc1Reads[adc1Index] = sensorReadADC1;
 
         ++adc0Index;
