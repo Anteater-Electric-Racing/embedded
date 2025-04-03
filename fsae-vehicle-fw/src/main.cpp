@@ -13,8 +13,9 @@
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
+#include "vehicle/can.h"
 
-void threadMain(void *pvParameters);
+void threadMain( void *pvParameters );
 
 void setup() { // runs once on bootup
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
@@ -25,13 +26,15 @@ void setup() { // runs once on bootup
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
-    // Peripherals_Init();
-
-    // Faults_Init();
+    Peripherals_Init();
+    Faults_Init();
     Telemetry_Init();
+    CAN_Init();
+
+    CAN_Begin();
 
     while (true) {
-        // Main loop
+
     }
 }
 
