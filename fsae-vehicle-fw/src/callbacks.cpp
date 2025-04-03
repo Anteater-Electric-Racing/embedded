@@ -43,19 +43,19 @@ void StartADCScanCallback() {
     adc->adc0->enableInterrupts(ADCConversionCompleteCallback);
     adc->startSynchronizedSingleRead(startPinADC0, startPinADC1); // in callbacks.h
     interrupts();
-    Serial.print("adc 0 values are ");
-    for(int i = 0; i < SENSOR_PIN_AMT_ADC0; ++i){
-        Serial.print(adc0Reads[i]);
-        Serial.print(", ");
-    }
-    Serial.println();
+    // Serial.print("adc 0 values are ");
+    // for(int i = 0; i < SENSOR_PIN_AMT_ADC0; ++i){
+    //     Serial.print(adc0Reads[i]);
+    //     Serial.print(", ");
+    // }
+    // Serial.println();
 
-    Serial.print("adc 1 values are ");
-    for(int i = 0; i < SENSOR_PIN_AMT_ADC1; ++i){
-        Serial.print(adc1Reads[i]);
-        Serial.print(", ");
-    }
-    Serial.println();
+    // Serial.print("adc 1 values are ");
+    // for(int i = 0; i < SENSOR_PIN_AMT_ADC1; ++i){
+    //     Serial.print(adc1Reads[i]);
+    //     Serial.print(", ");
+    // }
+    // Serial.println();
 }
 
 void ADCConversionCompleteCallback () {

@@ -4,7 +4,6 @@
 #define THREAD_MAIN_PRIORITY 1
 
 #include <Arduino.h>
-#include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
 #include "peripherals/peripherals.h"
@@ -33,7 +32,10 @@ void threadMain( void *pvParameters ) {
     CAN_Begin();
 
     while (true) {
-
+        // Main loop code here
+        // This is where you would typically handle tasks, read sensors, etc.
+        Serial.println("Main loop running...");
+        vTaskDelay(1000); // Delay for 1 second
     }
 }
 
