@@ -29,10 +29,10 @@ TelemetryData *telemetry;
 /**
  * 3/31 Task List:
  * 1) DONE (Consilidate Telemetry data)
- * 2) stateMachine full path of execution
- * 3) Implement Motor Torque commands
- * 4) Put constants in motor.h file
- * 5) Send for Review (4/2)
+ * 2) DONE stateMachine full path of execution
+ * 3) DONE Implement Motor Torque commands
+ * 4) Put constants in motor.h file, update all functions in motor.h file
+ * 5) Send for Review (4/4)
  */
 
 
@@ -90,41 +90,46 @@ static bool Motor_TransitionToDriving() {
 }
 
 void stateMachineTask(void *pvParameters){
-    /**TODO:
-     * 1) Pull telemetry data here as a pointer - acess through whole class from here
-     * 2) remove uneeded functions and put into each case
-     */
-
-    while (true){
+     while (true) {
         telemetry = Telemetry_GetData();
         vTaskDelay(pdMS_TO_TICKS(100));
-        switch (motorData.state) // state transition conditions go here
-        {
-        case MOTOR_STATE_OFF:
-            if (Motor_TransitionToPrecharging()){
-                motorData.state = MOTOR_STATE_PRECHARGING;
-            }
-            break;
-        case MOTOR_STATE_PRECHARGING:
-            if (Motor_TransitionToIdle()){
-                motorData.state = MOTOR_STATE_IDLE;
-            }
-            break;
-        case MOTOR_STATE_IDLE:
-            if(Motor_TransitionToDriving()){
-                motorData.state = MOTOR_STATE_DRIVING;
-            }
-            break;
-        case MOTOR_STATE_DRIVING:
-            if (!Motor_CheckReadyToDrive()){
-                motorData.state = MOTOR_STATE_FAULT;
-            }
-            break;
-        case MOTOR_STATE_FAULT:
-            break;
-        default:
-            motorData.state = MOTOR_STATE_OFF;
-            break;
+
+        switch (motorData.state) {
+            case MOTOR_STATE_OFF:
+                if (Motor_TransitionToIdle()) {
+                    motorData.state = MOTOR_STATE_IDLE;
+                }
+                break;
+
+            case MOTOR_STATE_IDLE:
+                if (!Faults_CheckAllClear()) {
+                    motorData.state = MOTOR_STATE_FAULT;
+                } else if (Motor_TransitionToPrecharging()) {
+                    motorData.state = MOTOR_STATE_PRECHARGING;
+                }
+                break;
+
+            case MOTOR_STATE_PRECHARGING:
+                if (!Faults_CheckAllClear()) {
+                    motorData.state = MOTOR_STATE_FAULT;
+                } else if (Motor_TransitionToDriving()) {
+                    motorData.state = MOTOR_STATE_DRIVING;
+                }
+                break;
+
+            case MOTOR_STATE_DRIVING:
+                if (!Faults_CheckAllClear()) {
+                    motorData.state = MOTOR_STATE_FAULT;
+                }
+                break;
+
+            case MOTOR_STATE_FAULT:
+                // Handle fault state, combine with fault module
+                break;
+
+            default:
+                motorData.state = MOTOR_STATE_OFF;
+                break;
         }
     }
 }
@@ -197,13 +202,12 @@ float Motor_SetRearMotorTorque(float regenTorque) {
     // TODO: create function to apply regen torque to back wheels
     Motor_SetRearMotorTorque(regenTorque);
 }
-void Motor_SetFaultState() { motorData.state = MOTOR_STATE_FAULT; }
+// void Motor_SetFaultState() { motorData.state = MOTOR_STATE_FAULT; }
 
-bool Motor_CheckReadyToDrive() {
-    // check if faults are clear
-    if (!Faults_CheckAllClear() || !Motor_CheckReadyToDrive()) {
-        Motor_SetFaultState();
-        return false;
-    }
-    // check if systems are ready
-}
+
+// bool Motor_CheckReadyToDrive() {
+//     // check if faults are clear
+//     if (!Faults_CheckAllClear() || !Motor_CheckReadyToDrive()) {
+//         return false;
+//     }
+// }
