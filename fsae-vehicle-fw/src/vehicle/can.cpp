@@ -28,16 +28,19 @@ void CAN_Init() {
 
 void CAN_Begin() {
     xTaskCreate(threadCAN, "threadCAN", THREAD_CAN_STACK_SIZE, NULL, THREAD_CAN_PRIORITY, NULL);
-    vTaskStartScheduler();
 }
 
 void threadCAN(void *pvParameters){
     while(true){
-        int res = can3.write(MB0, msg);
-        can3.mailboxStatus();
+        msg.id = 0x123; // Set the CAN ID
+        msg.len = 8; // Set the length of the message
+        // int res = can3.write(MB0, msg)
+        int res = can3.write(msg);
+        // can3.mailboxStatus();
         Serial.println(res);
         msg.id++;
-        vTaskDelay(1000);
+        Serial.println("CAN thread running...");
+        vTaskDelay(100);
     }
 }
 
