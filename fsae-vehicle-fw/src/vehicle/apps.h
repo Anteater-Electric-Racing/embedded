@@ -1,14 +1,11 @@
 // Anteater Electric Racing, 2025
 
+#include "bse.h"
+
 typedef struct {
     float appsReading1;
     float appsReading2;
 } APPSData;
-
-typedef struct {
-    float BSEReading1;
-    float BSEReading2;
-} BSEData;
 
 class APPS {
   private:
@@ -23,19 +20,4 @@ class APPS {
 
     void APPS_UpdateData(APPSData *data);
     float APPS_GetAPPSReading();
-};
-
-class BSE {
-  private:
-    BSEData _BSEdata;
-
-    void checkAndHandleBSEFault();
-    void verifySensorAgreement();
-
-  public:
-    BSE();
-    ~BSE();
-
-    void BSE_UpdateData(APPSData *data);
-    float BSE_GetBSEReading();
 };
