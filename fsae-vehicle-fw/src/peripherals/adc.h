@@ -1,6 +1,5 @@
 // Anteater Electric Racing, 2025
 
-#include <cstdint>
 #include <ADC.h>
 #define SENSOR_PIN_AMT_ADC0 8
 #define SENSOR_PIN_AMT_ADC1 8
@@ -16,4 +15,4 @@ static volatile uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
 static ADC *adc = new ADC();
 
-void ADC1_init();
+void ADC1_Init();
