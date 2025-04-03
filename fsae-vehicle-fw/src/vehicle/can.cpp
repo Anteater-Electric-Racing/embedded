@@ -7,12 +7,11 @@
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
-
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t msg;
 CAN_message_t rx_msg;
 
-void threadCAN( void *pvParameters );
+void threadCAN(void *pvParameters);
 
 void CAN_Init() {
     // Initialize CAN bus
@@ -27,13 +26,14 @@ void CAN_Init() {
 }
 
 void CAN_Begin() {
-    xTaskCreate(threadCAN, "threadCAN", THREAD_CAN_STACK_SIZE, NULL, THREAD_CAN_PRIORITY, NULL);
+    xTaskCreate(threadCAN, "threadCAN", THREAD_CAN_STACK_SIZE, NULL,
+                THREAD_CAN_PRIORITY, NULL);
 }
 
-void threadCAN(void *pvParameters){
-    while(true){
+void threadCAN(void *pvParameters) {
+    while (true) {
         msg.id = 0x123; // Set the CAN ID
-        msg.len = 8; // Set the length of the message
+        msg.len = 8;    // Set the length of the message
         // int res = can3.write(MB0, msg)
         int res = can3.write(msg);
         // can3.mailboxStatus();
@@ -43,5 +43,3 @@ void threadCAN(void *pvParameters){
         vTaskDelay(100);
     }
 }
-
-
