@@ -10,6 +10,7 @@
 #include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
 
+#include "vehicle/can.h"
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
@@ -26,9 +27,11 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
     Peripherals_Init();
-
     Faults_Init();
     Telemetry_Init();
+    CAN_Init();
+
+    CAN_Begin();
 
     while (true) {
         // Main loop
