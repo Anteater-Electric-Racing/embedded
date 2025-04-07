@@ -4,12 +4,12 @@
 #define THREAD_MAIN_PRIORITY 1
 
 #include <Arduino.h>
-#include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
 #include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
 
+#include "vehicle/can.h"
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
@@ -26,12 +26,17 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
     Peripherals_Init();
-
     Faults_Init();
     Telemetry_Init();
+    CAN_Init();
+
+    CAN_Begin();
 
     while (true) {
-        // Main loop
+        // Main loop code here
+        // This is where you would typically handle tasks, read sensors, etc.
+        Serial.println("Main loop running...");
+        vTaskDelay(1000); // Delay for 1 second
     }
 }
 
