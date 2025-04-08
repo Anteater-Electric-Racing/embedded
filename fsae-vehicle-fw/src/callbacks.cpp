@@ -7,6 +7,8 @@
 #include "vehicle/bse.h"
 #include "vehicle/apps.h"
 #include "vehicle/faults.h"
+#include "vehicle/telemetry.h"
+#include "vehicle/motor.h"
 
 #define LOGIC_LEVEL_V 3.3
 #define ADC_RESOLUTION 10
@@ -98,9 +100,23 @@ void ADCConversionCompleteCallback () {
     }
     interrupts();
 
+    // Update each sensors data
     APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
     BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
 
+    // Handle any faults that were raised
     Faults_HandleFaults();
+
+    Motor_UpdateMotor();
+
+    // Update telemetry data
+    TelemetryData telemetryData = {
+        .APPS_Travel = APPS_GetAPPSReading(),
+        .BSEFront_PSI = BSE_GetBSEReading()->bseFront_PSI,
+        .BSERear_PSI = BSE_GetBSEReading()->bseRear_PSI,
+    };
+
+    Telemetry_UpdateData(&telemetryData);
+
 }
 

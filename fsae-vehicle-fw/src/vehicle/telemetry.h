@@ -16,7 +16,7 @@ typedef struct {
 } TelemetryData;
 
 void Telemetry_Init();
-TelemetryData* Telemetry_GetData();
+TelemetryData const* Telemetry_GetData();
 void Telemetry_UpdateData(TelemetryData* data);
 
 #endif

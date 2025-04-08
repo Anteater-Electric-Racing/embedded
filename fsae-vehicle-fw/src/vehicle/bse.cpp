@@ -1,6 +1,13 @@
 // Anteater Electric Racing, 2025
 
-#define LOGIC_LEVEL_V 3.3F
+#include <cmath>
+
+#include "utils/utils.h"
+
+#include "bse.h"
+
+#include "vehicle/faults.h"
+
 #define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
 #define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / 4095.0F)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
 
@@ -9,12 +16,6 @@
 #define BSE_LOWER_THRESHOLD 0.5F
 #define BSE_UPPER_THRESHOLD 4.5F
 #define BSE_IMPLAUSABILITY_THRESHOLD 0.1F
-
-#include <cmath>
-
-#include "bse.h"
-
-#include "vehicle/faults.h"
 
 static BSEData bseData;
 

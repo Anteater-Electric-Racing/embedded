@@ -1,22 +1,22 @@
 // Anteater Electric Racing, 2025
 
-#define APPS_IMPLAUSABILITY_THRESHOLD 10           // 10%
-#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 25 // 25%
-#define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 200  // PSI
-
-#define LOGIC_LEVEL_V 3.3
-#define VOLTAGE_DIVIDER 2.0F
-#define APPS_ADC_TO_VOLTAGE(x)                                                 \
-    ((x) * (LOGIC_LEVEL_V / 4095.0F)) * VOLTAGE_DIVIDER
-
-#define APPS_3V_PERCENTAGE(x) ((x) / 3.3F) * 100
-#define APPS_5V_PERCENTAGE(x) ((x) / 5.0F) * 100
-
 #include <cmath>
+
+#include "utils/utils.h"
 
 #include "apps.h"
 
 #include "vehicle/faults.h"
+
+#define APPS_IMPLAUSABILITY_THRESHOLD 10           // 10%
+#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 25 // 25%
+#define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 200  // PSI
+
+#define VOLTAGE_DIVIDER 2.0F
+#define APPS_ADC_TO_VOLTAGE(x) ((x) * (LOGIC_LEVEL_V / 4095.0F)) * VOLTAGE_DIVIDER
+
+#define APPS_3V3_PERCENTAGE(x) ((x) / 3.3F) * 100
+#define APPS_5V_PERCENTAGE(x) ((x) / 5.0F) * 100
 
 void APPS_Init() {
     appsData.appsReading1_Percentage = 0;
@@ -52,7 +52,7 @@ void checkAndHandlePlausibilityFault() {
 
 void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
     appsData.appsReading1_Percentage =
-        APPS_3V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading1));
+        APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading1));
     appsData.appsReading2_Percentage =
         APPS_5V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading2));
 
