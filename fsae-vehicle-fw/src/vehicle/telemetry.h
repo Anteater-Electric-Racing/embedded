@@ -1,7 +1,6 @@
 // Anteater Electric Racing, 2025
 
-#ifndef TELEMETRY_H
-#define TELEMETRY_H
+#pragma once
 
 typedef struct {
     float APPS_Travel; // APPS travel in %
@@ -19,4 +18,3 @@ void Telemetry_Init();
 TelemetryData const* Telemetry_GetData();
 void Telemetry_UpdateData(TelemetryData* data);
 
-#endif

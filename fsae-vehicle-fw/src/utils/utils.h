@@ -1,7 +1,6 @@
 // Anteater Electric Racing, 2025
 
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 #define LOGIC_LEVEL_V 3.3F
 
@@ -15,4 +14,3 @@
             NEW = ALPHA * OLD + (1.0 - ALPHA) * OLD ;\
            }
 
-#endif
