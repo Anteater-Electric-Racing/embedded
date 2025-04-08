@@ -1,12 +1,12 @@
 // Anteater Electric Racing, 2025
 
+#include <stdint.h>
+
 typedef struct {
-    float bseReading1;
-    float bseReading2;
+    float bseFront_PSI; // front brake pressure in PSI
+    float bseRear_PSI; // rear brake pressure in PSI
 } BSEData;
 
-BSEData bseData;
-
 void BSE_Init();
-void BSE_UpdateData(BSEData *data);
-float BSE_GetBSEReading();
+void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2);
+BSEData* BSE_GetBSEReading();
