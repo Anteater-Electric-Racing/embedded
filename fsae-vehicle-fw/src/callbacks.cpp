@@ -98,6 +98,11 @@ void ADCConversionCompleteCallback () {
         adc->adc1->enableInterrupts(ADCConversionCompleteCallback, adc1Index); // Priority gets lower as it's further in the index array
         adc->adc1->startSingleRead(adc1Pins[adc1Index]); // in callbacks.h
     }
+
+    // Simulate ADC readings to test
+    adc0Reads[APPS_1_INDEX] = 0; // Simulated value for APPS 1
+    adc0Reads[APPS_2_INDEX] = 512; // Simulated value for APPS 2
+
     interrupts();
 
     // Update each sensors data
