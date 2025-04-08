@@ -10,6 +10,7 @@
 #include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
 
+#include "vehicle/bse.h"
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
@@ -26,6 +27,8 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
     Peripherals_Init();
+
+    BSE_Init();
 
     Faults_Init();
     Telemetry_Init();

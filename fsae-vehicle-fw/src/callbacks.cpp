@@ -4,6 +4,9 @@
 #include "callbacks.h"
 #include "peripherals/adc.h"
 
+#include "vehicle/bse.h"
+#include "vehicle/faults.h"
+
 #define LOGIC_LEVEL_V 3.3
 #define ADC_RESOLUTION 10
 #define adc0_MAX_VALUE (1 << ADC_RESOLUTION) - 1
@@ -93,5 +96,9 @@ void ADCConversionCompleteCallback () {
         adc->adc1->startSingleRead(adc1Pins[adc1Index]); // in callbacks.h
     }
     interrupts();
+
+    BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
+
+    Faults_HandleFaults();
 }
 

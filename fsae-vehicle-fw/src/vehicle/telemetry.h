@@ -4,8 +4,13 @@
 #define TELEMETRY_H
 
 typedef struct {
+    float APPS_Travel; // APPS travel in %
+
+    float BSEFront_PSI; // front brake pressure in PSI
+    float BSERear_PSI; // rear brake pressure in PSI
+
     float accumulatorVoltage;
-    float accumulatorTemp;
+    float accumulatorTemp_F;
 
     float tractiveSystemVoltage;
 } TelemetryData;
