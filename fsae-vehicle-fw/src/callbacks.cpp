@@ -5,6 +5,7 @@
 #include "peripherals/adc.h"
 
 #include "vehicle/bse.h"
+#include "vehicle/apps.h"
 #include "vehicle/faults.h"
 
 #define LOGIC_LEVEL_V 3.3
@@ -97,6 +98,7 @@ void ADCConversionCompleteCallback () {
     }
     interrupts();
 
+    APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
     BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
 
     Faults_HandleFaults();
