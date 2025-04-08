@@ -5,17 +5,8 @@ typedef struct {
     float bseReading2;
 } BSEData;
 
-class BSE {
-  private:
-    BSEData _BSEdata;
+BSEData bseData;
 
-    void checkAndHandleBSEFault();
-    void verifySensorAgreement();
-
-  public:
-    BSE();
-    ~BSE();
-
-    void BSE_UpdateData(BSEData *data);
-    float BSE_GetBSEReading();
-};
+void BSE_Init();
+void BSE_UpdateData(BSEData *data);
+float BSE_GetBSEReading();
