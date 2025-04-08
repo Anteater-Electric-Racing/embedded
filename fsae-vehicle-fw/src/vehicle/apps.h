@@ -7,17 +7,10 @@ typedef struct {
     float appsReading2;
 } APPSData;
 
-class APPS {
-  private:
-    APPSData _APPSdata;
+static APPSData appsData;
 
-    void checkAndHandleAPPSFault();
-    void checkAndHandlePlausibilityFault(BSE *bse);
-
-  public:
-    APPS();
-    ~APPS();
-
-    void APPS_UpdateData(APPSData *data);
-    float APPS_GetAPPSReading();
-};
+void APPS_Init();
+void checkAndHandleAPPSFault();
+void checkAndHandlePlausibilityFault();
+void APPS_UpdateData(APPSData *data);
+float APPS_GetAPPSReading();
