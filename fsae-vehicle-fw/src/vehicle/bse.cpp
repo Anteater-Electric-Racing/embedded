@@ -6,9 +6,9 @@
 
 #define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
 
-#define BSE_LOWER_THRESHOLD 0.5
-#define BSE_UPPER_THRESHOLD 4.5
-#define BSE_IMPLAUSABILITY_THRESHOLD 0.1
+#define BSE_LOWER_THRESHOLD 0.5F
+#define BSE_UPPER_THRESHOLD 4.5F
+#define BSE_IMPLAUSABILITY_THRESHOLD 0.1F
 
 #include <cmath>
 
