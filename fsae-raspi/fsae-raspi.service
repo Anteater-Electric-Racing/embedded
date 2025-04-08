@@ -1,0 +1,13 @@
+[Unit]
+Description=FSAE Raspi Service
+After=network.target
+
+[Service]
+User=fsae
+WorkingDirectory=/home/fsae/embedded
+ExecStart=/home/fsae/.cargo/bin/cargo run --bin fsae-raspi
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

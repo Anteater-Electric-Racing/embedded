@@ -5,40 +5,31 @@
 
 
 #include <Arduino.h>
+#include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
+#include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
-#include "peripherals/watchdog.h"
-
 
 void threadMain( void *pvParameters );
 
-void setup() {
-  
-  
-  
-  xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
-  vTaskStartScheduler();
+void setup() { // runs once on bootup
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
+                THREAD_MAIN_PRIORITY, NULL);
+    vTaskStartScheduler();
 }
 
-void threadMain( void *pvParameters ) {
-  Serial.begin(9600);
-  // Peripherals_init();
-  // Watchdog_Init();
+void threadMain(void *pvParameters) {
+    Serial.begin(9600);
 
-  //delay(500);
-  // while (!Serial && millis() < 4000); // test
-  Serial.println("System starting..."); // Testing
+    Peripherals_Init();
 
-  while (true) {
-    // Tells the computer to wait
-    vTaskDelay(1000);
+    Faults_Init();
+    Telemetry_Init();
 
-    // Only pet the watchdog if all sensors are working
-    if (checkSensors()) {
-        // Watchdog_Pet();
+    while (true) {
+        // Main loop
     }
-  }
 }
 
 void loop() {}
