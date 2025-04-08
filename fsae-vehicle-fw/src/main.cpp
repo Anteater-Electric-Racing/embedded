@@ -10,6 +10,8 @@
 
 #include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
+#include "vehicle/faults.h"
+#include "vehicle/telemetry.h"
 
 void threadMain( void *pvParameters );
 
