@@ -3,8 +3,8 @@
 #include "bse.h"
 
 typedef struct {
-    float appsReading1_Percentage; // 0-100%
-    float appsReading2_Percentage; // 0-100%
+    float appsReading1_Percentage; // 0-1
+    float appsReading2_Percentage; // 0-1
 } APPSData;
 
 static APPSData appsData;
