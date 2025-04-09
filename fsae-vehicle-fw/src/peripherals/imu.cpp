@@ -38,9 +38,6 @@ void IMU_Read(void *pvParameters) {
                 }
             }
 
-            Wire.beginTransmission(IMU_ID);
-            Wire.write(IMU_REG);
-            Wire.endTransmission(false);
             Wire.requestFrom(IMU_ID, num_Reg * 2, true);
         }
     }
