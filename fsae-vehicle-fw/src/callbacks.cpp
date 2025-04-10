@@ -100,8 +100,9 @@ void ADCConversionCompleteCallback () {
     }
 
     // Simulate ADC readings to test
-    adc0Reads[APPS_1_INDEX] = 0; // Simulated value for APPS 1
-    adc0Reads[APPS_2_INDEX] = 512; // Simulated value for APPS 2
+    static uint32_t ticks = 0;
+    adc0Reads[APPS_1_INDEX] = (1 * (ticks/10)) % 4095; // Simulated value for APPS 1
+    adc0Reads[APPS_2_INDEX] = 2048; // Simulated value for APPS 2
 
     interrupts();
 

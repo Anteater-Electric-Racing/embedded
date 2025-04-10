@@ -18,9 +18,23 @@
 #define APPS_3V3_PERCENTAGE(x) ((x) / 3.3F)
 #define APPS_5V_PERCENTAGE(x) ((x) / 5.0F)
 
+typedef struct {
+    float apps1RawReading;
+    float apps2RawReading;
+} APPSRawData;
+
+static APPSRawData appsRaw;
+static APPSData appsData;
+
+static void checkAndHandleAPPSFault();
+static void checkAndHandlePlausibilityFault();
+
 void APPS_Init() {
     appsData.appsReading1_Percentage = 0;
     appsData.appsReading2_Percentage = 0;
+
+    appsRaw.apps1RawReading = 0;
+    appsRaw.apps2RawReading = 0;
 }
 
 void checkAndHandleAPPSFault() {
@@ -50,12 +64,17 @@ void checkAndHandlePlausibilityFault() {
 }
 
 void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
+    // Filter incoming values
+    LOWPASS_FILTER(rawReading1, appsRaw.apps1RawReading, COMPUTE_ALPHA(100.0F));
+    LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, COMPUTE_ALPHA(100.0F));
+
     appsData.appsReading1_Percentage =
         APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading1));
     appsData.appsReading2_Percentage =
         APPS_5V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading2));
 
     checkAndHandleAPPSFault();
+    checkAndHandlePlausibilityFault();
 }
 
 float APPS_GetAPPSReading() {
