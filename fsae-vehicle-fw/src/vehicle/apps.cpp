@@ -25,6 +25,7 @@ typedef struct {
 
 static APPSRawData appsRaw;
 static APPSData appsData;
+static float appsAlpha;
 
 static void checkAndHandleAPPSFault();
 static void checkAndHandlePlausibilityFault();
@@ -35,6 +36,8 @@ void APPS_Init() {
 
     appsRaw.apps1RawReading = 0;
     appsRaw.apps2RawReading = 0;
+
+    appsAlpha = COMPUTE_ALPHA(1000.0F);
 }
 
 void checkAndHandleAPPSFault() {
@@ -65,11 +68,14 @@ void checkAndHandlePlausibilityFault() {
 
 void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
     // Filter incoming values
-    LOWPASS_FILTER(rawReading1, appsRaw.apps1RawReading, COMPUTE_ALPHA(100.0F));
-    LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, COMPUTE_ALPHA(100.0F));
+    float newReading1 = rawReading1;
+    float newReading2 = rawReading2;
+
+    LOWPASS_FILTER(newReading1, appsRaw.apps1RawReading, appsAlpha);
+    LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, appsAlpha);
 
     appsData.appsReading1_Percentage =
-        APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading1));
+        APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(appsRaw.apps1RawReading));
     appsData.appsReading2_Percentage =
         APPS_5V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading2));
 
@@ -78,5 +84,6 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
 }
 
 float APPS_GetAPPSReading() {
-    return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
+    return appsData.appsReading1_Percentage;
+    // return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
 }

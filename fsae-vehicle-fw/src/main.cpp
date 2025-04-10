@@ -34,7 +34,12 @@ void threadMain(void *pvParameters) {
     Telemetry_Init();
 
     while (true) {
-        // Main loop
+        TelemetryData const* telem = Telemetry_GetData();
+        Serial.print(telem->APPS_Travel);
+        Serial.print(" ");
+        Serial.print(telem->motorState);
+        Serial.println();
+        vTaskDelay(100);
     }
 }
 

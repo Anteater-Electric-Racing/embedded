@@ -1,6 +1,9 @@
 // Anteater Electric Racing, 2025
-
 #pragma once
+
+#include <stdint.h>
+
+#include "motor.h"
 
 typedef struct {
     float APPS_Travel; // APPS travel in %
@@ -12,6 +15,10 @@ typedef struct {
     float accumulatorTemp_F;
 
     float tractiveSystemVoltage;
+
+    MotorState motorState; // Motor state
+
+    uint32_t debug[4]; // Debug data
 } TelemetryData;
 
 void Telemetry_Init();
