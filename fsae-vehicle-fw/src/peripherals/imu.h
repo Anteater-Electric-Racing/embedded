@@ -21,7 +21,7 @@ typedef struct {
     int16_t gyro_x;
     int16_t gyro_y;
     int16_t gyro_z;
-} IMUData
+} IMUData;
 
 void IMU_Read(void *pvParameters);
 void IMU_Init();

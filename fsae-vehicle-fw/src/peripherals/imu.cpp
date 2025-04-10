@@ -6,7 +6,15 @@
 #define THREAD_IMU_STACK_SIZE 128
 #define THREAD_IMU_PRIORITY 1
 
-static struct IMUData imu_dat;
+
+template <typename T>
+T constrain(T val, T minVal, T maxVal) {
+    if (val < minVal) return minVal;
+    if (val > maxVal) return maxVal;
+    return val;
+}
+
+static IMUData imu_dat;
 
 // Telemetry object is const pointer bc of mutual exclusion,
 // so we just update local struct and telemetry pulls from it
@@ -25,7 +33,8 @@ void IMU_Read(void *pvParameters) {
 
             for (int i = 0; i < num_Reg; i++) {
                 int16_t data = Wire.read() << 8 | Wire.read();
-                data = constrain(map(data, -1700, 1700, 0, 127));
+                int16_t mappedData = map(data, -1700, 1700, 0, 127);
+                data = constrain((int16_t)mappedData, (int16_t)0, (int16_t)127);
 
                 switch (i) {
                     case 0: imu_dat.accel_x = data; break;
