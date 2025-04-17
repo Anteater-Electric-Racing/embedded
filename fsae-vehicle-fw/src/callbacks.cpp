@@ -3,6 +3,7 @@
 #include <ADC.h>
 #include "callbacks.h"
 #include "peripherals/adc.h"
+#include "vehicle/telemetry.h"
 
 #define LOGIC_LEVEL_V 3.3
 #define ADC_RESOLUTION 10
@@ -85,7 +86,10 @@ void ADCConversionCompleteCallback () {
     if(adc0Index >= SENSOR_PIN_AMT_ADC0 && adc1Index >= SENSOR_PIN_AMT_ADC1){ // Do here so we don't start a read for an invalid pin
         adc0Index = 0;
         adc1Index = 0;
-        // transmit data
+
+        // TODO: transmit data
+        Telemetry_UpdateADCData(adc0Reads, adc1Reads);
+
     } else if(adc0Index < SENSOR_PIN_AMT_ADC0){ // Do here so we don't start a read for an invalid pin
         adc->adc0->enableInterrupts(ADCConversionCompleteCallback, adc0Index); // Priority gets lower as it's further in the index array
         adc->adc0->startSingleRead(adc0Pins[adc0Index]); // in callbacks.h
