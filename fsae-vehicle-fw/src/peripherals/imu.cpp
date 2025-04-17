@@ -29,7 +29,7 @@ void IMU_Read(void *pvParameters) {
     while(true){
         // TODO:
         // Check if enough bytes available
-        if (Wire.available() < num_Reg * 2) {
+        if (Wire.available() == num_Reg * 2) {
 
             for (int i = 0; i < num_Reg; i++) {
                 int16_t data = Wire.read() << 8 | Wire.read();
