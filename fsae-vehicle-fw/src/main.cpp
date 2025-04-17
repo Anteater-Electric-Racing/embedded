@@ -3,18 +3,17 @@
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
 
+
 #include <Arduino.h>
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
 #include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
-
 #include "vehicle/faults.h"
-#include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 
-void threadMain(void *pvParameters);
+void threadMain( void *pvParameters );
 
 void setup() { // runs once on bootup
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
@@ -36,3 +35,26 @@ void threadMain(void *pvParameters) {
 }
 
 void loop() {}
+
+// Update sensor last updates
+/*
+void updateBrakeSensor() {
+    sensorLastUpdate.brake = millis();
+}
+
+void updateSuspensionSensor() {
+    sensorLastUpdate.suspension = millis();
+}
+
+void updatePedalSensor() {
+    sensorLastUpdate.pedal = millis();
+}
+
+void updateImuSensor() {
+    sensorLastUpdate.imu = millis();
+}
+
+void updateGpsSensor() {
+    sensorLastUpdate.gps = millis();
+}
+*/
