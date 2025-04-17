@@ -40,7 +40,7 @@ fn main() -> Result<(), socketcan_isotp::Error> {
         }
         println!("");
 
-        if buffer.len() < 28 {
+        if buffer.len() < 44 {
             println!("    Buffer too small to construct TelemetryData");
             continue;
         }
