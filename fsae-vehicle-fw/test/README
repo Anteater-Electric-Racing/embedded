@@ -9,3 +9,27 @@ in the development cycle.
 
 More information about PlatformIO Unit Testing:
 - https://docs.platformio.org/en/latest/advanced/unit-testing/index.html
+
+
+## APPS Tests
+
+| Test Case                                  | Description                                     | Expected Behavior                        |
+|--------------------------------------------|-------------------------------------------------|------------------------------------------|
+| APPS Initialization                        | Ensure APPS_Init sets readings to 0             | No faults, values = 0                    |
+| APPS Implausibility Fault                  | >10% disagreement between sensors               | Fault set: FAULT_APPS                    |
+| APPS + Brake Plausibility Fault            | Throttle >25%, Brake >200 PSI                   | Fault set: FAULT_APPS_BRAKE_PLAUSIBILITY |
+| APPS ADC to Voltage                        | Convert ADC to real-world voltage               | Accurate voltage conversion              |
+| APPS Low Pass Filter                       | Apply LPF to noisy input                        | Smoothed output                          |
+
+## BSE Tests
+
+| Test Case                                  | Description                                     | Expected Behavior                        |
+|--------------------------------------------|-------------------------------------------------|------------------------------------------|
+| BSE Initialization                         | Ensure BSE_Init sets readings to 0              | No faults, values = 0                    |
+| BSE Voltage Range Fault                    | Voltage outside 0.5V - 4.5V                     | Fault set: FAULT_BSE                     |
+| BSE ADC to Voltage                         | Convert ADC to real-world voltage               | Accurate voltage conversion              |
+| BSE Voltage to PSI                         | Convert voltage to PSI                          | Accurate PSI output                      |
+| BSE Implausibility Fault (optional)        | >10% PSI disagreement between front/rear        | Fault set: FAULT_BSE_IMPLAUSIBILITY (?)  |
+| BSE Low Pass Filter                        | Apply LPF to noisy input                        | Smoothed output                          |
+
+## Fault Module Tests
