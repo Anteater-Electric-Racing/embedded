@@ -27,7 +27,7 @@ fn main() -> Result<(), socketcan_isotp::Error> {
     let mut tp_socket = IsoTpSocket::open(
         "can0",
         StandardId::new(0x666).expect("Invalid src id"),
-        StandardId::new(0x020902).expect("Invalid dst id"),
+        StandardId::new(0x777).expect("Invalid dst id"),
     )?;
 
     loop {

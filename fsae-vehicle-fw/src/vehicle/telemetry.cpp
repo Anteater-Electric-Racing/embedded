@@ -5,7 +5,7 @@
 #include <isotp_server.h>
 
 const uint32_t canid = 0x666; // TODO: Get real CAN ID
-const uint32_t request = 0x020902; // TODO: Get real request ID
+const uint32_t request = 0x777; // TODO: Get real request ID
 TelemetryData telemetryData;
 static uint8_t serializedTelemetryBuf[sizeof(TelemetryData)];
 isotp_server<canid, STANDARD_ID, request, serializedTelemetryBuf, sizeof(serializedTelemetryBuf)> myResource;
