@@ -24,6 +24,7 @@ fn extract_adc_reads(slice: &[u8], count: usize) -> [u16; SENSOR_PIN_AMT_ADC0] {
 }
 
 fn main() -> Result<(), socketcan_isotp::Error> {
+    println!("Starting socketcan_isotp example");
     let mut tp_socket = IsoTpSocket::open(
         "can0",
         StandardId::new(0x666).expect("Invalid src id"),
