@@ -47,27 +47,39 @@ void Telemetry_CANSetup() {
     delay(400);
     Can1.begin();
     Can1.setClock(CLK_60MHz);
-    Can1.setBaudRate(95238);
+    Can1.setBaudRate(5000);
     Can1.setMaxMB(16);
     Can1.enableFIFO();
     Can1.enableFIFOInterrupt();
     Can1.onReceive(Telemetry_CanSniff);
     myResource.begin();
     myResource.setWriteBus(&Can1); /* we write to this bus */
+
+    // Testing CAN message
+    // const CAN_message_t message = CAN_message_t();
+//   uint32_t id = 0;          // can identifier
+//   uint16_t timestamp = 0;   // FlexCAN time when message arrived
+//   uint8_t idhit = 0; // filter that id came from
+//   struct {
+//     bool extended = 0; // identifier is extended (29-bit)
+//     bool remote = 0;  // remote transmission request packet type
+//     bool overrun = 0; // message overrun
+//     bool reserved = 0;
+//   } flags;
+//   uint8_t len = 8;      // length of data
+//   uint8_t buf[8] = { 0 };       // data
+//   int8_t mb = 0;       // used to identify mailbox reception
+//   uint8_t bus = 0;      // used to identify where the message came from when events() is used.
+//   bool seq = 0;         // sequential frames
+// } CAN_message_t;
+    // while(true){
+    //     Telemetry_CanSniff(message);
+    // }
+
 }
 
 TelemetryData* Telemetry_GetData() {
     return &telemetryData;
-}
-
-void Telemetry_UpdateData(TelemetryData* data) {
-    telemetryData = *data;
-}
-
-void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads){
-    memcpy(telemetryData.adc0Reads, (const uint16_t*)adc0reads, sizeof(telemetryData.adc0Reads));
-    memcpy(telemetryData.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryData.adc1Reads));
-    Telemetry_SerializeData(telemetryData);
 }
 
 void floatToBytes(float val, uint8_t* buf) {
@@ -80,6 +92,19 @@ void Telemetry_SerializeData(TelemetryData data){
     floatToBytes(data.tractiveSystemVoltage, serializedTelemetryBuf + 8); // copy float tractive system voltage (bytes 8-11)
     memcpy(serializedTelemetryBuf + 12, &data, sizeof(data) - 12); // copy rest of data
 }
+
+
+void Telemetry_UpdateData(TelemetryData* data) {
+    telemetryData = *data;
+}
+
+void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads){
+    memcpy(telemetryData.adc0Reads, (const uint16_t*)adc0reads, sizeof(telemetryData.adc0Reads));
+    memcpy(telemetryData.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryData.adc1Reads));
+    Telemetry_SerializeData(telemetryData);
+}
+
+
 
 // void Telemetry_TransmitData(){
 //     Telemetry_SerializeData(telemetryData);

@@ -25,9 +25,9 @@ void setup() { // runs once on bootup
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
-    Peripherals_Init();
+    // Peripherals_Init();
 
-    Faults_Init();
+    // Faults_Init();
     Telemetry_Init();
 
     while (true) {
