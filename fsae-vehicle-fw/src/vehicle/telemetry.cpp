@@ -19,7 +19,12 @@ void Telemetry_Init() {
         .accumulatorTemp = 0,
         .tractiveSystemVoltage = 0
     };
-    // TODO: Initialize adc reads data
+    // TODO: Initialize adc reads data with more helpful default values
+    uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0] = {0, 0, 0, 0, 0, 0, 0, 0};
+    uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1] = {0, 0, 0, 0, 0, 0, 0, 0};
+    Telemetry_SerializeData(telemetryData); // May be problematic if we forget to call this somewhere after updating data
+
+    Telemetry_CANSetup();
 }
 
 void Telemetry_CanSniff(const CAN_message_t &msg) {
@@ -37,16 +42,18 @@ void Telemetry_CanSniff(const CAN_message_t &msg) {
 }
 
 void Telemetry_CANSetup() {
-  Serial.begin(115200); delay(400);
-  Can1.begin();
-  Can1.setClock(CLK_60MHz);
-  Can1.setBaudRate(95238);
-  Can1.setMaxMB(16);
-  Can1.enableFIFO();
-  Can1.enableFIFOInterrupt();
-  Can1.onReceive(Telemetry_CanSniff);
-  myResource.begin();
-  myResource.setWriteBus(&Can1); /* we write to this bus */
+    // TODO: ensure these numbers line up with expected
+    Serial.begin(115200);
+    delay(400);
+    Can1.begin();
+    Can1.setClock(CLK_60MHz);
+    Can1.setBaudRate(95238);
+    Can1.setMaxMB(16);
+    Can1.enableFIFO();
+    Can1.enableFIFOInterrupt();
+    Can1.onReceive(Telemetry_CanSniff);
+    myResource.begin();
+    myResource.setWriteBus(&Can1); /* we write to this bus */
 }
 
 TelemetryData* Telemetry_GetData() {
