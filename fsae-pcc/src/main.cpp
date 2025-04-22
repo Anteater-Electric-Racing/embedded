@@ -1,18 +1,20 @@
+// Anteater Electric Racing, 2025
+
+#define THREAD_MAIN_STACK_SIZE 128
+#define THREAD_MAIN_PRIORITY 1
+
 #include <Arduino.h>
+#include <arduino_freertos.h>
 
-// put function declarations here:
-int myFunction(int, int);
+void threadMain(void *pvParameters);
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+void setup() { // runs once on bootup
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
+                THREAD_MAIN_PRIORITY, NULL);
+    vTaskStartScheduler();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void threadMain(void *pvParameters) {
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
-}
+void loop() {}
