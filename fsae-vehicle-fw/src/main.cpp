@@ -38,6 +38,8 @@ void threadMain(void *pvParameters) {
 
     CAN_Begin();
 
+    digitalWrite(3, 1);
+
     while (true) {
         TelemetryData const* telem = Telemetry_GetData();
         Serial.println(telem->debug[0]);

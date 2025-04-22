@@ -32,15 +32,15 @@ void CAN_Begin() {
 
 void threadCAN(void *pvParameters){
     while(true){
-        msg.id = 0x123; // Set the CAN ID
-        msg.len = 8; // Set the length of the message
-        // int res = can3.write(MB0, msg)
-        int res = can3.write(msg);
-        // can3.mailboxStatus();
-        Serial.println(res);
-        msg.id++;
-        Serial.println("CAN thread running...");
-        vTaskDelay(100);
+        // msg.id = 0x123; // Set the CAN ID
+        // msg.len = 8; // Set the length of the message
+        // // int res = can3.write(MB0, msg)
+        // int res = can3.write(msg);
+        // // can3.mailboxStatus();
+        // Serial.println(res);
+        // msg.id++;
+        // Serial.println("CAN thread running...");
+        // vTaskDelay(100);
     }
 }
 

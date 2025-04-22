@@ -74,10 +74,9 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
     LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, appsAlpha);
 
     appsData.appsReading1_Percentage =
-        APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(appsRaw.apps1RawReading));
+        APPS_ADC_TO_VOLTAGE(appsRaw.apps1RawReading);
     appsData.appsReading2_Percentage =
         APPS_ADC_TO_VOLTAGE(appsRaw.apps2RawReading);
-        // APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(appsRaw.apps1RawReading));
 
     checkAndHandleAPPSFault();
     checkAndHandlePlausibilityFault();
