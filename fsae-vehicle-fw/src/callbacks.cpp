@@ -105,20 +105,6 @@ void ADCConversionCompleteCallback () {
     }
     interrupts();
 
-    // Simulate ADC readings to test
-    static uint32_t ticks = 0;
-    static uint8_t direction = 1;
-    // adc0Reads[APPS_1_INDEX] = (1 * (ticks/10)) % 2047; // Simulated value for APPS 1
-    // adc0Reads[APPS_2_INDEX] = 1024; // Simulated value for APPS 2
-
-    adc0Reads[APPS_1_INDEX] = 1024 + (1024 * direction); // Simulated value for APPS 1
-    adc0Reads[APPS_2_INDEX] = 1024; // Simulated value for APPS 2
-
-    ticks++;
-    if (ticks % 100 == 0) {
-        direction *= -1;
-    }
-
     // Update each sensors data
     APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
     BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
@@ -135,6 +121,8 @@ void ADCConversionCompleteCallback () {
         .BSERear_PSI = BSE_GetBSEReading()->bseRear_PSI,
         .motorState = Motor_GetState(),
     };
+
+    telemetryData.debug[0] = APPS_GetAPPSReading();
 
     Telemetry_UpdateData(&telemetryData);
 }

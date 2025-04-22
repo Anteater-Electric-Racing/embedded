@@ -10,6 +10,7 @@
 #include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
 
+#include "vehicle/apps.h"
 #include "vehicle/bse.h"
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
@@ -28,6 +29,7 @@ void threadMain(void *pvParameters) {
 
     Peripherals_Init();
 
+    APPS_Init();
     BSE_Init();
 
     Faults_Init();
@@ -35,10 +37,7 @@ void threadMain(void *pvParameters) {
 
     while (true) {
         TelemetryData const* telem = Telemetry_GetData();
-        Serial.print(telem->APPS_Travel);
-        Serial.print(" ");
-        Serial.print(telem->motorState);
-        Serial.println();
+        Serial.println(telem->debug[0]);
         vTaskDelay(100);
     }
 }

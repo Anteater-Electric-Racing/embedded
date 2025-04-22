@@ -9,7 +9,7 @@
 #include "vehicle/faults.h"
 
 #define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
-#define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / 4095.0F)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
+#define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
 
 #define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
 
