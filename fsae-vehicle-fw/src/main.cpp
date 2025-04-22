@@ -4,7 +4,6 @@
 #define THREAD_MAIN_PRIORITY 1
 
 #include <Arduino.h>
-#include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
 #include "peripherals/adc.h"
@@ -12,6 +11,7 @@
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
+#include "vehicle/can.h"
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
@@ -34,6 +34,9 @@ void threadMain(void *pvParameters) {
 
     Faults_Init();
     Telemetry_Init();
+    CAN_Init();
+
+    CAN_Begin();
 
     while (true) {
         TelemetryData const* telem = Telemetry_GetData();

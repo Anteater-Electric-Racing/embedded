@@ -41,7 +41,9 @@ enum SensorIndexesADC1 { // TODO: Update with real values
 
 void StartADCScanCallback() {
     noInterrupts();
-    if (adc0Index != 0 || adc1Index != 0){ // means it was not reset at the end of the callback cycle: means callbacks did not complete
+    if (adc0Index != 0 ||
+        adc1Index != 0) { // means it was not reset at the end of the callback
+                          // cycle: means callbacks did not complete
         _reboot_Teensyduino_();
     }
     adc0Index = 0;
@@ -50,11 +52,12 @@ void StartADCScanCallback() {
     uint16_t startPinADC1 = adc1Pins[0];
     uint32_t currentTime = micros();
     adc->adc0->enableInterrupts(ADCConversionCompleteCallback);
-    adc->startSynchronizedSingleRead(startPinADC0, startPinADC1); // in callbacks.h
+    adc->startSynchronizedSingleRead(startPinADC0,
+                                     startPinADC1); // in callbacks.h
     interrupts();
 }
 
-void ADCConversionCompleteCallback () {
+void ADCConversionCompleteCallback() {
     // read from pin
     // store pin reads
     // go to next pin
@@ -68,34 +71,43 @@ void ADCConversionCompleteCallback () {
     // if 1 is less than the range and 0 is out of range, read 1 and start 1
     // if both out of range, make both indexes to 0 and end
 
-    if(adc0Index <= SENSOR_PIN_AMT_ADC0 && adc1Index <= SENSOR_PIN_AMT_ADC1){
+    if (adc0Index <= SENSOR_PIN_AMT_ADC0 && adc1Index <= SENSOR_PIN_AMT_ADC1) {
         ADC::Sync_result result = adc->readSynchronizedSingle();
         uint16_t sensorReadADC0 = result.result_adc0;
         uint16_t sensorReadADC1 = result.result_adc1;
 
-        adc0Reads[adc0Index] = sensorReadADC0; //*LOGIC_LEVEL_V/adc0_MAX_VALUE; // Get value within 0V to 3.3V range
+        adc0Reads[adc0Index] =
+            sensorReadADC0; //*LOGIC_LEVEL_V/adc0_MAX_VALUE; // Get value within
+                            //0V to 3.3V range
         adc1Reads[adc1Index] = sensorReadADC1;
 
         ++adc0Index;
         ++adc1Index;
-        if (adc0Index < SENSOR_PIN_AMT_ADC0 && adc1Index < SENSOR_PIN_AMT_ADC1){
-            adc->startSynchronizedSingleRead(adc0Pins[adc0Index], adc1Pins[adc1Index]);
+        if (adc0Index < SENSOR_PIN_AMT_ADC0 &&
+            adc1Index < SENSOR_PIN_AMT_ADC1) {
+            adc->startSynchronizedSingleRead(adc0Pins[adc0Index],
+                                             adc1Pins[adc1Index]);
         }
-    } else if (adc0Index <= SENSOR_PIN_AMT_ADC0){
+    } else if (adc0Index <= SENSOR_PIN_AMT_ADC0) {
         uint16_t sensorReadADC0 = adc->adc0->readSingle();
         adc0Reads[adc0Index] = sensorReadADC0;
         ++adc0Index;
-    } else if (adc1Index <= SENSOR_PIN_AMT_ADC1){
+    } else if (adc1Index <= SENSOR_PIN_AMT_ADC1) {
         uint16_t sensorReadADC1 = adc->adc1->readSingle();
         adc1Reads[adc1Index] = sensorReadADC1;
         ++adc1Index;
     }
 
-    if(adc0Index >= SENSOR_PIN_AMT_ADC0 && adc1Index >= SENSOR_PIN_AMT_ADC1){ // Do here so we don't start a read for an invalid pin
+    if (adc0Index >= SENSOR_PIN_AMT_ADC0 &&
+        adc1Index >= SENSOR_PIN_AMT_ADC1) { // Do here so we don't start a read
+                                            // for an invalid pin
         adc0Index = 0;
         adc1Index = 0;
-    } else if(adc0Index < SENSOR_PIN_AMT_ADC0){ // Do here so we don't start a read for an invalid pin
-        adc->adc0->enableInterrupts(ADCConversionCompleteCallback, adc0Index); // Priority gets lower as it's further in the index array
+    } else if (adc0Index < SENSOR_PIN_AMT_ADC0) { // Do here so we don't start a
+                                                  // read for an invalid pin
+        adc->adc0->enableInterrupts(ADCConversionCompleteCallback,
+                                    adc0Index); // Priority gets lower as it's
+                                                // further in the index array
         adc->adc0->startSingleRead(adc0Pins[adc0Index]); // in callbacks.h
         return;
     } else if(adc1Index < SENSOR_PIN_AMT_ADC1){ // Do here so we don't start a read for an invalid pin
@@ -126,4 +138,3 @@ void ADCConversionCompleteCallback () {
 
     Telemetry_UpdateData(&telemetryData);
 }
-
