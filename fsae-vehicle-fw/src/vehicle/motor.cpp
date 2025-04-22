@@ -3,6 +3,8 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 
+#define MOTOR_MAX_TORQUE 100.0F // TODO: Update with real value
+
 typedef struct{
     MotorState state;
     float torqueDemand;
@@ -15,6 +17,7 @@ void Motor_Init(){
 }
 
 void Motor_UpdateMotor(){
+    float throttleCommand = Telemetry_GetData()->APPS_Travel;
     switch(motorData.state){
         case MOTOR_STATE_OFF:
         {
@@ -33,7 +36,7 @@ void Motor_UpdateMotor(){
         {
             // apps.getThrottle() for setpoint maybe?
             // pid.compute() for torque demand
-            motorData.torqueDemand = 69.69F;
+            motorData.torqueDemand = MOTOR_MAX_TORQUE * throttleCommand;
             break;
         }
         case MOTOR_STATE_FAULT:
@@ -54,5 +57,9 @@ float Motor_GetTorqueDemand(){
 
 void Motor_SetFaultState(){
     motorData.state = MOTOR_STATE_FAULT;
+}
+
+MotorState Motor_GetState(){
+    return motorData.state;
 }
 

@@ -1,24 +1,47 @@
 // Anteater Electric Racing, 2025
 
-#define APPS_IMPLAUSABILITY_THRESHOLD 0.1
-#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.25
-#define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 0.1 // ???
-
 #include <cmath>
+
+#include "utils/utils.h"
 
 #include "apps.h"
 
 #include "vehicle/faults.h"
 
-APPS::APPS() {
-    _APPSdata.appsReading1 = 0;
-    _APPSdata.appsReading2 = 0;
+#define APPS_IMPLAUSABILITY_THRESHOLD 0.1            // 10%
+#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.25 // 25%
+#define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 200    // PSI
+
+#define VOLTAGE_DIVIDER 2.0F
+#define APPS_ADC_TO_VOLTAGE(x) ((x) * (LOGIC_LEVEL_V / 4095.0F)) * VOLTAGE_DIVIDER
+
+#define APPS_3V3_PERCENTAGE(x) ((x) / 3.3F)
+#define APPS_5V_PERCENTAGE(x) ((x) / 5.0F)
+
+typedef struct {
+    float apps1RawReading;
+    float apps2RawReading;
+} APPSRawData;
+
+static APPSRawData appsRaw;
+static APPSData appsData;
+static float appsAlpha;
+
+static void checkAndHandleAPPSFault();
+static void checkAndHandlePlausibilityFault();
+
+void APPS_Init() {
+    appsData.appsReading1_Percentage = 0;
+    appsData.appsReading2_Percentage = 0;
+
+    appsRaw.apps1RawReading = 0;
+    appsRaw.apps2RawReading = 0;
+
+    appsAlpha = COMPUTE_ALPHA(1000.0F);
 }
 
-APPS::~APPS() {}
-
-void APPS::checkAndHandleAPPSFault() {
-    float difference = abs(_APPSdata.appsReading1 - _APPSdata.appsReading2);
+void checkAndHandleAPPSFault() {
+    float difference = abs(appsData.appsReading1_Percentage - appsData.appsReading2_Percentage);
 
     if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
         Faults_SetFault(FAULT_APPS);
@@ -27,8 +50,13 @@ void APPS::checkAndHandleAPPSFault() {
     }
 }
 
-void APPS::checkAndHandlePlausibilityFault(BSE *bse) {
-    float BSEReading = bse->BSE_GetBSEReading();
+void checkAndHandlePlausibilityFault() {
+    float BSEReading_Front = BSE_GetBSEReading()->bseFront_PSI;
+    float BSEReading_Rear = BSE_GetBSEReading()->bseRear_PSI;
+
+    float BSEReading = BSEReading_Front;
+    if (BSEReading_Rear > BSEReading_Front)
+        BSEReading = BSEReading_Rear;
 
     if (APPS_GetAPPSReading() > APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD &&
         BSEReading > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD) {
@@ -38,14 +66,24 @@ void APPS::checkAndHandlePlausibilityFault(BSE *bse) {
     }
 }
 
-// TODO: confirm input data
-void APPS::APPS_UpdateData(APPSData *data) {
-    _APPSdata.appsReading1 = data->appsReading1;
-    _APPSdata.appsReading2 = data->appsReading2;
+void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
+    // Filter incoming values
+    float newReading1 = rawReading1;
+    float newReading2 = rawReading2;
+
+    LOWPASS_FILTER(newReading1, appsRaw.apps1RawReading, appsAlpha);
+    LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, appsAlpha);
+
+    appsData.appsReading1_Percentage =
+        APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(appsRaw.apps1RawReading));
+    appsData.appsReading2_Percentage =
+        APPS_5V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading2));
 
     checkAndHandleAPPSFault();
+    checkAndHandlePlausibilityFault();
 }
 
-float APPS::APPS_GetAPPSReading() {
-    return (_APPSdata.appsReading1 + _APPSdata.appsReading2) / 2;
+float APPS_GetAPPSReading() {
+    return appsData.appsReading1_Percentage;
+    // return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
 }

@@ -1,17 +1,27 @@
 // Anteater Electric Racing, 2025
+#pragma once
 
-#ifndef TELEMETRY_H
-#define TELEMETRY_H
+#include <stdint.h>
+
+#include "motor.h"
 
 typedef struct {
+    float APPS_Travel; // APPS travel in %
+
+    float BSEFront_PSI; // front brake pressure in PSI
+    float BSERear_PSI; // rear brake pressure in PSI
+
     float accumulatorVoltage;
-    float accumulatorTemp;
+    float accumulatorTemp_F;
 
     float tractiveSystemVoltage;
+
+    MotorState motorState; // Motor state
+
+    uint32_t debug[4]; // Debug data
 } TelemetryData;
 
 void Telemetry_Init();
-TelemetryData* Telemetry_GetData();
+TelemetryData const* Telemetry_GetData();
 void Telemetry_UpdateData(TelemetryData* data);
 
-#endif
