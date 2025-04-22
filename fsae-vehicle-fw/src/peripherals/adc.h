@@ -4,6 +4,8 @@
 #define SENSOR_PIN_AMT_ADC0 8
 #define SENSOR_PIN_AMT_ADC1 8
 
+// rtm: 15, bse1: 16, bse2: 17, apps1: 18, apps2: 19, susp1: 20, susp2: 21, susp3: 22, susp4: 23
+
 // note: change inputs for potentiometers to A0 (14) and A1 (15)
 static uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {19, 18, A2, A3, A4, A5, A6, A7}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
 static volatile uint16_t adc0Index = 0;
