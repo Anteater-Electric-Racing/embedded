@@ -15,9 +15,7 @@ pub trait Reading: InfluxDbWriteable + Serialize {
     fn topic() -> &'static str;
 }
 
-static INFLUX_CLIENT: Lazy<Client> = Lazy::new(|| {
-    Client::new(INFLUXDB_URL, INFLUXDB_DATABASE)
-});
+static INFLUX_CLIENT: Lazy<Client> = Lazy::new(|| Client::new(INFLUXDB_URL, INFLUXDB_DATABASE));
 
 static MQTT_CLIENT: Lazy<AsyncClient> = Lazy::new(|| {
     let mut mqttoptions = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
@@ -32,6 +30,7 @@ static MQTT_CLIENT: Lazy<AsyncClient> = Lazy::new(|| {
             }
         }
     });
+
     mqtt_client
 });
 
