@@ -2,15 +2,16 @@
 
 #include "telemetry.h"
 #include <FlexCAN_T4.h>
-#include <isotp_server.h>
+#include <isotp.h>
 
 const uint32_t canid = 0x666; // TODO: Get real CAN ID
 const uint32_t request = 0x777; // TODO: Get real request ID
 TelemetryData telemetryData;
 static uint8_t serializedTelemetryBuf[sizeof(TelemetryData)];
-isotp_server<canid, STANDARD_ID, request, serializedTelemetryBuf, sizeof(serializedTelemetryBuf)> myResource;
+// isotp_server<canid, STANDARD_ID, request, serializedTelemetryBuf, sizeof(serializedTelemetryBuf)> myResource;
+isotp<RX_BANKS_16, 512> tp;
 
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> Can1; // TODO: Figure out actual values for send and recieve
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; // TODO: Figure out actual values for send and recieve
 
 void Telemetry_Init() {
     // fill with reasonable default values
@@ -45,15 +46,29 @@ void Telemetry_CANSetup() {
     // TODO: ensure these numbers line up with expected
     Serial.begin(115200);
     delay(400);
-    Can1.begin();
-    Can1.setClock(CLK_60MHz);
-    Can1.setBaudRate(5000);
-    Can1.setMaxMB(16);
-    Can1.enableFIFO();
-    Can1.enableFIFOInterrupt();
-    Can1.onReceive(Telemetry_CanSniff);
-    myResource.begin();
-    myResource.setWriteBus(&Can1); /* we write to this bus */
+    Can2.begin();
+    Can2.setClock(CLK_60MHz);
+    Can2.setBaudRate(1000000);
+    Can2.setMaxMB(16);
+    Can2.enableFIFO();
+    Can2.enableFIFOInterrupt();
+    Can2.onReceive(Telemetry_CanSniff);
+    tp.begin();
+    tp.setWriteBus(&Can2); /* we write to this bus */
+    while(true){
+        static uint32_t sendTimer = millis();
+        if ( millis() - sendTimer > 1000 ) {
+            uint8_t buf[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5 };
+            const char b[] = "01413AAAAABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            ISOTP_data config;
+            config.id = 0x666;
+            config.flags.extended = 0; /* standard frame */
+            config.separation_time = 10; /* time between back-to-back frames in millisec */
+            tp.write(config, buf, sizeof(buf));
+            tp.write(config, b, sizeof(b));
+            sendTimer = millis();
+        }
+    }
 
     // Testing CAN message
     // const CAN_message_t message = CAN_message_t();
