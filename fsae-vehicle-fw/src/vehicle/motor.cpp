@@ -36,7 +36,8 @@ void Motor_UpdateMotor(){
         {
             // apps.getThrottle() for setpoint maybe?
             // pid.compute() for torque demand
-            motorData.torqueDemand = MOTOR_MAX_TORQUE * throttleCommand;
+            // torque is communicated as a percentage
+            motorData.torqueDemand = throttleCommand;
             break;
         }
         case MOTOR_STATE_FAULT:
