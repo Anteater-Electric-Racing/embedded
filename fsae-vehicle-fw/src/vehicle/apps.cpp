@@ -13,18 +13,17 @@
 #define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.25 // 25%
 #define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 200    // PSI
 
-#define VOLTAGE_DIVIDER 2.0F
-#define APPS_ADC_TO_VOLTAGE(x) ((x) * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * VOLTAGE_DIVIDER
-
-#define APPS_3V3_PERCENTAGE(x) ((x) / 3.3F)
-#define APPS_5V_PERCENTAGE(x) ((x) / 5.0F)
-
 typedef struct {
+    float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
+    float appsReading2_Percentage; // Percentage of pedal travel (0 to 1)
+
+    float appsReading1_Voltage;    // Voltage reading from the pedal (0 to 3.3V)
+    float appsReading2_Voltage;    // Voltage reading from the pedal (0 to 3.3V)
+
     float apps1RawReading;
     float apps2RawReading;
-} APPSRawData;
+} APPSData;
 
-static APPSRawData appsRaw;
 static APPSData appsData;
 static float appsAlpha;
 
@@ -35,23 +34,77 @@ void APPS_Init() {
     appsData.appsReading1_Percentage = 0;
     appsData.appsReading2_Percentage = 0;
 
-    appsRaw.apps1RawReading = 0;
-    appsRaw.apps2RawReading = 0;
+    appsData.appsReading1_Voltage = 0;
+    appsData.appsReading2_Voltage = 0;
+
+    appsData.apps1RawReading = 0;
+    appsData.apps2RawReading = 0;
 
     appsAlpha = COMPUTE_ALPHA(100.0F);
 }
 
-void checkAndHandleAPPSFault() {
+void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
+    // Filter incoming values
+    // LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
+    // LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
+
+    appsData.apps1RawReading = rawReading1;
+    appsData.apps2RawReading = rawReading2;
+
+    // Convert ADC values to voltage
+    appsData.appsReading1_Voltage = ADC_VALUE_TO_VOLTAGE(appsData.apps1RawReading);
+    appsData.appsReading2_Voltage = ADC_VALUE_TO_VOLTAGE(appsData.apps2RawReading);
+
+    // Map voltage to percentage of throttle travel, limiting to 0-1 range
+    appsData.appsReading1_Percentage = LINEAR_MAP(appsData.appsReading1_Voltage, APPS_3V3_MIN, APPS_3V3_MAX, 0.0F, 1.0F);
+    appsData.appsReading2_Percentage = LINEAR_MAP(appsData.appsReading2_Voltage, APPS_3V3_MIN, APPS_3V3_MAX, 0.0F, 1.0F);
+
+    if(appsData.appsReading1_Percentage < 0.0F) {
+        appsData.appsReading1_Percentage = 0.0F;
+    } else if(appsData.appsReading1_Percentage > 1.0F) {
+        appsData.appsReading1_Percentage = 1.0F;
+    }
+
+    if(appsData.appsReading2_Percentage < 0.0F) {
+        appsData.appsReading2_Percentage = 0.0F;
+    } else if(appsData.appsReading2_Percentage > 1.0F) {
+        appsData.appsReading2_Percentage = 1.0F;
+    }
+
+    checkAndHandleAPPSFault();
+    checkAndHandlePlausibilityFault();
+}
+
+float APPS_GetAPPSReading() {
+    return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
+}
+
+float APPS_GetAPPSReading1() {
+    return appsData.appsReading1_Percentage;
+}
+
+float APPS_GetAPPSReading2() {
+    return appsData.appsReading2_Percentage;
+}
+
+static void checkAndHandleAPPSFault() {
+    // Check for open/short circuit
     float difference = abs(appsData.appsReading1_Percentage - appsData.appsReading2_Percentage);
 
-    if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
+    if(appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
+       appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
+       appsData.appsReading2_Voltage < APPS_3V3_FAULT_MIN ||
+       appsData.appsReading2_Voltage > APPS_3V3_FAULT_MAX) {
+        Faults_SetFault(FAULT_APPS);
+    }
+    else if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
         Faults_SetFault(FAULT_APPS);
     } else {
         Faults_ClearFault(FAULT_APPS);
     }
 }
 
-void checkAndHandlePlausibilityFault() {
+static void checkAndHandlePlausibilityFault() {
     float BSEReading_Front = BSE_GetBSEReading()->bseFront_PSI;
     float BSEReading_Rear = BSE_GetBSEReading()->bseRear_PSI;
 
@@ -65,24 +118,4 @@ void checkAndHandlePlausibilityFault() {
     } else {
         Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
     }
-}
-
-void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
-    // Filter incoming values
-
-    LOWPASS_FILTER(rawReading1, appsRaw.apps1RawReading, appsAlpha);
-    LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, appsAlpha);
-
-    appsData.appsReading1_Percentage =
-        APPS_ADC_TO_VOLTAGE(appsRaw.apps1RawReading);
-    appsData.appsReading2_Percentage =
-        APPS_ADC_TO_VOLTAGE(appsRaw.apps2RawReading);
-
-    checkAndHandleAPPSFault();
-    checkAndHandlePlausibilityFault();
-}
-
-float APPS_GetAPPSReading() {
-    return appsData.appsReading2_Percentage;
-    // return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
 }

@@ -59,6 +59,10 @@ void Motor_SetFaultState(){
     motorData.state = MOTOR_STATE_FAULT;
 }
 
+void Motor_ClearFaultState(){
+    motorData.state = MOTOR_STATE_OFF;
+}
+
 MotorState Motor_GetState(){
     return motorData.state;
 }

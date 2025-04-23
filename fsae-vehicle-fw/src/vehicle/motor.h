@@ -17,3 +17,4 @@ float Motor_GetTorqueDemand();
 MotorState Motor_GetState();
 
 void Motor_SetFaultState();
+void Motor_ClearFaultState();

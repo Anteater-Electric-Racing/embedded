@@ -2,11 +2,8 @@
 
 #include "bse.h"
 
-typedef struct {
-    float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
-    float appsReading2_Percentage; // Percentage of pedal travel (0 to 1)
-} APPSData;
-
 void APPS_Init();
 void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2);
 float APPS_GetAPPSReading();
+float APPS_GetAPPSReading1();
+float APPS_GetAPPSReading2();

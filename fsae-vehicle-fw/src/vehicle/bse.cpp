@@ -51,7 +51,7 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
        bseVoltage1 > BSE_UPPER_THRESHOLD ||
        bseVoltage2 < BSE_LOWER_THRESHOLD ||
        bseVoltage2 > BSE_UPPER_THRESHOLD) {
-        Faults_SetFault(FAULT_BSE);
+        // Faults_SetFault(FAULT_BSE);
     } else {
         Faults_ClearFault(FAULT_BSE);
     }

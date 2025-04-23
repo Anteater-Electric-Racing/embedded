@@ -38,12 +38,18 @@ void threadMain(void *pvParameters) {
 
     CAN_Begin();
 
+    digitalWrite(2, 1);
     digitalWrite(3, 1);
 
     while (true) {
         TelemetryData const* telem = Telemetry_GetData();
-        Serial.println(telem->debug[0]);
-        vTaskDelay(100);
+        Serial.print(telem->debug[0], 4);
+        Serial.print(" ");
+        Serial.print(telem->debug[1], 4);
+        Serial.print(" ");
+        Serial.print(telem->motorState);
+        Serial.println();
+        vTaskDelay(50);
     }
 }
 

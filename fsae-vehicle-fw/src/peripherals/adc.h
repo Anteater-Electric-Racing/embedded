@@ -17,4 +17,5 @@ static volatile uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
 static ADC *adc = new ADC();
 
+void ADC0_Init();
 void ADC1_Init();

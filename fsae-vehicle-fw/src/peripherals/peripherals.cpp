@@ -7,6 +7,7 @@
 
 void Peripherals_Init() {
     GPIO_Init();
+    ADC0_Init();
     ADC1_Init();
     Timer_StartADCScan();
 }
