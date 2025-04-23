@@ -7,6 +7,7 @@
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
+#include "vehicle/motor.h"
 
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t msg;
@@ -40,7 +41,9 @@ void threadCAN(void *pvParameters){
         // Serial.println(res);
         // msg.id++;
         // Serial.println("CAN thread running...");
-        // vTaskDelay(100);
+
+        Serial.println(Motor_GetTorqueDemand());
+        vTaskDelay(100);
     }
 }
 

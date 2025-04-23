@@ -81,10 +81,12 @@ float APPS_GetAPPSReading() {
 
 float APPS_GetAPPSReading1() {
     return appsData.appsReading1_Percentage;
+    // return appsData.appsReading1_Voltage;
 }
 
 float APPS_GetAPPSReading2() {
     return appsData.appsReading2_Percentage;
+    // return appsData.appsReading2_Voltage;
 }
 
 static void checkAndHandleAPPSFault() {

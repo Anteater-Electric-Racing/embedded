@@ -1,9 +1,9 @@
 // Anteater Electric Racing, 2025
 
+#include "utils/utils.h"
+
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
-
-#define MOTOR_MAX_TORQUE 100.0F // TODO: Update with real value
 
 typedef struct{
     MotorState state;
@@ -13,7 +13,7 @@ typedef struct{
 MotorData motorData;
 
 void Motor_Init(){
-    motorData.state = MOTOR_STATE_OFF;
+    motorData.state = MOTOR_STATE_DRIVING;
 }
 
 void Motor_UpdateMotor(){
@@ -60,7 +60,7 @@ void Motor_SetFaultState(){
 }
 
 void Motor_ClearFaultState(){
-    motorData.state = MOTOR_STATE_OFF;
+    motorData.state = MOTOR_STATE_DRIVING;
 }
 
 MotorState Motor_GetState(){
