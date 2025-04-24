@@ -29,6 +29,8 @@ void threadMain(void *pvParameters) {
 
     // Faults_Init();
     Telemetry_Init();
+    Telemetry_Begin();
+
     CAN_Init();
 
     CAN_Begin();

@@ -17,6 +17,7 @@ struct TelemetryData{
 
 
 void Telemetry_Init();
+void Telemetry_Begin();
 void Telemetry_CANSetup() ;
 TelemetryData* Telemetry_GetData();
 void floatToBytes(float val, uint8_t* buf) ;

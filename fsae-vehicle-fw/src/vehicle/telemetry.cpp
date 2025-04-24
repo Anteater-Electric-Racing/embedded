@@ -3,6 +3,11 @@
 #include "telemetry.h"
 #include <FlexCAN_T4.h>
 #include <isotp.h>
+#include <arduino_freertos.h>
+
+#define THREAD_CAN_STACK_SIZE 128
+#define THREAD_CAN_PRIORITY 2
+
 
 const uint32_t canid = 0x666; // TODO: Get real CAN ID
 const uint32_t request = 0x777; // TODO: Get real request ID
@@ -11,7 +16,7 @@ static uint8_t serializedTelemetryBuf[sizeof(TelemetryData)];
 // isotp_server<canid, STANDARD_ID, request, serializedTelemetryBuf, sizeof(serializedTelemetryBuf)> myResource;
 isotp<RX_BANKS_16, 512> tp;
 
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> Can2; // TODO: Figure out actual values for send and recieve
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2; // TODO: Figure out actual values for send and recieve
 
 void Telemetry_Init() {
     // fill with reasonable default values
@@ -28,33 +33,30 @@ void Telemetry_Init() {
     Telemetry_CANSetup();
 }
 
-void Telemetry_CanSniff(const CAN_message_t &msg) {
-  Serial.print("MB "); Serial.print(msg.mb);
-  Serial.print(" OVERRUN: "); Serial.print(msg.flags.overrun);
-  Serial.print(" LEN: "); Serial.print(msg.len);
-  Serial.print(" EXT: "); Serial.print(msg.flags.extended);
-  Serial.print(" TS: "); Serial.print(msg.timestamp);
-  Serial.print(" ID: "); Serial.print(msg.id, HEX);
-  Serial.print(" BUS: "); Serial.print(msg.bus);
-  Serial.print(" Buffer: ");
-  for ( uint8_t i = 0; i < msg.len; i++ ) {
-    Serial.print(msg.buf[i], HEX); Serial.print(" ");
-  } Serial.println();
-}
-
 void Telemetry_CANSetup() {
     // TODO: ensure these numbers line up with expected
     Serial.begin(115200);
-    delay(400);
-    Can2.begin();
-    Can2.setClock(CLK_60MHz);
-    Can2.setBaudRate(1000000);
-    Can2.setMaxMB(16);
-    Can2.enableFIFO();
-    Can2.enableFIFOInterrupt();
-    Can2.onReceive(Telemetry_CanSniff);
+    vTaskDelay(1000); // Delay for 1 second
+    can2.begin();
+    // can2.setClock(CLK_60MHz);
+    can2.setBaudRate(1000000);
+    can2.setTX(DEF);
+    can2.setRX(DEF);
+    can2.enableFIFO();
+    can2.enableFIFOInterrupt();
+    can2.setMaxMB(16);
     tp.begin();
-    tp.setWriteBus(&Can2); /* we write to this bus */
+    tp.setWriteBus(&can2); /* we write to this bus */
+    can2.onReceive(Telemetry_CanSniff);
+}
+
+void threadTelemetryCAN( void *pvParameters );
+
+void Telemetry_Begin() {
+    xTaskCreate(threadTelemetryCAN, "threadTelemetryCAN", THREAD_CAN_STACK_SIZE, NULL, THREAD_CAN_PRIORITY, NULL);
+}
+
+void threadTelemetryCAN(void *pvParameters){
     while(true){
         static uint32_t sendTimer = millis();
         if ( millis() - sendTimer > 1000 ) {
@@ -70,27 +72,20 @@ void Telemetry_CANSetup() {
         }
     }
 
-    // Testing CAN message
-    // const CAN_message_t message = CAN_message_t();
-//   uint32_t id = 0;          // can identifier
-//   uint16_t timestamp = 0;   // FlexCAN time when message arrived
-//   uint8_t idhit = 0; // filter that id came from
-//   struct {
-//     bool extended = 0; // identifier is extended (29-bit)
-//     bool remote = 0;  // remote transmission request packet type
-//     bool overrun = 0; // message overrun
-//     bool reserved = 0;
-//   } flags;
-//   uint8_t len = 8;      // length of data
-//   uint8_t buf[8] = { 0 };       // data
-//   int8_t mb = 0;       // used to identify mailbox reception
-//   uint8_t bus = 0;      // used to identify where the message came from when events() is used.
-//   bool seq = 0;         // sequential frames
-// } CAN_message_t;
-    // while(true){
-    //     Telemetry_CanSniff(message);
-    // }
+}
 
+void Telemetry_CanSniff(const CAN_message_t &msg) {
+  Serial.print("MB "); Serial.print(msg.mb);
+  Serial.print(" OVERRUN: "); Serial.print(msg.flags.overrun);
+  Serial.print(" LEN: "); Serial.print(msg.len);
+  Serial.print(" EXT: "); Serial.print(msg.flags.extended);
+  Serial.print(" TS: "); Serial.print(msg.timestamp);
+  Serial.print(" ID: "); Serial.print(msg.id, arduino::HEX);
+  Serial.print(" BUS: "); Serial.print(msg.bus);
+  Serial.print(" Buffer: ");
+  for ( uint8_t i = 0; i < msg.len; i++ ) {
+    Serial.print(msg.buf[i], arduino::HEX); Serial.print(" ");
+  } Serial.println();
 }
 
 TelemetryData* Telemetry_GetData() {
