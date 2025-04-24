@@ -116,6 +116,10 @@ void ADCConversionCompleteCallback() {
         return;
     }
     interrupts();
+    // Digital Sensor Reads
+    bool rtmButton = digitalRead(RTM_BUTTON_PIN);
+    bool wheelSpeed1 = digitalRead(WHEEL_SPEED_1_PIN);
+    bool wheelSpeed2 = digitalRead(WHEEL_SPEED_2_PIN);
 
     // Update each sensors data
     APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);

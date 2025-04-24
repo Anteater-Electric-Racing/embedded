@@ -4,6 +4,7 @@
 
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
+#include "vehicle/rtm_button.h"
 
 typedef struct{
     MotorState state;
@@ -13,35 +14,36 @@ typedef struct{
 MotorData motorData;
 
 void Motor_Init(){
-    motorData.state = MOTOR_STATE_DRIVING;
+    motorData.state = MOTOR_STATE_IDLE;
 }
 
 void Motor_UpdateMotor(){
     float throttleCommand = Telemetry_GetData()->APPS_Travel;
     switch(motorData.state){
         case MOTOR_STATE_OFF:
-        {
-            break;
-        }
         case MOTOR_STATE_PRECHARGING:
-        {
-            break;
-        }
         case MOTOR_STATE_IDLE:
         {
-            // check for ready to drive button press
+            if(RTMButton_GetState()){
+                motorData.state = MOTOR_STATE_DRIVING;
+            }
             break;
         }
         case MOTOR_STATE_DRIVING:
         {
-            // apps.getThrottle() for setpoint maybe?
-            // pid.compute() for torque demand
+            if(RTMButton_GetState() == false){
+                motorData.state = MOTOR_STATE_IDLE;
+            }
+
             // torque is communicated as a percentage
             motorData.torqueDemand = throttleCommand;
             break;
         }
         case MOTOR_STATE_FAULT:
         {
+            if(RTMButton_GetState() == false){
+                motorData.state = MOTOR_STATE_IDLE;
+            }
             motorData.torqueDemand = 0.0F;
             break;
         }

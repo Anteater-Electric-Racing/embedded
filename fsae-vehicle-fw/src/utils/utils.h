@@ -2,6 +2,10 @@
 
 #pragma once
 
+#define WHEEL_SPEED_1_PIN 2
+#define WHEEL_SPEED_2_PIN 3
+#define RTM_BUTTON_PIN 4
+
 #define LOGIC_LEVEL_V 3.3F
 #define TIME_STEP 0.001F // 1ms time step
 
@@ -11,7 +15,7 @@
 #define ADC_VOLTAGE_DIVIDER 2.0F
 #define ADC_VALUE_TO_VOLTAGE(x) ((x) * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * ADC_VOLTAGE_DIVIDER
 
-#define APPS_3V3_FAULT_MIN 0.005F
+#define APPS_3V3_FAULT_MIN 0.01F
 #define APPS_3V3_FAULT_MAX 1.8F
 
 #define APPS_3V3_MIN 0.37F
