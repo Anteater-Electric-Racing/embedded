@@ -20,7 +20,7 @@ void Telemetry_Init();
 void Telemetry_Begin();
 void Telemetry_CANSetup() ;
 TelemetryData* Telemetry_GetData();
-void floatToBytes(float val, uint8_t* buf) ;
+void floatToBytesTelemetry(float val, uint8_t* buf) ;
 void Telemetry_SerializeData(TelemetryData data);
 void Telemetry_UpdateData(TelemetryData* data);
 void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
