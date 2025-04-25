@@ -1,6 +1,13 @@
 // Anteater Electric Racing, 2025
 
+#define THREAD_MOTOR_STACK_SIZE 128
+#define THREAD_MOTOR_PRIORITY 1
+
+#include <arduino_freertos.h>
+
 #include "utils/utils.h"
+
+#include "peripherals/can.h"
 
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
@@ -11,10 +18,20 @@ typedef struct{
     float torqueDemand;
 } MotorData;
 
-MotorData motorData;
+static MotorData motorData;
+void threadMotor(void *pvParameters);
 
 void Motor_Init(){
     motorData.state = MOTOR_STATE_IDLE;
+    xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
+}
+
+void threadMotor(void *pvParameters){
+    while(true){
+        // Send CAN message to inverter
+        CAN_SendVCU1Message(motorData.torqueDemand);
+        vTaskDelay(10);
+    }
 }
 
 void Motor_UpdateMotor(){

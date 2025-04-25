@@ -1,7 +1,7 @@
 // Anteater Electric Racing, 2025
 
 #define THREAD_MAIN_STACK_SIZE 128
-#define THREAD_MAIN_PRIORITY 1
+#define THREAD_MAIN_PRIORITY 5
 
 #include <Arduino.h>
 #include <arduino_freertos.h>
@@ -11,7 +11,6 @@
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
-#include "vehicle/can.h"
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
@@ -19,8 +18,7 @@
 void threadMain(void *pvParameters);
 
 void setup() { // runs once on bootup
-    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
-                THREAD_MAIN_PRIORITY, NULL);
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
     vTaskStartScheduler();
 }
 
@@ -34,12 +32,6 @@ void threadMain(void *pvParameters) {
 
     Faults_Init();
     Telemetry_Init();
-    CAN_Init();
-
-    CAN_Begin();
-
-    digitalWrite(2, 1);
-    digitalWrite(3, 1);
 
     while (true) {
         TelemetryData const* telem = Telemetry_GetData();

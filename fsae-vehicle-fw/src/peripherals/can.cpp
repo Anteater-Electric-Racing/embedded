@@ -38,45 +38,11 @@ typedef struct {
 	uint64_t Checksum : 8;
 } VCU1;
 
-static void sendVCU1Message(float torqueValue);
+static uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
 
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
-CAN_message_t msg;
+CAN_message_t motorMsg;
 CAN_message_t rx_msg;
-
-// checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
-uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
-    uint8_t sum = 0;
-    for (uint8_t i = 0; i < length - 1; i++) {
-        sum += data[i];
-    }
-    return sum ^ 0xFF;
-}
-
-static void sendVCU1Message(float torqueValue)
-{
-	CAN_message_t msg;
-
-	msg.id = VCU1_ID;
-	msg.len = VCU1_LEN;
-
-	VCU1 vcu1 = {0};
-
-    // Map throttle percentage to uint8 value
-	vcu1.TorqueReq = (uint8_t) LINEAR_MAP(torqueValue, 0.0F, 1.0F, 0.0F, 255.0F);
-
-	memcpy(msg.buf, &vcu1, sizeof(vcu1));
-	msg.buf[7] = ComputeChecksum(msg.buf, 8);
-
-	if (can3.write(msg)) {
-		Serial.println("VCU1 message sent");
-	} else {
-		Serial.println("VCU1 message failed to send");
-	}
-}
-
-
-void threadCAN( void *pvParameters );
 
 void CAN_Init() {
     // Initialize CAN bus
@@ -90,15 +56,34 @@ void CAN_Init() {
     can3.setMaxMB(16);
 }
 
-void CAN_Begin() {
-    xTaskCreate(threadCAN, "threadCAN", THREAD_CAN_STACK_SIZE, NULL, THREAD_CAN_PRIORITY, NULL);
+void CAN_SendVCU1Message(float torqueValue)
+{
+	motorMsg.id = VCU1_ID;
+	motorMsg.len = VCU1_LEN;
+
+	VCU1 vcu1 = {0};
+
+    // Map throttle percentage to uint8 value
+	vcu1.TorqueReq = (uint8_t) LINEAR_MAP(torqueValue, 0.0F, 1.0F, 0.0F, 255.0F);
+
+	memcpy(motorMsg.buf, &vcu1, sizeof(vcu1));
+	motorMsg.buf[7] = ComputeChecksum(motorMsg.buf, 8);
+
+	if (can3.write(motorMsg)) {
+		Serial.println("VCU1 message sent");
+	} else {
+		Serial.println("VCU1 message failed to send");
+	}
 }
 
-void threadCAN(void *pvParameters){
-    while(true){
-        sendVCU1Message(Motor_GetTorqueDemand());
-        vTaskDelay(100);
-    }
+// checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
+static uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
+	uint8_t sum = 0;
+	for (uint8_t i = 0; i < length - 1; i++) {
+		sum += data[i];
+	}
+	return sum ^ 0xFF;
 }
+
 
 
