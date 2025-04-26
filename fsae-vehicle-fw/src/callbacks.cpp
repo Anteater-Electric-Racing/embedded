@@ -4,6 +4,7 @@
 #include "callbacks.h"
 #include "peripherals/adc.h"
 #include "vehicle/telemetry.h"
+#include "vehicle/can.h"
 
 #define LOGIC_LEVEL_V 3.3
 #define ADC_RESOLUTION 10
@@ -30,6 +31,34 @@ enum SensorIndexesADC1 { // TODO: Update with real values
     SUSP_TRAV_LINPOT32,
     SUSP_TRAV_LINPOT42
 };
+
+// TODO: Remove
+uint16_t adc0Val = 0;
+uint16_t adc1Val = 1;
+
+float accumulatorVoltage = 0.0;
+float accumulatorTemp = 0.0;
+float tractiveSystemVoltage = 0.0;
+
+void updateADCDataForRaspiTesting(){
+    // noInterrupts();
+
+    // accumulatorVoltage++;
+    // accumulatorTemp++;
+    // tractiveSystemVoltage++;
+    // CAN_UpdateAccumulatorData(accumulatorVoltage, accumulatorTemp, tractiveSystemVoltage);
+
+    for (int i = 0; i< SENSOR_PIN_AMT_ADC0; ++i){
+        adc0Reads[i] = adc0Val;
+    }
+    for (int i = 0; i< SENSOR_PIN_AMT_ADC1; ++i){
+        adc1Reads[i] = adc1Val;
+    }
+    CAN_UpdateTelemetryADCData(adc0Reads, adc1Reads);
+    adc0Val++;
+    adc1Val++;
+    // interrupts();
+}
 
 void StartADCScanCallback() {
     noInterrupts();

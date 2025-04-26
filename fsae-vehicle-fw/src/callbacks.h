@@ -5,4 +5,4 @@
 
 void StartADCScanCallback();
 void ADCConversionCompleteCallback ();
-
+void updateADCDataForRaspiTesting();
