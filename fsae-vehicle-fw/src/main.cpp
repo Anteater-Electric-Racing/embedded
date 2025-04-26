@@ -13,6 +13,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/can.h"
+#include "callbacks.h"
 
 void threadMain( void *pvParameters );
 

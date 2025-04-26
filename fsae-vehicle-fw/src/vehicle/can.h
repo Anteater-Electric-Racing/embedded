@@ -18,7 +18,7 @@ struct CANTelemetryData{
 void CAN_Init();
 void CAN_Begin();
 void CAN_TelemetryInit();
-void CAN_SerializeTelemetryData(CANTelemetryData data);
+void CAN_SerializeTelemetryData(CANTelemetryData data, uint8_t* serializedTelemetryBuf);
 void CAN_UpdateTelemetryData(CANTelemetryData* data);
 void CAN_UpdateAccumulatorData(float accumulatorVoltage, float accumulatorTemp, float tractiveSystemVoltage);
 void CAN_UpdateTelemetryADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);

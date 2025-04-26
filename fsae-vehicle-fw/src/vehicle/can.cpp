@@ -20,7 +20,6 @@ SemaphoreHandle_t xSemaphore;
 const uint32_t canid = 0x666;
 const uint32_t request = 0x777;
 CANTelemetryData telemetryDataCAN;
-static uint8_t serializedTelemetryBuf[sizeof(CANTelemetryData)];
 isotp<RX_BANKS_16, 512> tp;
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2; // TODO: Figure out actual values for send and recieve
 
@@ -38,7 +37,7 @@ void CAN_TelemetryInit() {
     // TODO: Initialize adc reads data with more helpful default values
     uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0] = {0, 0, 0, 0, 0, 0, 0, 0};
     uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1] = {0, 0, 0, 0, 0, 0, 0, 0};
-    CAN_SerializeTelemetryData(telemetryDataCAN); // May be problematic if we forget to call this somewhere after updating data
+    // CAN_SerializeTelemetryData(telemetryDataCAN, ); // May be problematic if we forget to call this somewhere after updating data
 }
 
 void CAN_Init() {
@@ -86,20 +85,21 @@ void threadCAN(void *pvParameters){
 void threadTelemetryCAN(void *pvParameters){
     static uint32_t sendTimer;
     sendTimer = millis();
+    uint8_t serializedTelemetryBuf[sizeof(CANTelemetryData)];
     while(true){
         if ( millis() - sendTimer > 1000 ) {
-            xSemaphoreTake(xSemaphore, (TickType_t) 10); // TODO put in if/else block?
-            telemetryDataCAN.accumulatorTemp++;
-            telemetryDataCAN.accumulatorVoltage++;
-            telemetryDataCAN.tractiveSystemVoltage++;
-            CAN_SerializeTelemetryData(telemetryDataCAN);
-            ISOTP_data config;
-            config.id = 0x666;
-            config.flags.extended = 0; /* standard frame */
-            config.separation_time = 10; /* time between back-to-back frames in millisec */
-            tp.write(config, serializedTelemetryBuf, sizeof(serializedTelemetryBuf));
-            sendTimer = millis();
-            xSemaphoreGive(xSemaphore);
+                Serial.print("Semaphor take successful");
+                xSemaphoreTake(xSemaphore, (TickType_t) 1000);
+                CAN_SerializeTelemetryData(telemetryDataCAN, serializedTelemetryBuf);
+                xSemaphoreGive(xSemaphore);
+
+                ISOTP_data config;
+                config.id = 0x666;
+                config.flags.extended = 0; /* standard frame */
+                config.separation_time = 10; /* time between back-to-back frames in millisec */
+                tp.write(config, serializedTelemetryBuf, sizeof(serializedTelemetryBuf));
+
+                sendTimer = millis();
         }
     }
 }
@@ -108,32 +108,24 @@ void floatToBytes(float val, uint8_t* buf) {
     memcpy(buf, &val, sizeof(float));
 }
 
-void CAN_SerializeTelemetryData(CANTelemetryData data){
-    // floatToBytes(data.accumulatorVoltage, serializedTelemetryBuf); // copy float accumulator voltage (bytes 0-3)
-    // floatToBytes(data.accumulatorTemp, serializedTelemetryBuf + 4); // copy float accumulator temp (bytes 4-7)
-    // floatToBytes(data.tractiveSystemVoltage, serializedTelemetryBuf + 8); // copy float tractive system voltage (bytes 8-11)
-    // memcpy(serializedTelemetryBuf + 12, &data, sizeof(data) - 12); // copy rest of data
-    // noInterrupts();
+void CAN_SerializeTelemetryData(CANTelemetryData data, uint8_t* serializedTelemetryBuf){
     memcpy(serializedTelemetryBuf, &data, sizeof(data));
-    // interrupts();
 }
 
 void CAN_UpdateTelemetryData(CANTelemetryData* data) {
-    xSemaphoreTake(xSemaphore, (TickType_t) 10);
     telemetryDataCAN = *data;
-    xSemaphoreGive(xSemaphore);
 }
 
 void CAN_UpdateAccumulatorData(float accumulatorVoltage, float accumulatorTemp, float tractiveSystemVoltage){
-    xSemaphoreTake(xSemaphore, (TickType_t) 10);
+    // xSemaphoreTake(xSemaphore, (TickType_t) 1000);
     telemetryDataCAN.accumulatorVoltage = accumulatorVoltage;
     telemetryDataCAN.accumulatorTemp = accumulatorTemp;
     telemetryDataCAN.tractiveSystemVoltage = tractiveSystemVoltage;
-    xSemaphoreGive(xSemaphore);
+    // xSemaphoreGive(xSemaphore);
 }
 
 void CAN_UpdateTelemetryADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads){
-    xSemaphoreTake(xSemaphore, (TickType_t) 10);
+    xSemaphoreTake(xSemaphore, (TickType_t) 1000);
     memcpy(telemetryDataCAN.adc0Reads, (const uint16_t*)adc0reads, sizeof(telemetryDataCAN.adc0Reads));
     memcpy(telemetryDataCAN.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryDataCAN.adc1Reads));
     xSemaphoreGive(xSemaphore);

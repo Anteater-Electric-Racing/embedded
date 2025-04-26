@@ -5,6 +5,7 @@
 #include "peripherals/adc.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/can.h"
+#include <arduino_freertos.h>
 
 #define LOGIC_LEVEL_V 3.3
 #define ADC_RESOLUTION 10
@@ -40,24 +41,33 @@ float accumulatorVoltage = 0.0;
 float accumulatorTemp = 0.0;
 float tractiveSystemVoltage = 0.0;
 
-void updateADCDataForRaspiTesting(){
+void updateADCDataForRaspiTesting(void *pvParameters){
     // noInterrupts();
 
     // accumulatorVoltage++;
     // accumulatorTemp++;
     // tractiveSystemVoltage++;
-    // CAN_UpdateAccumulatorData(accumulatorVoltage, accumulatorTemp, tractiveSystemVoltage);
+    // CAN_UpdateAccumulatorData(accumulatorVoltage, accumulatorTemp,
+    // tractiveSystemVoltage);
+    TickType_t xLastWakeTime;
+    const TickType_t xFrequency = 10;
 
-    for (int i = 0; i< SENSOR_PIN_AMT_ADC0; ++i){
-        adc0Reads[i] = adc0Val;
+    xLastWakeTime = xTaskGetTickCount();
+
+    for (;;) {
+        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+
+        for (int i = 0; i < SENSOR_PIN_AMT_ADC0; ++i) {
+            adc0Reads[i] = adc0Val;
+        }
+        for (int i = 0; i < SENSOR_PIN_AMT_ADC1; ++i) {
+            adc1Reads[i] = adc1Val;
+        }
+        CAN_UpdateTelemetryADCData(adc0Reads, adc1Reads);
+        adc0Val++;
+        adc1Val++;
+        // interrupts();
     }
-    for (int i = 0; i< SENSOR_PIN_AMT_ADC1; ++i){
-        adc1Reads[i] = adc1Val;
-    }
-    CAN_UpdateTelemetryADCData(adc0Reads, adc1Reads);
-    adc0Val++;
-    adc1Val++;
-    // interrupts();
 }
 
 void StartADCScanCallback() {

@@ -5,4 +5,4 @@
 
 void StartADCScanCallback();
 void ADCConversionCompleteCallback ();
-void updateADCDataForRaspiTesting();
+void updateADCDataForRaspiTesting(void *pvParameters);
