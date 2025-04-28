@@ -17,25 +17,25 @@
 #define VCU1_LEN 8 // bytes
 
 typedef struct __attribute__((packed)) {
-	uint64_t TorqueReq : 8;
-	uint64_t MotorSpdReq : 16;
-	uint64_t ChangeGearAlarm: 1;
-	uint64_t VCUAuthStatus : 2;
-	uint64_t Reserved : 5;
-	uint64_t VehicleState: 1;
-	uint64_t Brake_Pedal_State: 2;
-	uint64_t BMS_Main_Relay_Cmd: 1;
-	uint64_t GearLevelPos_Sts : 3;
-	uint64_t GearLevelPos_Sts_F : 1;
-	uint64_t AC_Control_Cmd : 1;
-	uint64_t VCU_WorkMode : 1;
-	uint64_t VCU_MotorMode : 2;
-	uint64_t VCU_Warning_Level : 2;
-	uint64_t KeyPosition : 2;
-	uint64_t BMS_Aux_Relay_Cmd: 1;
-	uint64_t PowerReduceReq : 3;
-	uint64_t RollingCounter : 4;
-	uint64_t Checksum : 8;
+    uint64_t TorqueReq : 8;
+    uint64_t MotorSpdReq : 16;
+    uint64_t ChangeGearAlarm: 1;
+    uint64_t VCUAuthStatus : 2;
+    uint64_t Reserved : 5;
+    uint64_t VehicleState: 1;
+    uint64_t Brake_Pedal_State: 2;
+    uint64_t BMS_Main_Relay_Cmd: 1;
+    uint64_t GearLevelPos_Sts : 3;
+    uint64_t GearLevelPos_Sts_F : 1;
+    uint64_t AC_Control_Cmd : 1;
+    uint64_t VCU_WorkMode : 1;
+    uint64_t VCU_MotorMode : 2;
+    uint64_t VCU_Warning_Level : 2;
+    uint64_t KeyPosition : 2;
+    uint64_t BMS_Aux_Relay_Cmd: 1;
+    uint64_t PowerReduceReq : 3;
+    uint64_t RollingCounter : 4;
+    uint64_t Checksum : 8;
 } VCU1;
 
 static uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
@@ -58,31 +58,31 @@ void CAN_Init() {
 
 void CAN_SendVCU1Message(float torqueValue)
 {
-	motorMsg.id = VCU1_ID;
-	motorMsg.len = VCU1_LEN;
+    motorMsg.id = VCU1_ID;
+    motorMsg.len = VCU1_LEN;
 
-	VCU1 vcu1 = {0};
+    VCU1 vcu1 = {0};
 
     // Map throttle percentage to uint8 value
-	vcu1.TorqueReq = (uint8_t) LINEAR_MAP(torqueValue, 0.0F, 1.0F, 0.0F, 255.0F);
+    vcu1.TorqueReq = (uint8_t) LINEAR_MAP(torqueValue, 0.0F, 1.0F, 0.0F, 255.0F);
 
-	memcpy(motorMsg.buf, &vcu1, sizeof(vcu1));
-	motorMsg.buf[7] = ComputeChecksum(motorMsg.buf, 8);
+    memcpy(motorMsg.buf, &vcu1, sizeof(vcu1));
+    motorMsg.buf[7] = ComputeChecksum(motorMsg.buf, 8);
 
-	if (can3.write(motorMsg)) {
-		Serial.println("VCU1 message sent");
-	} else {
-		Serial.println("VCU1 message failed to send");
-	}
+    if (can3.write(motorMsg)) {
+        Serial.println("VCU1 message sent");
+    } else {
+        Serial.println("VCU1 message failed to send");
+    }
 }
 
 // checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
 static uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
-	uint8_t sum = 0;
-	for (uint8_t i = 0; i < length - 1; i++) {
-		sum += data[i];
-	}
-	return sum ^ 0xFF;
+    uint8_t sum = 0;
+    for (uint8_t i = 0; i < length - 1; i++) {
+        sum += data[i];
+    }
+    return sum ^ 0xFF;
 }
 
 
