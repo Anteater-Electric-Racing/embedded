@@ -16,7 +16,7 @@
 #define VCU1_ID 0x101
 #define VCU1_LEN 8 // bytes
 
-typedef struct {
+typedef struct __attribute__((packed)) {
 	uint64_t TorqueReq : 8;
 	uint64_t MotorSpdReq : 16;
 	uint64_t ChangeGearAlarm: 1;
