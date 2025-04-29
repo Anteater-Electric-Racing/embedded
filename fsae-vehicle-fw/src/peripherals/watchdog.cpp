@@ -13,7 +13,7 @@ void Watchdog_Init(){
   config.timeout = WDT_TIMEOUT_SEC;
   config.window = WDT_WINDOW_SEC; // must feed after 0.5s, before 1s
   config.trigger = WDT_TRIGGER_SEC; // warning trigger
-  config.callback = myCallBack; // Full system reset (change back to nullptr)
+  config.callback = Watchdog_CallBack; // Full system reset (change back to nullptr)
 
   wdt.begin(config);
 
@@ -25,6 +25,11 @@ void Watchdog_Pet(){
   Serial.println("Watchdog has been pet.");
 }
 
-void myCallBack(){
+void Watchdog_Reset(){
+  Serial.println("Force reset");
+  wdt.reset();
+}
+
+void Watchdog_CallBack(){
   Serial.println("WARNING: WATCHDOG NEEDS TO BE PET.");
 }

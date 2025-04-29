@@ -14,6 +14,8 @@ void Watchdog_Init();
 
 void Watchdog_Pet();
 
-void myCallBack();
+void Watchdog_Reset();
+
+void Watchdog_CallBack();
 
 #endif

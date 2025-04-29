@@ -13,6 +13,8 @@
 #include "vehicle/telemetry.h"
 #include "peripherals/watchdog.h"
 
+volatile bool systemHealthy = false;
+
 void threadMain( void *pvParameters );
 
 void setup() { // runs once on bootup
@@ -22,19 +24,34 @@ void setup() { // runs once on bootup
 
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(100);
 
     Peripherals_Init();
     Faults_Init();
     Telemetry_Init();
     Watchdog_Init();
+
+    systemHealthy = true; // initialization was successful
+
     Serial.println("Entering loop...");
 
     while (true) {
         // Main loop
-          Serial.println("Running...");
-          //Watchdog_Pet(); commented out for testing
-          vTaskDelay(pdMS_TO_TICKS(100));
+            Serial.println("Running...");
+
+            /*
+            if(some error condition){
+                systemHealthy = false;
+            }
+            */
+
+            if (systemHealthy){
+                Watchdog_Pet(); //comment if testing
+            }
+            else{
+                Serial.println("System not healthy.");
+            }
+            vTaskDelay(100);
     }
 }
 
