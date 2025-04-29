@@ -1,5 +1,7 @@
 // Anteater Electric Racing, 2025
 
+#pragma once
+
 #include "bse.h"
 
 typedef struct {
@@ -10,3 +12,4 @@ typedef struct {
 void APPS_Init();
 void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2);
 float APPS_GetAPPSReading();
+APPSData APPS_GetAPPSReading_Separate();

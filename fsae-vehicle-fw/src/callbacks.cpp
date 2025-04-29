@@ -4,8 +4,8 @@
 #include "callbacks.h"
 #include "peripherals/adc.h"
 
-#include "vehicle/bse.h"
 #include "vehicle/apps.h"
+#include "vehicle/bse.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"

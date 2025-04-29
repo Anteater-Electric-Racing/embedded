@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <unity.h>
-#include "../lib/APPS/apps.h"
-#include "../lib/APPS/faults.h"
+#include "vehicle/apps.h"
+#include "vehicle/faults.h"
+#include <iostream>
 
 void setUp(void) {
     // set stuff up here
@@ -10,8 +11,6 @@ void setUp(void) {
 void tearDown(void) {
     // clean stuff up here
 }
-
-
 
 void test_APPS_Fault(void) {
     // APPSData appsData = APPS_GetAPPSReading_Separate();
@@ -29,19 +28,18 @@ void trivialTest(void) {
 }
 
 void setup() {
-    // NOTE!!! Wait for >2 secs
-    // if board doesn't support software reset via Serial.DTR/RTS
-    delay(2000);
-
+    delay(5000); // Wait for serial to be ready
+    Serial.begin(9600);
+    Serial.println("Starting tests...");
     UNITY_BEGIN();
-    // RUN_TEST(test_APPS_Fault);
+
+    while(!Serial) delay(10);
+    RUN_TEST(test_APPS_Fault);
     RUN_TEST(trivialTest);
+
     UNITY_END();
 }
 
 void loop() {
-    // digitalWrite(13, HIGH);
-    // delay(100);
-    // digitalWrite(13, LOW);
-    // delay(500);
+    std::cout << "Looping..." << std::endl;
 }

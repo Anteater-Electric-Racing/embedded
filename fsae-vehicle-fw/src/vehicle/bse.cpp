@@ -3,15 +3,18 @@
 #include <cmath>
 
 #include "utils/utils.h"
-
 #include "bse.h"
 
-#include "vehicle/faults.h"
+#include "faults.h"
 
 #define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
 #define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / 4095.0F)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
 
-#define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
+#define BSE_SENSOR_VMIN 0.5F
+#define BSE_SENSOR_VMAX 4.5F
+#define BSE_SENSOR_PMIN 0.0F
+#define BSE_SENSOR_PMAX 200.0F
+#define BSE_VOLTAGE_TO_PSI(x) (((x) - BSE_SENSOR_VMIN) * ((BSE_SENSOR_PMAX - BSE_SENSOR_PMIN) / (BSE_SENSOR_VMAX - BSE_SENSOR_VMIN)) + BSE_SENSOR_PMIN) // Voltage to PSI conversion
 
 #define BSE_LOWER_THRESHOLD 0.5F
 #define BSE_UPPER_THRESHOLD 4.5F

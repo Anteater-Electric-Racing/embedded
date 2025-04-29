@@ -1,7 +1,7 @@
 // Anteater Electric Racing, 2025
 
-#include "vehicle/motor.h"
-#include "vehicle/telemetry.h"
+#include "motor.h"
+#include "telemetry.h"
 
 #define MOTOR_MAX_TORQUE 100.0F // TODO: Update with real value
 

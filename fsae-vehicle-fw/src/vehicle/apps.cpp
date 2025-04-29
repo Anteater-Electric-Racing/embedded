@@ -6,14 +6,14 @@
 
 #include "apps.h"
 
-#include "vehicle/faults.h"
+#include "faults.h"
 
 #define APPS_IMPLAUSABILITY_THRESHOLD 0.1            // 10%
 #define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.25 // 25%
-#define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 200    // PSI
+#define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 50    // PSI
 
 #define VOLTAGE_DIVIDER 2.0F
-#define APPS_ADC_TO_VOLTAGE(x) ((x) * (LOGIC_LEVEL_V / 4095.0F)) * VOLTAGE_DIVIDER
+#define APPS_ADC_TO_VOLTAGE(x) ((x) * (LOGIC_LEVEL_V / 1027.0F)) * VOLTAGE_DIVIDER
 
 #define APPS_3V3_PERCENTAGE(x) ((x) / 3.3F)
 #define APPS_5V_PERCENTAGE(x) ((x) / 5.0F)
@@ -38,7 +38,7 @@ void APPS_Init() {
 }
 
 void checkAndHandleAPPSFault() {
-    float difference = abs(appsData.appsReading1_Percentage - appsData.appsReading2_Percentage);
+    float difference = fabs(appsData.appsReading1_Percentage - appsData.appsReading2_Percentage);
 
     if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
         Faults_SetFault(FAULT_APPS);
@@ -68,10 +68,8 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
     LOWPASS_FILTER(rawReading1, appsRaw.apps1RawReading, COMPUTE_ALPHA(100.0F));
     LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, COMPUTE_ALPHA(100.0F));
 
-    appsData.appsReading1_Percentage =
-        APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading1));
-    appsData.appsReading2_Percentage =
-        APPS_5V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading2));
+    appsData.appsReading1_Percentage = APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading1));
+    appsData.appsReading2_Percentage = APPS_5V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(rawReading2));
 
     checkAndHandleAPPSFault();
     checkAndHandlePlausibilityFault();
@@ -79,4 +77,8 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
 
 float APPS_GetAPPSReading() {
     return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
+}
+
+APPSData APPS_GetAPPSReading_Separate() {
+    return appsData;
 }
