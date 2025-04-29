@@ -1,8 +1,11 @@
 // Anteater Electric Racing, 2025
 
 #include <ADC.h>
+#include <stdint.h>
+
 #include "callbacks.h"
 #include "peripherals/adc.h"
+#include "utils/utils.h"
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -94,17 +97,27 @@ void ADCConversionCompleteCallback () {
     } else if(adc0Index < SENSOR_PIN_AMT_ADC0){ // Do here so we don't start a read for an invalid pin
         adc->adc0->enableInterrupts(ADCConversionCompleteCallback, adc0Index); // Priority gets lower as it's further in the index array
         adc->adc0->startSingleRead(adc0Pins[adc0Index]); // in callbacks.h
+        return;
     } else if(adc1Index < SENSOR_PIN_AMT_ADC1){ // Do here so we don't start a read for an invalid pin
         adc->adc1->enableInterrupts(ADCConversionCompleteCallback, adc1Index); // Priority gets lower as it's further in the index array
         adc->adc1->startSingleRead(adc1Pins[adc1Index]); // in callbacks.h
+        return;
     }
+    interrupts();
 
     // Simulate ADC readings to test
     static uint32_t ticks = 0;
-    adc0Reads[APPS_1_INDEX] = (1 * (ticks/10)) % 4095; // Simulated value for APPS 1
-    adc0Reads[APPS_2_INDEX] = 2048; // Simulated value for APPS 2
+    static uint8_t direction = 1;
+    // adc0Reads[APPS_1_INDEX] = (1 * (ticks/10)) % 2047; // Simulated value for APPS 1
+    // adc0Reads[APPS_2_INDEX] = 1024; // Simulated value for APPS 2
 
-    interrupts();
+    adc0Reads[APPS_1_INDEX] = 1024 + (1024 * direction); // Simulated value for APPS 1
+    adc0Reads[APPS_2_INDEX] = 1024; // Simulated value for APPS 2
+
+    ticks++;
+    if (ticks % 100 == 0) {
+        direction *= -1;
+    }
 
     // Update each sensors data
     APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
@@ -120,9 +133,9 @@ void ADCConversionCompleteCallback () {
         .APPS_Travel = APPS_GetAPPSReading(),
         .BSEFront_PSI = BSE_GetBSEReading()->bseFront_PSI,
         .BSERear_PSI = BSE_GetBSEReading()->bseRear_PSI,
+        .motorState = Motor_GetState(),
     };
 
     Telemetry_UpdateData(&telemetryData);
-
 }
 

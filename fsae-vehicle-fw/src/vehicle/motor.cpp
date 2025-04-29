@@ -59,3 +59,7 @@ void Motor_SetFaultState(){
     motorData.state = MOTOR_STATE_FAULT;
 }
 
+MotorState Motor_GetState(){
+    return motorData.state;
+}
+
