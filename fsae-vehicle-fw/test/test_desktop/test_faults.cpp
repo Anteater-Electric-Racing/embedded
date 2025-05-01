@@ -50,10 +50,19 @@ void test_Faults_ClearFaults(void) {
     TEST_ASSERT_FALSE(*Faults_GetFaults() & FAULT_OVER_CURRENT_MASK);
 }
 
+void test_Faults_CheckAllClear(void) {
+    Faults_SetFault(FAULT_OVER_CURRENT);
+    TEST_ASSERT_FALSE(Faults_CheckAllClear());
+
+    Faults_ClearFault(FAULT_OVER_CURRENT);
+    TEST_ASSERT_TRUE(Faults_CheckAllClear());
+}
+
 int run_Faults_tests() {
     RUN_TEST(test_Faults_Init);
     RUN_TEST(test_Faults_SetFaults);
     RUN_TEST(test_Faults_MultiFaults);
     RUN_TEST(test_Faults_ClearFaults);
+    RUN_TEST(test_Faults_CheckAllClear);
     return 0;
 }

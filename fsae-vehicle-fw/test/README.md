@@ -1,15 +1,4 @@
-
-This directory is intended for PlatformIO Test Runner and project tests.
-
-Unit Testing is a software testing method by which individual units of
-source code, sets of one or more MCU program modules together with associated
-control data, usage procedures, and operating procedures, are tested to
-determine whether they are fit for use. Unit testing finds problems early
-in the development cycle.
-
-More information about PlatformIO Unit Testing:
-- https://docs.platformio.org/en/latest/advanced/unit-testing/index.html
-
+# Firmware Unit Testing
 
 ## APPS Tests
 
@@ -19,6 +8,7 @@ More information about PlatformIO Unit Testing:
 | APPS UpdateData                            | Ensure APPS_UpdateData correctly updates data   | No faults, values are correctly set      | ✅
 | APPS Implausibility Fault                  | >10% disagreement between sensors               | Fault set: FAULT_APPS                    | ✅
 | APPS + Brake Plausibility Fault            | Throttle >25%, Brake >200 PSI                   | Fault set: FAULT_APPS_BRAKE_PLAUSIBILITY | ✅
+| APPS Voltage Range Fault                   | Voltage outside (0.5V - 4.5V) (0.17V - 1.8V)    | Fault set: FAULT_APPS_VOLTAGE            |
 | APPS ADC to Voltage                        | Convert ADC to real-world voltage               | Accurate voltage conversion              | unsure if accurate
 | APPS Low Pass Filter                       | Apply LPF to noisy input                        | Smoothed output                          | unsure how to test
 
@@ -35,18 +25,20 @@ More information about PlatformIO Unit Testing:
 
 ## Fault Module Tests
 
-sanity
-init
-all clear
-
-set faults
-clear faults
+| Test Case                                  | Description                                     | Expected Behavior                        | Notes
+|--------------------------------------------|-------------------------------------------------|------------------------------------------|-------------------------------------
+| Fault Module Init                          | Ensure all faults are false on init             | No faults active on init                 | ✅ 
+| Faults All clear                           | Ensure Faults_CheckAllClear works               | Always true when no faults               | ✅
+| Faults Set Faults                          | Ensure faults are set correctly                 | Faults set                               | ✅ 
+| Faults Clear Faults                        | Ensure faults are cleared correctly             | Faults clear                             | ✅ 
 
 
 
 ## Motor Module Tests
 
-init
-motor state
-clear fault state
-get motor state
+| Test Case                                  | Description                                     | Expected Behavior                        | Notes
+|--------------------------------------------|-------------------------------------------------|------------------------------------------|-------------------------------------
+| Motor Module Init                          | Sanity check motor state starts as OFF          | No faults active on init                 | ✅ 
+| Motor Update State (All States)            | Update motor state based on update logic        | Always true when no faults               | ✅
+| Motor Torque Demand (w/ Fault)             | Hold correct motor demand + during motor fault  | Faults set                               | ✅ 
+| Set Motor Fault State                      | Ensure faults are cleared correctly             | Faults clear                             | ✅ 
