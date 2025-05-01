@@ -7,13 +7,16 @@
 
 #include "faults.h"
 
+#define ADC_RESOLUTION 12
+#define ADC_MAX_VALUE ((1 << ADC_RESOLUTION) - 1)
+
 #define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
-#define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / 4095.0F)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
+#define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
 
 #define BSE_SENSOR_VMIN 0.5F
 #define BSE_SENSOR_VMAX 4.5F
 #define BSE_SENSOR_PMIN 0.0F
-#define BSE_SENSOR_PMAX 200.0F
+#define BSE_SENSOR_PMAX 100.0F
 #define BSE_VOLTAGE_TO_PSI(x) (((x) - BSE_SENSOR_VMIN) * ((BSE_SENSOR_PMAX - BSE_SENSOR_PMIN) / (BSE_SENSOR_VMAX - BSE_SENSOR_VMIN)) + BSE_SENSOR_PMIN) // Voltage to PSI conversion
 
 #define BSE_LOWER_THRESHOLD 0.5F

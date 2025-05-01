@@ -2,8 +2,9 @@
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
 #include "vehicle/faults.h"
-#include "../test_desktop/test_apps_fault.h"
-#include "../test_desktop/test_bse_fault.h"
+#include "../test_desktop/test_apps.h"
+#include "../test_desktop/test_bse.h"
+#include "../test_desktop/test_faults.h"
 
 void setUp(void) {
     // set stuff up here
@@ -21,6 +22,7 @@ int main(int argc, char **argv) {
     
     run_APPS_tests();
     run_BSE_tests();
+    run_Faults_tests();
 
     UNITY_END();
     return 0;

@@ -34,3 +34,19 @@ More information about PlatformIO Unit Testing:
 | BSE Low Pass Filter                        | Apply LPF to noisy input                        | Smoothed output                          | unsure how to test
 
 ## Fault Module Tests
+
+sanity
+init
+all clear
+
+set faults
+clear faults
+
+
+
+## Motor Module Tests
+
+init
+motor state
+clear fault state
+get motor state
