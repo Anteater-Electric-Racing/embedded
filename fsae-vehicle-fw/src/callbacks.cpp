@@ -1,8 +1,17 @@
 // Anteater Electric Racing, 2025
 
+#include <ADC.h>
+#include <stdint.h>
+
 #include "callbacks.h"
 #include "peripherals/adc.h"
-#include <ADC.h>
+#include "utils/utils.h"
+
+#include "vehicle/bse.h"
+#include "vehicle/apps.h"
+#include "vehicle/faults.h"
+#include "vehicle/telemetry.h"
+#include "vehicle/motor.h"
 
 #define LOGIC_LEVEL_V 3.3
 #define ADC_RESOLUTION 10
@@ -100,12 +109,38 @@ void ADCConversionCompleteCallback() {
                                     adc0Index); // Priority gets lower as it's
                                                 // further in the index array
         adc->adc0->startSingleRead(adc0Pins[adc0Index]); // in callbacks.h
-    } else if (adc1Index < SENSOR_PIN_AMT_ADC1) { // Do here so we don't start a
-                                                  // read for an invalid pin
-        adc->adc1->enableInterrupts(ADCConversionCompleteCallback,
-                                    adc1Index); // Priority gets lower as it's
-                                                // further in the index array
+        return;
+    } else if(adc1Index < SENSOR_PIN_AMT_ADC1){ // Do here so we don't start a read for an invalid pin
+        adc->adc1->enableInterrupts(ADCConversionCompleteCallback, adc1Index); // Priority gets lower as it's further in the index array
         adc->adc1->startSingleRead(adc1Pins[adc1Index]); // in callbacks.h
+        return;
     }
     interrupts();
+    // Digital Sensor Reads
+    bool rtmButton = digitalRead(RTM_BUTTON_PIN);
+    bool wheelSpeed1 = digitalRead(WHEEL_SPEED_1_PIN);
+    bool wheelSpeed2 = digitalRead(WHEEL_SPEED_2_PIN);
+
+    // Update each sensors data
+    APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
+    BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
+
+    // Handle any faults that were raised
+    Faults_HandleFaults();
+
+    Motor_UpdateMotor();
+
+    // Update telemetry data
+    TelemetryData telemetryData = {
+        .APPS_Travel = APPS_GetAPPSReading(),
+        .BSEFront_PSI = BSE_GetBSEReading()->bseFront_PSI,
+        .BSERear_PSI = BSE_GetBSEReading()->bseRear_PSI,
+        .motorState = Motor_GetState(),
+    };
+
+    telemetryData.debug[0] = APPS_GetAPPSReading1();
+    telemetryData.debug[1] = APPS_GetAPPSReading2();
+
+
+    Telemetry_UpdateData(&telemetryData);
 }

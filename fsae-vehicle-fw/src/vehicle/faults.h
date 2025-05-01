@@ -1,7 +1,6 @@
 // Anteater Electric Racing, 2025
 
-#ifndef FAULTS_H
-#define FAULTS_H
+#pragma once
 
 #include <stdint.h>
 
@@ -24,4 +23,3 @@ void Faults_ClearFault(FaultType fault);
 void Faults_HandleFaults();
 bool Faults_CheckAllClear();
 
-#endif
