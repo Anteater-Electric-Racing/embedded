@@ -19,6 +19,7 @@ extern volatile uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
 extern ADC *adc; // = new ADC();
 
-void ADC1_Init();
+void ADC_Init();
+void ADC_Begin();
 
 #endif // ADC_H

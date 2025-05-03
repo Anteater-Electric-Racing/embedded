@@ -85,7 +85,6 @@ void telemetryCanThread(void *pvParameters){
             sendTimer = millis();
         }
     }
-
 }
 
 TelemetryData* Telemetry_GetData() {
@@ -103,7 +102,6 @@ void Telemetry_SerializeData(TelemetryData data){
     memcpy(serializedTelemetryBuf + 12, &data, sizeof(data) - 12); // copy rest of data
 }
 
-
 void Telemetry_UpdateData(TelemetryData* data) {
     telemetryData = *data;
 }
@@ -113,10 +111,3 @@ void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* ad
     memcpy(telemetryData.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryData.adc1Reads));
     Telemetry_SerializeData(telemetryData);
 }
-
-
-
-// void Telemetry_TransmitData(){
-//     Telemetry_SerializeData(telemetryData);
-//     // Figure out how to actually transmit it
-// }

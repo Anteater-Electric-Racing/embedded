@@ -9,5 +9,6 @@ void Peripherals_Init() {
     // GPIO_Init();
     // ADC1_Init();
     // init the rest of peripherals
-    Timer_StartADCScan();
+    // Timer_StartADCScan();
+    ADC_Begin();
 }
