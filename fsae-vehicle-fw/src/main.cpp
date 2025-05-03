@@ -15,6 +15,7 @@
 #include "vehicle/can.h"
 #include "callbacks.h"
 
+
 void threadMain( void *pvParameters );
 
 void setup() { // runs once on bootup
@@ -34,8 +35,9 @@ void threadMain(void *pvParameters) {
 
     CAN_Init();
 
-    CAN_Begin();
-
+    //CAN_Begin();
+    startCANStressTest(30000);
+    
     while (true) {
         // Main loop code here
         // This is where you would typically handle tasks, read sensors, etc.

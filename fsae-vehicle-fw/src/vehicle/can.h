@@ -23,4 +23,7 @@ void CAN_UpdateTelemetryData(CANTelemetryData* data);
 void CAN_UpdateAccumulatorData(float accumulatorVoltage, float accumulatorTemp, float tractiveSystemVoltage);
 void CAN_UpdateTelemetryADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
 
+void startCANStressTest(uint32_t duration);
+// void canSniff(const CAN_message_t &msg);
+
 #endif
