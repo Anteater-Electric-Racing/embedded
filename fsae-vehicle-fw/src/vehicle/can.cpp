@@ -144,13 +144,16 @@ void CAN_UpdateAccumulatorData(float accumulatorVoltage, float accumulatorTemp,
     // xSemaphoreGive(xSemaphore);
 }
 
-void CAN_UpdateTelemetryADCData(volatile uint16_t *adc0reads,
-                                volatile uint16_t *adc1reads) {
+void CAN_UpdateTelemetryADCData(const uint16_t *newAdc0reads,
+                                const uint16_t *newAdc1reads) {
     BaseType_t xHigherPriorityTaskWoken =
         pdFALSE; // TODO: check if this is correct
-    CANADCValues newValues = {.adc0Reads = *adc0reads, .adc1Reads = *adc1reads};
+    CANADCValues newValues;
+    memcpy(newValues.adc0Reads, newAdc0reads, sizeof(newValues.adc0Reads));
+    memcpy(newValues.adc1Reads, newAdc1reads, sizeof(newValues.adc1Reads));
     xQueueSendToBackFromISR(adcValuesQueue, &newValues,
                             &xHigherPriorityTaskWoken);
+
 
     // xSemaphoreTake(xSemaphore, (TickType_t) 1000);
     // memcpy(telemetryDataCAN.adc0Reads, (const uint16_t*)adc0reads,

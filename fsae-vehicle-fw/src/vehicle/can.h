@@ -26,6 +26,6 @@ void CAN_TelemetryInit();
 void CAN_SerializeTelemetryData(CANTelemetryData data, uint8_t* serializedTelemetryBuf);
 void CAN_UpdateTelemetryData(CANTelemetryData* data);
 void CAN_UpdateAccumulatorData(float accumulatorVoltage, float accumulatorTemp, float tractiveSystemVoltage);
-void CAN_UpdateTelemetryADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
+void CAN_UpdateTelemetryADCData(const uint16_t* adc0reads, const uint16_t* adc1reads);
 
 #endif
