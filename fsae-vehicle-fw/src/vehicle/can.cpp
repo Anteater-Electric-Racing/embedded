@@ -99,26 +99,30 @@ void threadTelemetryCAN(void *pvParameters) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = 1000;
     uint8_t serializedTelemetryBuf[sizeof(CANTelemetryData)];
-    CANADCValues newValues;
+    CANADCValues lastValue;
+    ISOTP_data config;
+    config.id = 0x666;
+    config.flags.extended = 0;
+    config.separation_time = 10;
     while (true) {
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        xSemaphoreTake(xSemaphore, (TickType_t)10);
-        while (uxQueueMessagesWaiting(adcValuesQueue)) {
-            xQueueReceive(adcValuesQueue, &newValues, portMAX_DELAY);
-            memcpy(telemetryDataCAN.adc0Reads, newValues.adc0Reads,
-                   sizeof(newValues.adc0Reads));
-            memcpy(telemetryDataCAN.adc1Reads, newValues.adc1Reads,
-                   sizeof(newValues.adc1Reads));
-            CAN_SerializeTelemetryData(telemetryDataCAN,
-                                       serializedTelemetryBuf);
-        }
-        xSemaphoreGive(xSemaphore);
+        bool itemReceived = false;
 
-        ISOTP_data config;
-        config.id = 0x666;
-        config.flags.extended = 0; /* standard frame */
-        config.separation_time =
-            10; /* time between back-to-back frames in millisec */
+        while (xQueueReceive(adcValuesQueue, &lastValue, 0) == pdPASS) {
+            itemReceived = true;
+        }
+
+        if (itemReceived) {
+            xSemaphoreTake(xSemaphore, (TickType_t)10);
+            memcpy(telemetryDataCAN.adc0Reads, lastValue.adc0Reads,
+                   sizeof(lastValue.adc0Reads));
+            memcpy(telemetryDataCAN.adc1Reads, lastValue.adc1Reads,
+                   sizeof(lastValue.adc1Reads));
+            xSemaphoreGive(xSemaphore);
+        }
+
+        CAN_SerializeTelemetryData(telemetryDataCAN, serializedTelemetryBuf);
+
         tp.write(config, serializedTelemetryBuf,
                  sizeof(serializedTelemetryBuf));
     }
@@ -153,7 +157,6 @@ void CAN_UpdateTelemetryADCData(const uint16_t *newAdc0reads,
     memcpy(newValues.adc1Reads, newAdc1reads, sizeof(newValues.adc1Reads));
     xQueueSendToBackFromISR(adcValuesQueue, &newValues,
                             &xHigherPriorityTaskWoken);
-
 
     // xSemaphoreTake(xSemaphore, (TickType_t) 1000);
     // memcpy(telemetryDataCAN.adc0Reads, (const uint16_t*)adc0reads,
