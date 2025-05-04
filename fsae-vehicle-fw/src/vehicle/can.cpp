@@ -96,9 +96,11 @@ void threadTelemetryCAN(void *pvParameters){
         if ( millis() - sendTimer > 1000 ) {
                 Serial.print("Semaphor take successful");
                 xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-                xQueueReceive(adcValuesQueue, &newValues, portMAX_DELAY);
-                memcpy(telemetryDataCAN.adc0Reads, newValues.adc0Reads, sizeof(newValues.adc0Reads));
-                memcpy(telemetryDataCAN.adc1Reads, newValues.adc1Reads, sizeof(newValues.adc1Reads));
+                if (uxQueueMessagesWaiting(adcValuesQueue) >= 1){
+                    xQueueReceive(adcValuesQueue, &newValues, portMAX_DELAY);
+                    memcpy(telemetryDataCAN.adc0Reads, newValues.adc0Reads, sizeof(newValues.adc0Reads));
+                    memcpy(telemetryDataCAN.adc1Reads, newValues.adc1Reads, sizeof(newValues.adc1Reads));
+                }
                 CAN_SerializeTelemetryData(telemetryDataCAN, serializedTelemetryBuf);
                 xSemaphoreGive(xSemaphore);
 
