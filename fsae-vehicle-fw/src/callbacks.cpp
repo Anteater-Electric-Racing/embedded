@@ -79,7 +79,7 @@ void StartADCScanCallback() {
     adc1Index = 0;
     uint16_t startPinADC0 = adc0Pins[0];
     uint16_t startPinADC1 = adc1Pins[0];
-    uint32_t currentTime = micros();
+    // uint32_t currentTime = micros();
     adc->adc0->enableInterrupts(ADCConversionCompleteCallback);
     adc->startSynchronizedSingleRead(startPinADC0, startPinADC1); // in callbacks.h
     interrupts();
@@ -140,7 +140,7 @@ void ADCConversionCompleteCallback () {
         adc1Index = 0;
 
         // TODO: transmit data
-        Telemetry_UpdateADCData(adc0Reads, adc1Reads);
+        CAN_UpdateTelemetryADCData(adc0Reads, adc1Reads);
 
     } else if(adc0Index < SENSOR_PIN_AMT_ADC0){ // Do here so we don't start a read for an invalid pin
         adc->adc0->enableInterrupts(ADCConversionCompleteCallback, adc0Index); // Priority gets lower as it's further in the index array

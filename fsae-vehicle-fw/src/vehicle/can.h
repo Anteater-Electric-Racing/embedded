@@ -15,6 +15,11 @@ struct CANTelemetryData{
 
 } __attribute__((packed)); // need this to ensure data is packed without gaps in between;
 
+struct CANADCValues{
+    uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
+    uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
+} __attribute__((packed));
+
 void CAN_Init();
 void CAN_Begin();
 void CAN_TelemetryInit();

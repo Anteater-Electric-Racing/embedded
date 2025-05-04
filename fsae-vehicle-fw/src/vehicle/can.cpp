@@ -1,20 +1,24 @@
 // Anteater Electric Racing, 2025
 
-#define THREAD_CAN_STACK_SIZE 128
-#define THREAD_CAN_PRIORITY 1
-#define THREAD_CAN_TELEMETRY_PRIORITY 2
-
 #include "can.h"
 #include <FlexCAN_T4.h>
 #include <isotp.h>
 #include <arduino_freertos.h>
 #include <semphr.h>
+#include "peripherals/adc.h"
+
+#define THREAD_CAN_STACK_SIZE 128
+#define THREAD_CAN_PRIORITY 1
+#define THREAD_CAN_TELEMETRY_PRIORITY 2
+#define QUEUE_TELEMETRY_ADC_LENGTH 3
+#define QUEUE_TELEMETRY_ADC_ITEM_SIZE (sizeof(uint16_t)*(SENSOR_PIN_AMT_ADC0 + SENSOR_PIN_AMT_ADC1))// TODO: figure out how big to make this
 
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t msg;
 CAN_message_t rx_msg;
 
 SemaphoreHandle_t xSemaphore;
+QueueHandle_t adcValuesQueue;
 
 // TODO: Update IDs to be more logical values
 const uint32_t canid = 0x666;
@@ -66,6 +70,7 @@ void CAN_Init() {
 void CAN_Begin() {
     // xTaskCreate(threadCAN, "threadCAN", THREAD_CAN_STACK_SIZE, NULL, THREAD_CAN_PRIORITY, NULL);
     xTaskCreate(threadTelemetryCAN, "threadTelemetryCAN", THREAD_CAN_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
+    adcValuesQueue = xQueueCreate( QUEUE_TELEMETRY_ADC_LENGTH, QUEUE_TELEMETRY_ADC_ITEM_SIZE );
 }
 
 void threadCAN(void *pvParameters){
@@ -86,10 +91,14 @@ void threadTelemetryCAN(void *pvParameters){
     static uint32_t sendTimer;
     sendTimer = millis();
     uint8_t serializedTelemetryBuf[sizeof(CANTelemetryData)];
+    CANADCValues newValues;
     while(true){
         if ( millis() - sendTimer > 1000 ) {
                 Serial.print("Semaphor take successful");
                 xSemaphoreTake(xSemaphore, (TickType_t) 1000);
+                xQueueReceive(adcValuesQueue, &newValues, portMAX_DELAY);
+                memcpy(telemetryDataCAN.adc0Reads, newValues.adc0Reads, sizeof(newValues.adc0Reads));
+                memcpy(telemetryDataCAN.adc1Reads, newValues.adc1Reads, sizeof(newValues.adc1Reads));
                 CAN_SerializeTelemetryData(telemetryDataCAN, serializedTelemetryBuf);
                 xSemaphoreGive(xSemaphore);
 
@@ -125,8 +134,12 @@ void CAN_UpdateAccumulatorData(float accumulatorVoltage, float accumulatorTemp, 
 }
 
 void CAN_UpdateTelemetryADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads){
-    xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-    memcpy(telemetryDataCAN.adc0Reads, (const uint16_t*)adc0reads, sizeof(telemetryDataCAN.adc0Reads));
-    memcpy(telemetryDataCAN.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryDataCAN.adc1Reads));
-    xSemaphoreGive(xSemaphore);
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE; // TODO: check if this is correct
+    CANADCValues newValues = {.adc0Reads = *adc0reads, .adc1Reads = *adc1reads} ;
+    xQueueSendToBackFromISR(adcValuesQueue, &newValues, &xHigherPriorityTaskWoken);
+
+    // xSemaphoreTake(xSemaphore, (TickType_t) 1000);
+    // memcpy(telemetryDataCAN.adc0Reads, (const uint16_t*)adc0reads, sizeof(telemetryDataCAN.adc0Reads));
+    // memcpy(telemetryDataCAN.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryDataCAN.adc1Reads));
+    // xSemaphoreGive(xSemaphore);
 }
