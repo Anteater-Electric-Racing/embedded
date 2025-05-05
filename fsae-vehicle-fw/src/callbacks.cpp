@@ -81,6 +81,7 @@ void StartADCScanCallback() {
     uint16_t startPinADC1 = adc1Pins[0];
     // uint32_t currentTime = micros();
     adc->adc0->enableInterrupts(ADCConversionCompleteCallback);
+    adc->adc1->enableInterrupts(ADCConversionCompleteCallback);
     adc->startSynchronizedSingleRead(startPinADC0, startPinADC1); // in callbacks.h
     interrupts();
     // Serial.print("adc 0 values are ");
