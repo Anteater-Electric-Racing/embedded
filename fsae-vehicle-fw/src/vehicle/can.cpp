@@ -14,7 +14,7 @@ FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t msg;
 CAN_message_t rx_msg;
 
-SemaphoreHandle_t xSemaphore;
+SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
 
 // TODO: Update IDs to be more logical values
 const uint32_t canid = 0x666;
@@ -27,7 +27,7 @@ void threadCAN( void *pvParameters );
 void threadTelemetryCAN( void *pvParameters );
 
 void CAN_TelemetryInit() {
-    xSemaphore = xSemaphoreCreateMutex();
+    // xSemaphore = xSemaphoreCreateMutex();
     // fill with reasonable default values
     telemetryDataCAN = {
         .accumulatorVoltage = 0,

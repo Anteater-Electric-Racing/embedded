@@ -10,5 +10,6 @@ void Peripherals_Init() {
     // ADC1_Init();
     // init the rest of peripherals
     // Timer_StartADCScan();
+    ADC_Init();
     ADC_Begin();
 }
