@@ -51,9 +51,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         eprintln!("Failed to publish to MQTT: {}", e);
     }
 
-    tokio::spawn(async move {
-        if let Err(e) = INFLUX_CLIENT.query(message.into_query(T::topic())).await {
-            eprintln!("Failed to write to InfluxDB: {}", e);
-        }
-    });
+    if let Err(e) = INFLUX_CLIENT.query(message.into_query(T::topic())).await {
+        eprintln!("Failed to write to InfluxDB: {}", e);
+    }
 }
