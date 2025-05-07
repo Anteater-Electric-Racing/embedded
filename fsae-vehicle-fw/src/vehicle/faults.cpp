@@ -88,6 +88,10 @@ void Faults_ClearFault(FaultType fault) {
 // currently having all faults being handled the same but leaving room for
 // future customization
 void Faults_HandleFaults() {
+    if (faultBitMap == 0) {
+        Motor_ClearFaultState();
+        return;
+    }
     if (faultBitMap & FAULT_OVER_CURRENT_MASK) {
         Motor_SetFaultState();
     }

@@ -18,7 +18,7 @@ typedef struct {
 
     MotorState motorState; // Motor state
 
-    uint32_t debug[4]; // Debug data
+    float debug[4]; // Debug data
 } TelemetryData;
 
 void Telemetry_Init();
