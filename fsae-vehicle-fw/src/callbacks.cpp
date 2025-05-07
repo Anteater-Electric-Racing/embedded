@@ -7,8 +7,8 @@
 #include "peripherals/adc.h"
 #include "utils/utils.h"
 
-#include "vehicle/bse.h"
 #include "vehicle/apps.h"
+#include "vehicle/bse.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"

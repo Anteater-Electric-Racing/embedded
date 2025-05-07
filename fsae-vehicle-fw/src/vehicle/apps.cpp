@@ -2,8 +2,6 @@
 
 #include <cmath>
 
-#include "utils/utils.h"
-
 #include "apps.h"
 
 #include "vehicle/faults.h"
@@ -120,4 +118,28 @@ static void checkAndHandlePlausibilityFault() {
     } else {
         Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
     }
+}
+
+void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
+    // Filter incoming values
+    float newReading1 = rawReading1;
+    float newReading2 = rawReading2;
+
+    LOWPASS_FILTER(newReading1, appsRaw.apps1RawReading, appsAlpha);
+    LOWPASS_FILTER(rawReading2, appsRaw.apps2RawReading, appsAlpha);
+
+    appsData.appsReading1_Percentage = APPS_3V3_PERCENTAGE(APPS_ADC_TO_VOLTAGE(appsRaw.apps1RawReading));
+    appsData.appsReading2_Percentage = APPS_5V_PERCENTAGE(APPS_ADC_TO_VOLTAGE(appsRaw.apps2RawReading));
+
+    checkAndHandleAPPSFault();
+    checkAndHandlePlausibilityFault();
+}
+
+float APPS_GetAPPSReading() {
+    return appsData.appsReading1_Percentage;
+    // return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
+}
+
+APPSData APPS_GetAPPSReading_Separate() {
+    return appsData;
 }

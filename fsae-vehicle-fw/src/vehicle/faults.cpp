@@ -1,15 +1,7 @@
 // Anteater Electric Racing, 2025
 
-#define FAULT_OVER_CURRENT_MASK 0x1
-#define FAULT_UNDER_VOLTAGE_MASK 0x1 << 1
-#define FAULT_OVER_TEMP_MASK 0x1 << 2
-#define FAULT_APPS_MASK 0x1 << 3
-#define FAULT_BSE_MASK 0x1 << 4
-#define FAULT_BPPS_MASK 0x1 << 5
-#define FAULT_APPS_BRAKE_PLAUSIBILITY_MASK 0x1 << 6
-
-#include "vehicle/faults.h"
-#include "vehicle/motor.h"
+#include "faults.h"
+#include "motor.h"
 
 static uint32_t faultBitMap;
 
@@ -56,40 +48,40 @@ void Faults_SetFault(FaultType fault) {
 
 void Faults_ClearFault(FaultType fault) {
     switch (fault) {
-    case FAULT_NONE: {
-        break;
-    }
-    case FAULT_OVER_CURRENT: {
-        faultBitMap &= ~FAULT_OVER_CURRENT_MASK;
-        break;
-    }
-    case FAULT_UNDER_VOLTAGE: {
-        faultBitMap &= ~FAULT_UNDER_VOLTAGE_MASK;
-        break;
-    }
-    case FAULT_OVER_TEMP: {
-        faultBitMap &= ~FAULT_OVER_TEMP_MASK;
-        break;
-    }
-    case FAULT_APPS: {
-        faultBitMap &= ~FAULT_APPS_MASK;
-        break;
-    }
-    case FAULT_BSE: {
-        faultBitMap &= ~FAULT_BSE_MASK;
-        break;
-    }
-    case FAULT_BPPS: {
-        faultBitMap &= ~FAULT_BPPS_MASK;
-        break;
-    }
-    case FAULT_APPS_BRAKE_PLAUSIBILITY: {
-        faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
-        break;
-    }
-    default: {
-        break;
-    }
+        case FAULT_NONE: {
+            break;
+        }
+        case FAULT_OVER_CURRENT: {
+            faultBitMap &= ~FAULT_OVER_CURRENT_MASK;
+            break;
+        }
+        case FAULT_UNDER_VOLTAGE: {
+            faultBitMap &= ~FAULT_UNDER_VOLTAGE_MASK;
+            break;
+        }
+        case FAULT_OVER_TEMP: {
+            faultBitMap &= ~FAULT_OVER_TEMP_MASK;
+            break;
+        }
+        case FAULT_APPS: {
+            faultBitMap &= ~FAULT_APPS_MASK;
+            break;
+        }
+        case FAULT_BSE: {
+            faultBitMap &= ~FAULT_BSE_MASK;
+            break;
+        }
+        case FAULT_BPPS: {
+            faultBitMap &= ~FAULT_BPPS_MASK;
+            break;
+        }
+        case FAULT_APPS_BRAKE_PLAUSIBILITY: {
+            faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
+            break;
+        }
+        default: {
+            break;
+        }
     }
 }
 

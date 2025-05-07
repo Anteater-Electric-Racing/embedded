@@ -1,5 +1,7 @@
 // Anteater Electric Racing, 2025
 
+#pragma once
+
 #include "bse.h"
 
 void APPS_Init();
