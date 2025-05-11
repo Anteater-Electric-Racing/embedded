@@ -10,65 +10,10 @@
 #include "utils/utils.h"
 
 #include "vehicle/motor.h"
+#include "vehicle/ifl100-36.h"
 
 #define CAN_INSTANCE CAN1
 #define CAN_BAUD_RATE 500000
-
-#define mVCU1_ID 0x101
-#define mVCU1_LEN 8 // bytes
-
-#define mBMS1_ID 0x1A0
-#define mBMS1_LEN 8 // bytes
-
-typedef struct __attribute__((packed)) {
-    uint64_t sMotorTorqueReq : 8; // end of byte 0
-    uint64_t sMotorSpdReq : 16; // end of byte 1 and 2
-    uint64_t sChangeGearAlarm: 1;
-    uint64_t sAuthenticationSts : 2;
-    uint64_t Reserved : 5; // end of byte 3
-    uint64_t sGearLevelPos_Sts_F : 1;
-    uint64_t sGearLevelPos_Sts : 3;
-    uint64_t sMainRelayCmd: 1;
-    uint64_t sBrakePedal_Sts: 2;
-    uint64_t sVehicleState: 1;  // end of byte 4
-    uint64_t sKeyPosition : 2;
-    uint64_t sWarningLevelVCU : 2;
-    uint64_t sMotorModeReq : 2;
-    uint64_t sWorkModeReq : 1;
-    uint64_t sAC_ControlCmd : 1; // end of byte 5
-    uint64_t sPowerReduceReq : 3;
-    uint64_t sAuxRelayCmd: 1;
-    uint64_t sVCU1_RC : 4; // end of byte 6
-    uint64_t sVCU1_CS : 8; // end of byte 7
-} VCU1;
-
-typedef struct __attribute__((packed)) {
-    uint64_t sBatChargeSts_F : 1;
-    uint64_t sHVLockSts: 1;
-    uint64_t sPositiveRelay_FB : 1;
-    uint64_t sNegativeRelay_FB : 1;
-    uint64_t sBatChargeSts : 2;
-    uint64_t sWarningLevelBMS : 2; // end of byte 0
-    uint64_t sBatSocValue: 8; // end of byte 1
-    uint64_t sBatSohValue: 8; // end of byte 2
-    uint64_t sReqMode : 2;
-    uint64_t sPrecharge_Finshed_F : 1;
-    uint64_t sPrecharge_Finished : 1;
-    uint64_t sFastChargeRelay_FB : 1;
-    uint64_t sPrechargeRelay_FB : 1;
-    uint64_t sCmd_ACDC : 2; // end of byte 3
-    uint64_t sRlAdhereDetSts : 1;
-    uint64_t sChrgRlAdhereDetSts : 1;
-    uint64_t sAllowMaxDischarge : 14; // end of byte 4 and byte 5
-    uint64_t sHVLockSts_F: 1;
-    uint64_t sResInsulationLow_F : 1;
-    uint64_t sBatPackMatchAlarm : 1;
-    uint64_t sBatPackCoincidenceAlarm : 1;
-    uint64_t sBMS1_RC : 4; // end of byte 6
-    uint64_t sBMS1_CS : 8; // end of byte 7
-} BMS1;
-
-static uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
 
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 CAN_message_t motorMsg;
