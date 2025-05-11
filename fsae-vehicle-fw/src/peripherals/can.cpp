@@ -30,7 +30,7 @@ typedef struct __attribute__((packed)) {
     uint64_t sGearLevelPos_Sts : 3;
     uint64_t sMainRelayCmd: 1;
     uint64_t sBrakePedal_Sts: 2;
-    uint64_t sVehicleState: 1; // end of byte 4
+    uint64_t sVehicleState: 1;  // end of byte 4
     uint64_t sKeyPosition : 2;
     uint64_t sWarningLevelVCU : 2;
     uint64_t sMotorModeReq : 2;
