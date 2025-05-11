@@ -19,6 +19,7 @@ typedef struct{
 } MotorData;
 
 static MotorData motorData;
+static TickType_t xLastWakeTime;
 void threadMotor(void *pvParameters);
 
 void Motor_Init(){
@@ -29,8 +30,8 @@ void Motor_Init(){
 void threadMotor(void *pvParameters){
     while(true){
         // Send CAN message to inverter
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
         CAN_SendVCU1Message(motorData.torqueDemand);
-        vTaskDelay(10);
     }
 }
 
