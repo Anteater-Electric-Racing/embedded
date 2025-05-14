@@ -4,7 +4,7 @@
 #define CAN_H
 
 void CAN_Init();
-void CAN_SendVCU1Message(float torqueValue);
+void CAN_SendVCU1Message(uint32_t id, uint64_t msg);
 void CAN_Receive();
 
 
