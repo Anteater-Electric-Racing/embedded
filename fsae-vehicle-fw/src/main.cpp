@@ -8,6 +8,7 @@
 
 #include "peripherals/adc.h"
 #include "peripherals/peripherals.h"
+#include "peripherals/can.h"
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -34,14 +35,15 @@ void threadMain(void *pvParameters) {
     Telemetry_Init();
 
     while (true) {
-        TelemetryData const* telem = Telemetry_GetData();
-        // Serial.print(telem->APPS_Travel, 4);
-        // Serial.print(" ");
-        // Serial.print(telem->debug[1], 4);
-        // Serial.print(" ");
-        Serial.print(telem->motorState);
-        Serial.println();
-        vTaskDelay(50);
+        // TelemetryData const* telem = Telemetry_GetData();
+        // // Serial.print(telem->APPS_Travel, 4);
+        // // Serial.print(" ");
+        // // Serial.print(telem->debug[1], 4);
+        // // Serial.print(" ");
+        // Serial.print(telem->motorState);
+        // Serial.println();
+        // vTaskDelay(50);
+        CAN_Receive();
     }
 }
 

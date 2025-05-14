@@ -5,6 +5,7 @@
 
 void CAN_Init();
 void CAN_SendVCU1Message(float torqueValue);
+void CAN_Receive();
 
 
 #endif
