@@ -17,7 +17,7 @@ void Telemetry_Init() {
     };
 }
 
-TelemetryData const* Telemetry_GetData() {
+TelemetryData* Telemetry_GetData() {
     return &telemetryData;
 }
 
