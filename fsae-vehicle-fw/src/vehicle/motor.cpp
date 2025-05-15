@@ -36,25 +36,24 @@ static void threadMotor(void *pvParameters){
 
         switch (motorData.state){
             case MOTOR_STATE_OFF:
+            case MOTOR_STATE_PRECHARGING:
             {
                 // T2 BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
             }
-            case MOTOR_STATE_PRECHARGING:
+            case MOTOR_STATE_IDLE:
             {
                 // T4 BMS_Main_Relay_Cmd == 1 && Pre_charge_Finish_Sts == 1 && Ubat>=200V
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
             }
-            case MOTOR_STATE_IDLE:
+            case MOTOR_STATE_DRIVING:
             {
                 // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
-
             }
-            case MOTOR_STATE_DRIVING:
             case MOTOR_STATE_FAULT:
             {
                 // T7 MCU_Warning_Level == 3
