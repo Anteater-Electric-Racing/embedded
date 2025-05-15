@@ -66,10 +66,10 @@ typedef struct __attribute__((packed)) {
     uint64_t MCU_DC_LowVoltWarning : 1;
     uint64_t MCU_12V_LowVoltWarning : 1;
     uint64_t Reserved : 17; // end of byte 3, byte 4, and byte 5
-    uint64_t RollingCounter : 4;
-    uint64_t MCU_Warning_Level : 2;
-    uint64_t MCU_MotorOpenPhaseFault : 1;
     uint64_t MCU_MotorStallFault : 1; // end of byte 6
+    uint64_t MCU_MotorOpenPhaseFault : 1;
+    uint64_t MCU_Warning_Level : 2;
+    uint64_t RollingCounter : 4;
     uint64_t CheckSum : 8; // end of byte 7
 } MCU2;
 

@@ -28,24 +28,36 @@ typedef struct {
     float mcuWorkMode; // MCU work mode
 
     // MCU2 data
-    float motorTemp; // Motor temperature in C
-    float mcuTemp; // Hardware temperature in C
-    bool dcOverVoltFault; // DC over voltage fault
-    bool motorOvrHotFault; // Motor over heat fault
-    bool motorOvrSpdFault; // Motor over speed fault
-    bool phaseCurSensorFault; // Phase current sensor fault
+    int32_t motorTemp; // Motor temperature in C
+    int32_t mcuTemp; // Hardware temperature in C
+    bool dcMainWireOverVoltFault; // DC over voltage fault
+    bool motorPhaseCurrFault; // MCU motor phase current fault
+    bool mcuOverHotFault; // MCU overheat fault
     bool resolverFault; // Resolver fault
-    bool overHotFault; // Over hot fault
-    bool motorPhaseCurFault; // Motor phase current fault
-    bool dcOverCurFault; // DC over current fault
-    bool v12LowVoltFault; // V12 low voltage fault
-    bool dcLowVoltFault; // DC low voltage fault
+    bool phaseCurrSensorFault; // Phase current sensor fault
+    bool motorOverSpdFault; // MCU motor over speed fault
+    bool drvMotorOverHotFault; // Driver motor overheat fault
+    bool dcMainWireOverVoltFault; // DC main wire over voltage fault
+    bool drvMotorOverCoolFault; // Driver motor overcool fault
+    bool mcuMotorSystemState; // MCU motor system state
+    bool mcuTempSensorState; // MCU temperature sensor state
+    bool motorTempSensorState; // MCU motor temperature sensor state
+    bool dcVoltSensorState; // MCU DC voltage sensor state
+    bool dcLowVoltWarning; // MCU DC low voltage warning
+    bool mcu12VLowVoltWarning; // MCU 12V low voltage warning
+    bool motorStallFault; // MCU motor stall fault
+    bool motorOpenPhaseFault; // MCU motor open phase fault
+    uint8_t mcuWarningLevel; // MCU warning level
 
+    // MCU3 data
+    float mcuVoltage; // DC main wire voltage in V
+    float mcuCurrent; // DC main wire current in A
+    float motorPhaseCurr; // Motor phase current in A
 
     float debug[4]; // Debug data
 } TelemetryData;
 
 void Telemetry_Init();
-TelemetryData const* Telemetry_GetData();
+TelemetryData* Telemetry_GetData();
 void Telemetry_UpdateData(TelemetryData* data);
 
