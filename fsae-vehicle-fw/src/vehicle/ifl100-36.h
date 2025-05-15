@@ -8,101 +8,113 @@
 #define mMCU3_ID 0x107
 
 #define mBMS1_ID 0x1A0
+#define mBMS2_ID 0x1A1
+
 
 typedef struct __attribute__((packed)) {
-    uint64_t sMotorTorqueReq : 8; // end of byte 0
-    uint64_t sMotorSpdReq : 16; // end of byte 1 and 2
-    uint64_t sChangeGearAlarm: 1;
-    uint64_t sAuthenticationSts : 2;
+    uint64_t VCU_TorqueReq : 8; // end of byte 0
+    uint64_t VCU_MotorSpdReq : 16; // end of byte 1 and 2
+    uint64_t ChangeGearAlarm: 1;
+    uint64_t VCUAuthenticationStatus : 2;
     uint64_t Reserved : 5; // end of byte 3
-    uint64_t sGearLevelPos_Sts_F : 1;
-    uint64_t sGearLevelPos_Sts : 3;
-    uint64_t sMainRelayCmd: 1;
-    uint64_t sBrakePedal_Sts: 2;
-    uint64_t sVehicleState: 1;  // end of byte 4
-    uint64_t sKeyPosition : 2;
-    uint64_t sWarningLevelVCU : 2;
-    uint64_t sMotorModeReq : 2;
-    uint64_t sWorkModeReq : 1;
-    uint64_t sAC_ControlCmd : 1; // end of byte 5
-    uint64_t sPowerReduceReq : 3;
-    uint64_t sAuxRelayCmd: 1;
-    uint64_t sVCU1_RC : 4; // end of byte 6
-    uint64_t sVCU1_CS : 8; // end of byte 7
+    uint64_t VehicleState: 1;
+    uint64_t Brake_Pedal_Sts: 2;
+    uint64_t BMS_Main_Relay_Cmd: 1;
+    uint64_t GearLeverPos_Sts : 3;
+    uint64_t GearLeverPos_Sts_F : 1;  // end of byte 4
+    uint64_t AC_Control_Cmd : 1;
+    uint64_t VCU_WorkMode : 1;
+    uint64_t VCU_MotorMode : 2;
+    uint64_t VCU_Warning_Level : 2;
+    uint64_t KeyPosition : 2; // end of byte 5
+    uint64_t BMS_Aux_Relay_Cmd: 1;
+    uint64_t PowerReduceReq : 3;
+    uint64_t RollingCounter : 4; // end of byte 6
+    uint64_t CheckSum : 8; // end of byte 7
 } VCU1;
 
 typedef struct __attribute__((packed)) {
-    uint64_t sMotorSpeed : 16; // end of byte 0 and byte 1
-    uint64_t sMotorTorque: 8; // end of byte 2
-    uint64_t sMaxMotorTq : 8; // end of byte 3
-    uint64_t sMaxMotorBrakeTq : 8; // end of byte 4
-    uint64_t sMotorDirection : 2;
-    uint64_t sMotorMainState : 3;
-    uint64_t Reserved: 3; // end of byte 5
-    uint64_t sWorkMode: 2; // end of byte 2
-    uint64_t sMotorMode : 2;
-    uint64_t sMCU1_RC : 4; // end of byte 6
-    uint64_t sMCU1_CS : 8; // end of byte 7
+    uint64_t MCU_ActMotorSpd : 16; // end of byte 0 and byte 1
+    uint64_t MCU_ActMotorTq: 8; // end of byte 2
+    uint64_t MCU_MaxMotorTq : 8; // end of byte 3
+    uint64_t MCU_MaxMotorBrakeTq : 8; // end of byte 4
+    uint64_t MCU_MotorRatoteDirection : 2;
+    uint64_t Reserved: 3;
+    uint64_t MCU_MotorMainState : 3; // end of byte 5
+    uint64_t MCU_MotorState : 2;
+    uint64_t MCU_MotorWorkMode: 2;
+    uint64_t RollingCounter : 4; // end of byte 6
+    uint64_t CheckSum : 8; // end of byte 7
 } MCU1;
 
 typedef struct __attribute__((packed)) {
-    uint64_t sMotorTemp : 8; // end of byte 0
-    uint64_t sHardwareTemp: 8; // end of byte 1
-    uint64_t sDC_OverVolt_Fault : 1;
-    uint64_t sMotorOvrHot_Fault : 1;
-    uint64_t sMotorOvrSpd_Fault : 1;
-    uint64_t sPhaseCurSensor_Fault : 1;
-    uint64_t sResolver_Fault: 1;
-    uint64_t sOverHot_Fault: 1;
-    uint64_t sMotorPhaseCur_Fault : 1;
-    uint64_t sDC_OverCur_Fault : 1; // end of byte 2
-    uint64_t sV12LowVolt_Fault : 1;
-    uint64_t sDC_LowVolt_Fault : 1;
-    uint64_t sDC_VoltSensor_Fault : 1;
-    uint64_t sMotorTempSensor_Fault : 1;
-    uint64_t sTempSensor_Fault : 1;
-    uint64_t sMotorSystem_Fault : 1;
-    uint64_t sMotorOvrCool_Fault : 1;
+    uint64_t MCU_Motor_Temp : 8; // end of byte 0
+    uint64_t MCU_hardwareTemp: 8; // end of byte 1
+    uint64_t MCU_DC_MainWireOverCurrFault : 1;
+    uint64_t MCU_MotorPhaseCurrFault : 1;
+    uint64_t MCU_OverHotFault: 1;
+    uint64_t sResolver_Fault: 1; // ?? MCU_RotateTransformerFault
+    uint64_t MCU_PhaseCurrSensorState : 1;
+    uint64_t MCU_MotorOverSpdFault : 1;
+    uint64_t Drv_MotorOverHotFault : 1;
+    uint64_t MCU_DC_MainWireOverVoltFault : 1; // end of byte 2
+    uint64_t Drv_MotorOverCoolFault : 1;
+    uint64_t MCU_MotorSystemState : 1;
+    uint64_t MCU_TempSensorState : 1;
+    uint64_t MCU_MotorTempSensorState : 1;
+    uint64_t MCU_DC_VoltSensorState : 1;
+    uint64_t MCU_DC_LowVoltWarning : 1;
+    uint64_t MCU_12V_LowVoltWarning : 1;
     uint64_t Reserved : 17; // end of byte 3, byte 4, and byte 5
-    uint64_t sMotorStall_Fault : 1;
-    uint64_t sMotorOpenPhase_Fault : 1;
-    uint64_t sWarningLevelMCU : 1;
-    uint64_t sMCU2_RC : 4; // end of byte 6
-    uint64_t sMCU2_CS : 8; // end of byte 7
+    uint64_t RollingCounter : 4;
+    uint64_t MCU_Warning_Level : 2;
+    uint64_t MCU_MotorOpenPhaseFault : 1;
+    uint64_t MCU_MotorStallFault : 1; // end of byte 6
+    uint64_t CheckSum : 8; // end of byte 7
 } MCU2;
 
 typedef struct __attribute__((packed)) {
-    uint64_t sDC_Voltage : 16; // end of byte 0 and byte 1
-    uint64_t sDC_Current: 16; // end of byte 2 and byte 3
-    uint64_t sMotorPhaseCurrent : 16; // end of byte 4 and byte 5
+    uint64_t MCU_DC_MainWireVolt : 16; // end of byte 0 and byte 1
+    uint64_t MCU_DC_MainWireCurr: 16; // end of byte 2 and byte 3
+    uint64_t MCU_MotorPhaseCurr : 16; // end of byte 4 and byte 5
     uint64_t Reserved : 16; // end of byte 6 and byte 7
 } MCU3;
 
 typedef struct __attribute__((packed)) {
-    uint64_t sBatChargeSts_F : 1;
-    uint64_t sHVLockSts: 1;
-    uint64_t sPositiveRelay_FB : 1;
-    uint64_t sNegativeRelay_FB : 1;
-    uint64_t sBatChargeSts : 2;
-    uint64_t sWarningLevelBMS : 2; // end of byte 0
-    uint64_t sBatSocValue: 8; // end of byte 1
-    uint64_t sBatSohValue: 8; // end of byte 2
-    uint64_t sReqMode : 2;
-    uint64_t sPrecharge_Finshed_F : 1;
-    uint64_t sPrecharge_Finished : 1;
-    uint64_t sFastChargeRelay_FB : 1;
-    uint64_t sPrechargeRelay_FB : 1;
-    uint64_t sCmd_ACDC : 2; // end of byte 3
-    uint64_t sRlAdhereDetSts : 1;
-    uint64_t sChrgRlAdhereDetSts : 1;
-    uint64_t sAllowMaxDischarge : 14; // end of byte 4 and byte 5
-    uint64_t sHVLockSts_F: 1;
-    uint64_t sResInsulationLow_F : 1;
-    uint64_t sBatPackMatchAlarm : 1;
-    uint64_t sBatPackCoincidenceAlarm : 1;
-    uint64_t sBMS1_RC : 4; // end of byte 6
-    uint64_t sBMS1_CS : 8; // end of byte 7
+    uint64_t BMS_Warning_Level : 2;
+    uint64_t Batt_charge_Sts : 2;
+    uint64_t Negative_Relay_FB : 1;
+    uint64_t Positive_Relay_FB : 1;
+    uint64_t HighVoltLoopLockSts: 1;
+    uint64_t Batt_Charge_Sts_F : 1; // end of byte 0
+    uint64_t Batt_SOC_Value: 8; // end of byte 1
+    uint64_t Batt_SOH_Value: 8; // end of byte 2
+    uint64_t BMS_Cmd_AC_DC : 2;
+    uint64_t Pre_charge_Relay_FB : 1;
+    uint64_t Fast_charge_Relay_FB : 1;
+    uint64_t Pre_charge_Finish_Sts : 1;
+    uint64_t Pre_charge_Finish_Sts_F : 1;
+    uint64_t BMS_Req_Mode : 2; // end of byte 3
+    uint64_t Batt_Pack_Coincidence_Alarm : 1;
+    uint64_t Batt_Pack_Matching_Alarm : 1;
+    uint64_t Insulation_Resistance_Low_F : 1;
+    uint64_t HighVoltLoopLockSts_F: 1;
+    uint64_t ChargeRelayAdhereDetectionSts : 1;
+    uint64_t RelayAdhereDetectionSts : 1;
+    uint64_t BMS_Allow_Max_Discharge : 14; // end of byte 4 and byte 5 and half of byte 6
+    uint64_t RollingCounter : 4; // end of byte 6
+    uint64_t CheckSum : 8; // end of byte 7
 } BMS1;
+
+typedef struct __attribute__((packed)) {
+    uint64_t Reserved1 : 8; // end of byte 0
+    uint64_t sAllowMaxDischarge : 16; // end of byte 1 and byte 2
+    uint64_t sAllowMaxRegenCharge: 16; // end of byte 3 and byte 4
+    uint64_t Reserved2 : 8; // end of byte 5
+    uint64_t RollingCounter : 4;
+    uint64_t Reserved3 : 4; // end of byte 6
+    uint64_t CheckSum : 8; // end of byte 7
+} BMS2;
 
 void MCU_Init();
 uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
