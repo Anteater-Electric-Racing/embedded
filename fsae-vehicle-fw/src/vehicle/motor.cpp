@@ -21,46 +21,77 @@ typedef struct{
 
 static MotorData motorData;
 static TickType_t xLastWakeTime;
-void threadMotor(void *pvParameters);
+static VCU1 vcu1 = {0};
+static BMS1 bms1 = {0};
+static void threadMotor(void *pvParameters);
 
 void Motor_Init(){
     motorData.state = MOTOR_STATE_IDLE;
+    Serial.println("Motor thread starting");
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
 }
 
-void threadMotor(void *pvParameters){
+static void threadMotor(void *pvParameters){
     while(true){
-        // Send CAN message to inverter
-        Serial.println("Motor thread running");
-        
-        VCU1 vcu1 = {0};
-        vcu1.sMainRelayCmd = 1; // 1 = ON, 0 = OFF
+
+        switch (motorData.state){
+            case MOTOR_STATE_OFF:
+            {
+                // T2 BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
+                vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
+                bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
+            }
+            case MOTOR_STATE_PRECHARGING:
+            {
+                // T4 BMS_Main_Relay_Cmd == 1 && Pre_charge_Finish_Sts == 1 && Ubat>=200V
+                vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
+                bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
+            }
+            case MOTOR_STATE_IDLE:
+            {
+                // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
+                vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
+                vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
+
+            }
+            case MOTOR_STATE_DRIVING:
+            case MOTOR_STATE_FAULT:
+            {
+                // T7 MCU_Warning_Level == 3
+                vcu1.VCU_Warning_Level = 3; // 0 = No Warning, 1 = Warning, 2 = Fault, 3 = Critical Fault
+            }
+            default:
+                break;
+        }
+
         uint64_t vcu1_msg;
         memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));
         CAN_SendVCU1Message(mVCU1_ID, vcu1_msg);
-        
-        BMS1 bms1 = {0};
-        bms1.sPrechargeRelay_FB = 1; // 1 = ON, 0 = OFF
-        // Print out the bytes of bms1
-        uint8_t* bms1_bytes = reinterpret_cast<uint8_t*>(&bms1);
-        for (size_t i = 0; i < sizeof(bms1); ++i) {
-            Serial.print("bms1 byte[");
-            Serial.print(i);
-            Serial.print("]: ");
-            Serial.println(bms1_bytes[i], 16);
-        }
+
         uint64_t bms1_msg;
         memcpy(&bms1_msg, &bms1, sizeof(bms1_msg));
         CAN_SendVCU1Message(mBMS1_ID, bms1_msg);
-        // vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(20));
+
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(20));
     }
 }
 
 void Motor_UpdateMotor(){
     float throttleCommand = Telemetry_GetData()->APPS_Travel;
     switch(motorData.state){
+        // LV on, HV off
         case MOTOR_STATE_OFF:
+        // HV swtich on (PCC CAN message)
         case MOTOR_STATE_PRECHARGING:
+        {
+            if(RTMButton_GetState()){
+                motorData.state = MOTOR_STATE_IDLE;
+            }
+            
+            motorData.torqueDemand = 0.0F;
+            break;
+        }
+        // PCC CAN message finished
         case MOTOR_STATE_IDLE:
         {
             if(RTMButton_GetState()){
@@ -68,6 +99,7 @@ void Motor_UpdateMotor(){
             }
             break;
         }
+        // Ready to drive button pressed
         case MOTOR_STATE_DRIVING:
         {
             if(RTMButton_GetState() == false){
