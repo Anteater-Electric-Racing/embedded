@@ -44,8 +44,7 @@ void threadMain(void *pvParameters) {
         // // Serial.print(" ");
         // Serial.print(telem->motorState);
         // Serial.println();
-        // vTaskDelay(50);
-        CAN_Receive();
+        vTaskDelay(50);
     }
 }
 

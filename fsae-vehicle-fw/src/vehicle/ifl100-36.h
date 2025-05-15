@@ -9,7 +9,6 @@
 
 #define mBMS1_ID 0x1A0
 
-
 typedef struct __attribute__((packed)) {
     uint64_t sMotorTorqueReq : 8; // end of byte 0
     uint64_t sMotorSpdReq : 16; // end of byte 1 and 2
@@ -105,4 +104,5 @@ typedef struct __attribute__((packed)) {
     uint64_t sBMS1_CS : 8; // end of byte 7
 } BMS1;
 
+void MCU_Init();
 uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
