@@ -116,4 +116,5 @@ typedef struct __attribute__((packed)) {
     uint64_t CheckSum : 8; // end of byte 7
 } BMS2;
 
+void MCU_Init();
 uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
