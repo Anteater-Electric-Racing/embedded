@@ -23,6 +23,7 @@ static MotorData motorData;
 static TickType_t xLastWakeTime;
 static VCU1 vcu1 = {0};
 static BMS1 bms1 = {0};
+static BMS2 bms2 = {0};
 static void threadMotor(void *pvParameters);
 
 void Motor_Init(){
@@ -41,23 +42,41 @@ static void threadMotor(void *pvParameters){
                 // T2 BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
+
+                vcu1.VCU_TorqueReq = 0; // 0 = No torque
             }
             case MOTOR_STATE_IDLE:
             {
                 // T4 BMS_Main_Relay_Cmd == 1 && Pre_charge_Finish_Sts == 1 && Ubat>=200V
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
+                
+                bms1.Fast_charge_Relay_FB = 1;
+                bms2.sAllowMaxDischarge = 500;
+                bms2.sAllowMaxRegenCharge = 500;
+
+                vcu1.VCU_TorqueReq = 0; // 0 = No torque
+                vcu1.VehicleState = 1; // 0 = Not ready, 1 = Ready
+                vcu1.GearLeverPos_Sts = 3; 
+                vcu1.AC_Control_Cmd = 1;
+                vcu1.BMS_Aux_Relay_Cmd = 1;
+                vcu1.VCU_MotorMode = 1;
+                vcu1.KeyPosition = 2;
             }
             case MOTOR_STATE_DRIVING:
             {
                 // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
+                
+                vcu1.VCU_TorqueReq = motorData.torqueDemand; // Troque demand in percentage (0-99.6)
             }
             case MOTOR_STATE_FAULT:
             {
                 // T7 MCU_Warning_Level == 3
                 vcu1.VCU_Warning_Level = 3; // 0 = No Warning, 1 = Warning, 2 = Fault, 3 = Critical Fault
+
+                vcu1.VCU_TorqueReq = 0; // 0 = No torque
             }
             default:
                 break;
@@ -65,11 +84,15 @@ static void threadMotor(void *pvParameters){
 
         uint64_t vcu1_msg;
         memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));
-        CAN_SendVCU1Message(mVCU1_ID, vcu1_msg);
+        CAN_Send(mVCU1_ID, vcu1_msg);
 
         uint64_t bms1_msg;
         memcpy(&bms1_msg, &bms1, sizeof(bms1_msg));
-        CAN_SendVCU1Message(mBMS1_ID, bms1_msg);
+        CAN_Send(mBMS1_ID, bms1_msg);
+
+        uint64_t bms2_msg;
+        memcpy(&bms2_msg, &bms2, sizeof(bms2_msg));
+        CAN_Send(mBMS1_ID, bms2_msg);
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(20));
     }
