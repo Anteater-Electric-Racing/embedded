@@ -57,11 +57,11 @@ static void threadMotor(void *pvParameters){
 
                 vcu1.VCU_TorqueReq = 0; // 0 = No torque
                 vcu1.VehicleState = 1; // 0 = Not ready, 1 = Ready
-                vcu1.GearLeverPos_Sts = 3; 
-                vcu1.AC_Control_Cmd = 1;
-                vcu1.BMS_Aux_Relay_Cmd = 1;
-                vcu1.VCU_MotorMode = 1;
-                vcu1.KeyPosition = 2;
+                vcu1.GearLeverPos_Sts = 3; // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
+                vcu1.AC_Control_Cmd = 1; // 0 = Not active, 1 = Active
+                vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
+                vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
+                vcu1.KeyPosition = 2; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
             }
             case MOTOR_STATE_DRIVING:
             {
@@ -69,7 +69,7 @@ static void threadMotor(void *pvParameters){
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
                 
-                vcu1.VCU_TorqueReq = motorData.torqueDemand; // Troque demand in percentage (0-99.6)
+                vcu1.VCU_TorqueReq = motorData.torqueDemand; // Troque demand in percentage (0-99.6) 350Nm
             }
             case MOTOR_STATE_FAULT:
             {
