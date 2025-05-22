@@ -7,6 +7,7 @@
 #include "bse.h"
 
 #include "vehicle/faults.h"
+#include <arduino_freertos.h>
 
 #define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
 #define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
@@ -27,6 +28,9 @@ typedef struct{
 static BSEData bseData;
 static BSERawData bseRawData;
 static float bseAlpha;
+static bool bseFaultDetected = false;
+static TickType_t bseFaultDetectedTime = 0; // Set to 0 when fault not detected
+
 
 void BSE_Init() {
     bseData.bseFront_PSI = 0;
@@ -51,7 +55,23 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
        bseVoltage1 > BSE_UPPER_THRESHOLD ||
        bseVoltage2 < BSE_LOWER_THRESHOLD ||
        bseVoltage2 > BSE_UPPER_THRESHOLD) {
-        // Faults_SetFault(FAULT_BSE);
+
+        if (bseFaultDetected){
+            if(bseFaultDetectedTime == 0){
+                Serial.print("FAULT TIME NOT PROPERLY SET");
+                bseFaultDetectedTime = xTaskGetTickCount();
+            } else {
+                TickType_t now = xTaskGetTickCount();
+                TickType_t elapsedTicks = now - bseFaultDetectedTime;
+                TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
+                if (elapsedMs > 100){
+                    Faults_SetFault(FAULT_BSE);
+                }
+            }
+        } else {
+            bseFaultDetected = true;
+            bseFaultDetectedTime = xTaskGetTickCount();
+        }
     } else {
         Faults_ClearFault(FAULT_BSE);
     }
