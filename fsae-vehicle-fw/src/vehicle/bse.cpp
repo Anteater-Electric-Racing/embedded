@@ -73,6 +73,8 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
             bseFaultDetectedTime = xTaskGetTickCount();
         }
     } else {
+        bseFaultDetected = false;
+        bseFaultDetectedTime = 0;
         Faults_ClearFault(FAULT_BSE);
     }
 
