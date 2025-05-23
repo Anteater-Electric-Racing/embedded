@@ -47,9 +47,9 @@ static void threadMCU(void *pvParameters) {
                     .motorTorque = mcu1.MCU_ActMotorTq * 0.392F * torqueDirection * MOTOR_MAX_TORQUE, // convert to Nm
                     .maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm
                     .maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm
-                    .motorDirection = (uint8_t) mcu1.MCU_MotorRotateDirection,
-                    .mcuMainState = mcu1.MCU_MotorMainState,
-                    .mcuWorkMode = mcu1.MCU_MotorWorkMode
+                    .motorDirection = (MotorRotateDirection) mcu1.MCU_MotorRotateDirection,
+                    .mcuMainState = (MCUMainState) mcu1.MCU_MotorMainState,
+                    .mcuWorkMode = (MCUWorkMode) mcu1.MCU_MotorWorkMode
                 };
                 break;
             }
@@ -59,26 +59,28 @@ static void threadMCU(void *pvParameters) {
                 memcpy(&mcu2, &rx_data, sizeof(mcu2));
                 Serial.println("MCU2 message received");
 
-                telemetryData->motorTemp = mcu2.MCU_Motor_Temp - 40; // convert to C
-                telemetryData->mcuTemp = mcu2.MCU_hardwareTemp - 40; // convert to C
-                telemetryData->dcMainWireOverVoltFault = mcu2.MCU_DC_MainWireOverVoltFault;
-                telemetryData->motorPhaseCurrFault = mcu2.MCU_MotorPhaseCurrFault;
-                telemetryData->mcuOverHotFault = mcu2.MCU_OverHotFault;
-                telemetryData->resolverFault = mcu2.sResolver_Fault;
-                telemetryData->phaseCurrSensorFault = mcu2.MCU_PhaseCurrSensorState;
-                telemetryData->motorOverSpdFault = mcu2.MCU_MotorOverSpdFault;
-                telemetryData->drvMotorOverHotFault = mcu2.Drv_MotorOverHotFault;
-                telemetryData->dcMainWireOverVoltFault = mcu2.MCU_DC_MainWireOverVoltFault;
-                telemetryData->drvMotorOverCoolFault = mcu2.Drv_MotorOverCoolFault;
-                telemetryData->mcuMotorSystemState = mcu2.MCU_MotorSystemState;
-                telemetryData->mcuTempSensorState = mcu2.MCU_TempSensorState;
-                telemetryData->motorTempSensorState = mcu2.MCU_MotorTempSensorState;
-                telemetryData->dcVoltSensorState = mcu2.MCU_DC_VoltSensorState;
-                telemetryData->dcLowVoltWarning = mcu2.MCU_DC_LowVoltWarning;
-                telemetryData->mcu12VLowVoltWarning = mcu2.MCU_12V_LowVoltWarning;
-                telemetryData->motorStallFault = mcu2.MCU_MotorStallFault;
-                telemetryData->motorOpenPhaseFault = mcu2.MCU_MotorOpenPhaseFault;
-                telemetryData->mcuWarningLevel = mcu2.MCU_Warning_Level;
+                mcu2Data = {
+                    .motorTemp = mcu2.MCU_Motor_Temp - 40, // convert to C
+                    .mcuTemp = mcu2.MCU_hardwareTemp - 40, // convert to C
+                    .dcMainWireOverVoltFault = mcu2.MCU_DC_MainWireOverVoltFault ? true : false,
+                    .motorPhaseCurrFault = mcu2.MCU_MotorPhaseCurrFault ? true : false,
+                    .mcuOverHotFault = mcu2.MCU_OverHotFault ? true : false,
+                    .resolverFault = mcu2.sResolver_Fault ? true : false,
+                    .phaseCurrSensorFault = mcu2.MCU_PhaseCurrSensorState ? true : false,
+                    .motorOverSpdFault = mcu2.MCU_MotorOverSpdFault ? true : false,
+                    .drvMotorOverHotFault = mcu2.Drv_MotorOverHotFault ? true : false,
+                    .dcMainWireOverCurrFault = mcu2.MCU_DC_MainWireOverVoltFault ? true : false,
+                    .drvMotorOverCoolFault = mcu2.Drv_MotorOverCoolFault ? true : false,
+                    .mcuMotorSystemState = mcu2.MCU_MotorSystemState ? true : false,
+                    .mcuTempSensorState = mcu2.MCU_TempSensorState ? true : false,
+                    .motorTempSensorState = mcu2.MCU_MotorTempSensorState ? true : false,
+                    .dcVoltSensorState = mcu2.MCU_DC_VoltSensorState ? true : false,
+                    .dcLowVoltWarning = mcu2.MCU_DC_LowVoltWarning ? true : false,
+                    .mcu12VLowVoltWarning = mcu2.MCU_12V_LowVoltWarning ? true : false,
+                    .motorStallFault = mcu2.MCU_MotorStallFault ? true : false,
+                    .motorOpenPhaseFault = mcu2.MCU_MotorOpenPhaseFault ? true : false,
+                    .mcuWarningLevel = (MCUWarningLevel) mcu2.MCU_Warning_Level
+                };
                 break;
             }
             case mMCU3_ID:
@@ -86,9 +88,12 @@ static void threadMCU(void *pvParameters) {
                 MCU3 mcu3 = {0};
                 memcpy(&mcu3, &rx_data, sizeof(mcu3));
                 Serial.println("MCU3 message received");
-                telemetryData->mcuVoltage = mcu3.MCU_DC_MainWireVolt * 0.01F; // convert to V
-                telemetryData->mcuCurrent = mcu3.MCU_DC_MainWireCurr * 0.01F; // convert to A
-                telemetryData->motorPhaseCurr = mcu3.MCU_MotorPhaseCurr * 0.01F; // convert to A
+                mcu3Data = {
+                    .mcuVoltage = mcu3.MCU_DC_MainWireVolt * 0.01F, // convert to V
+                    .mcuCurrent = mcu3.MCU_DC_MainWireCurr * 0.01F, // convert to A
+                    .motorPhaseCurr = mcu3.MCU_MotorPhaseCurr * 0.01F // convert to A
+                };
+
                 break;
             }
             default:
@@ -96,7 +101,6 @@ static void threadMCU(void *pvParameters) {
                 Serial.println("Unknown message received");
                 break;
             }
-            Telemetry_UpdateData(telemetryData);
         }
     }
 }

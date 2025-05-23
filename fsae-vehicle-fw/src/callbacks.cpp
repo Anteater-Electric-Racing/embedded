@@ -13,10 +13,6 @@
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
 
-#define LOGIC_LEVEL_V 3.3
-#define ADC_RESOLUTION 10
-#define adc0_MAX_VALUE (1 << ADC_RESOLUTION) - 1
-
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
     APPS_2_INDEX,

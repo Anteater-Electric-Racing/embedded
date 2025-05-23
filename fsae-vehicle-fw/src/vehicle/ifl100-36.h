@@ -25,6 +25,19 @@ typedef enum {
     STATE_POWER_OFF = 4,
 } MCUMainState;
 
+typedef enum {
+    WORK_MODE_STANDBY = 0,
+    WORK_MODE_TORQUE = 1,
+    WORK_MODE_SPEED = 2,
+} MCUWorkMode;
+
+typedef enum {
+    ERROR_NONE = 0,
+    ERROR_LOW = 1,
+    ERROR_MEDIUM = 2,
+    ERROR_HIGH = 3,
+} MCUWarningLevel;
+
 typedef struct __attribute__((packed)) {
     uint64_t VCU_TorqueReq : 8; // end of byte 0
     uint64_t VCU_MotorSpdReq : 16; // end of byte 1 and 2
@@ -137,8 +150,8 @@ typedef struct {
     float maxMotorTorque; // Max motor torque in Nm
     float maxMotorBrakeTorque; // Max motor brake torque in Nm
     MotorRotateDirection motorDirection; // Motor direction
-    uint8_t mcuMainState; // Motor main state
-    uint8_t mcuWorkMode; // MCU work mode
+    MCUMainState mcuMainState; // Motor main state
+    MCUWorkMode mcuWorkMode; // MCU work mode
 } MCU1Data;
 
 typedef struct {
@@ -151,7 +164,7 @@ typedef struct {
     bool phaseCurrSensorFault; // Phase current sensor fault
     bool motorOverSpdFault; // MCU motor over speed fault
     bool drvMotorOverHotFault; // Driver motor overheat fault
-    bool dcMainWireOverVoltFault; // DC main wire over voltage fault
+    bool dcMainWireOverCurrFault; // DC main wire over voltage fault
     bool drvMotorOverCoolFault; // Driver motor overcool fault
     bool mcuMotorSystemState; // MCU motor system state
     bool mcuTempSensorState; // MCU temperature sensor state
@@ -161,7 +174,7 @@ typedef struct {
     bool mcu12VLowVoltWarning; // MCU 12V low voltage warning
     bool motorStallFault; // MCU motor stall fault
     bool motorOpenPhaseFault; // MCU motor open phase fault
-    uint8_t mcuWarningLevel; // MCU warning level
+    MCUWarningLevel mcuWarningLevel; // MCU warning level
 } MCU2Data;
 
 typedef struct {

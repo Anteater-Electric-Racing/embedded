@@ -37,7 +37,7 @@ typedef struct {
     bool phaseCurrSensorFault; // Phase current sensor fault
     bool motorOverSpdFault; // MCU motor over speed fault
     bool drvMotorOverHotFault; // Driver motor overheat fault
-    bool dcMainWireOverVoltFault; // DC main wire over voltage fault
+    bool dcMainWireOverCurrFault; // DC main wire over voltage fault
     bool drvMotorOverCoolFault; // Driver motor overcool fault
     bool mcuMotorSystemState; // MCU motor system state
     bool mcuTempSensorState; // MCU temperature sensor state
