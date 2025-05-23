@@ -4,14 +4,14 @@
 #define TELEMETRY_H
 
 typedef struct {
-    float accumulatorVoltage;
-    float accumulatorTemp;
+    float accumulatorVoltage = 0.0f;
+    float accumulatorTemp = 0.0f;
 
-    float tractiveSystemVoltage;
+    float tractiveSystemVoltage = 0.0f;
 } TelemetryData;
 
 void Telemetry_Init();
-TelemetryData* Telemetry_GetData();
-void Telemetry_UpdateData(TelemetryData* data);
+bool Telemetry_GetData(TelemetryData& data);
+void Telemetry_UpdateData(const TelemetryData& data);
 
 #endif
