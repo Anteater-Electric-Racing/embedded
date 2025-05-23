@@ -21,7 +21,7 @@
 #define APPS_3V3_MIN 0.37F
 #define APPS_3V3_MAX 1.7F
 
-#define MOTOR_MAX_TORQUE 250.0F // TODO: Update with real value
+#define MOTOR_MAX_TORQUE 260.0F // TODO: Update with real value
 
 #define COMPUTE_ALPHA(CUTOFF_HZ) \
     (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))

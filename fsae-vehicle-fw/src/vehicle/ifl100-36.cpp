@@ -41,9 +41,9 @@ static void threadMCU(void *pvParameters) {
                 }
 
                 telemetryData->motorSpeed = mcu1.MCU_ActMotorSpd * 0.25F; // convert to RPM
-                telemetryData->motorTorque = mcu1.MCU_ActMotorTq * 0.392 * torqueDirection; // convert to Nm
-                telemetryData->maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392;
-                telemetryData->maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392;
+                telemetryData->motorTorque = mcu1.MCU_ActMotorTq * 0.392 * torqueDirection * MOTOR_MAX_TORQUE; // convert to Nm
+                telemetryData->maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392 * MOTOR_MAX_TORQUE; // convert to Nm
+                telemetryData->maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392 * MOTOR_MAX_TORQUE; // convert to Nm
                 telemetryData->motorDirection = mcu1.MCU_MotorRatoteDirection;
                 telemetryData->mcuMainState = mcu1.MCU_MotorMainState;
                 telemetryData->mcuWorkMode = mcu1.MCU_MotorWorkMode;
@@ -94,6 +94,18 @@ static void threadMCU(void *pvParameters) {
             }
             Telemetry_UpdateData(telemetryData);
         }
+    }
+}
+
+// checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
+uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
+    uint8_t sum = 0;
+    for (uint8_t i = 0; i < length - 1; i++) {
+        sum += data[i];
+    }
+    return sum ^ 0xFF;
+}
+
         /*
                 if (rx_msg.id == mMCU1_ID) {
             // MCU1 mcu1 = {0};
@@ -170,15 +182,3 @@ static void threadMCU(void *pvParameters) {
             // Serial.print("motor phase current: ");
             // Serial.println(mcu3.sMotorPhaseCurrent);
 */
-    }
-}
-
-// checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
-uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
-    uint8_t sum = 0;
-    for (uint8_t i = 0; i < length - 1; i++) {
-        sum += data[i];
-    }
-    return sum ^ 0xFF;
-}
-
