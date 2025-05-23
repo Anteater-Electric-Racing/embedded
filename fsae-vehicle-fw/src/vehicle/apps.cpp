@@ -1,18 +1,10 @@
 // Anteater Electric Racing, 2025
 
 #include <cmath>
-
 #include "utils/utils.h"
-
 #include "apps.h"
-
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
-
-#define APPS_IMPLAUSABILITY_THRESHOLD 0.1            // 10%
-#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.25 // 25%
-#define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 200    // PSI
-#define APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD 0.05 // 5%
 
 typedef struct {
     float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)

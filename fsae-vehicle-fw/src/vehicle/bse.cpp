@@ -9,17 +9,6 @@
 #include "vehicle/faults.h"
 #include <arduino_freertos.h>
 
-#define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
-#define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
-
-#define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
-
-#define BSE_LOWER_THRESHOLD 0.5F
-#define BSE_UPPER_THRESHOLD 4.5F
-#define BSE_IMPLAUSABILITY_THRESHOLD 0.1F
-
-#define BSE_CUTOFF_HZ 100.0F
-
 typedef struct{
     float bseRawFront;
     float bseRawRear;
