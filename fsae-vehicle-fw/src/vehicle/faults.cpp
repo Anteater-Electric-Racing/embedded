@@ -17,40 +17,40 @@ void Faults_Init() { faultBitMap = 0; }
 
 void Faults_SetFault(FaultType fault) {
     switch (fault) {
-    case FAULT_NONE: {
-        break;
-    }
-    case FAULT_OVER_CURRENT: {
-        faultBitMap |= FAULT_OVER_CURRENT_MASK;
-        break;
-    }
-    case FAULT_UNDER_VOLTAGE: {
-        faultBitMap |= FAULT_UNDER_VOLTAGE_MASK;
-        break;
-    }
-    case FAULT_OVER_TEMP: {
-        faultBitMap |= FAULT_OVER_TEMP_MASK;
-        break;
-    }
-    case FAULT_APPS: {
-        faultBitMap |= FAULT_APPS_MASK;
-        break;
-    }
-    case FAULT_BSE: {
-        faultBitMap |= FAULT_BSE_MASK;
-        break;
-    }
-    case FAULT_BPPS: {
-        faultBitMap |= FAULT_BPPS_MASK;
-        break;
-    }
-    case FAULT_APPS_BRAKE_PLAUSIBILITY: {
-        faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
-        break;
-    }
-    default: {
-        break;
-    }
+        case FAULT_NONE: {
+            break;
+        }
+        case FAULT_OVER_CURRENT: {
+            faultBitMap |= FAULT_OVER_CURRENT_MASK;
+            break;
+        }
+        case FAULT_UNDER_VOLTAGE: {
+            faultBitMap |= FAULT_UNDER_VOLTAGE_MASK;
+            break;
+        }
+        case FAULT_OVER_TEMP: {
+            faultBitMap |= FAULT_OVER_TEMP_MASK;
+            break;
+        }
+        case FAULT_APPS: {
+            faultBitMap |= FAULT_APPS_MASK;
+            break;
+        }
+        case FAULT_BSE: {
+            faultBitMap |= FAULT_BSE_MASK;
+            break;
+        }
+        case FAULT_BPPS: {
+            faultBitMap |= FAULT_BPPS_MASK;
+            break;
+        }
+        case FAULT_APPS_BRAKE_PLAUSIBILITY: {
+            faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
+            break;
+        }
+        default: {
+            break;
+        }
     }
 }
 
@@ -96,6 +96,10 @@ void Faults_ClearFault(FaultType fault) {
 // currently having all faults being handled the same but leaving room for
 // future customization
 void Faults_HandleFaults() {
+    if (faultBitMap == 0) {
+        Motor_ClearFaultState();
+        return;
+    }
     if (faultBitMap & FAULT_OVER_CURRENT_MASK) {
         Motor_SetFaultState();
     }

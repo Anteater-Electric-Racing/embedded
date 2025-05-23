@@ -7,25 +7,27 @@
 #include "utils/circular_buf.h"
 #include <arduino_freertos.h>
 
-#include "vehicle/bse.h"
 #include "vehicle/apps.h"
+#include "vehicle/bse.h"
 #include "vehicle/faults.h"
-#include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
+#include "vehicle/telemetry.h"
 
 TelemetryData telemetryData;
 static CircularBuffer<TelemetryData> telemetryBuffer(10);
 
 void Telemetry_Init() {
     // fill with reasonable default values
-    telemetryData = {
-        .accumulatorVoltage = 0,
-        .accumulatorTemp = 0,
-        .tractiveSystemVoltage = 0
-    };
+    telemetryData = {.APPS_Travel = 0,
+                     .BSEFront_PSI = 0,
+                     .BSERear_PSI = 0,
 
-    xTaskCreate(threadTelemetry, "threadTelemetry", THREAD_CAN_STACK_SIZE, NULL, 
-        THREAD_CAN_PRIORITY, NULL);
+                     .accumulatorVoltage = 0,
+                     .accumulatorTemp_F = 0,
+                     .tractiveSystemVoltage = 0};
+
+    xTaskCreate(threadTelemetry, "threadTelemetry", THREAD_CAN_STACK_SIZE, NULL,
+                THREAD_CAN_PRIORITY, NULL);
 }
 
 void threadTelemetry(void *pvParameters) {
@@ -40,15 +42,17 @@ void threadTelemetry(void *pvParameters) {
     }
 }
 
-bool Telemetry_GetData(TelemetryData& data) {
+bool Telemetry_GetData(TelemetryData &data) {
     return telemetryBuffer.get(data);
 }
 
-void Telemetry_UpdateData(const TelemetryData& data) {
+TelemetryData const *Telemetry_GetData() { return &telemetryData; }
+
+void Telemetry_UpdateData(const TelemetryData &data) {
     telemetryBuffer.put(data);
 }
 
-void printTelemetryData(const TelemetryData& data) {
+void printTelemetryData(const TelemetryData &data) {
     Serial.print("Accumulator Voltage: ");
     Serial.println(data.accumulatorVoltage);
     Serial.print("Accumulator Temperature: ");
