@@ -70,6 +70,23 @@ public:
         return size;
     }
 
+    void printBuffer() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        Serial.println("CircularBuffer contents:");
+        for (size_t i = 0; i < max_size; ++i) {
+            if (i == head) Serial.print("[H]");
+            if (i == tail) Serial.print("[T]");
+
+            Serial.print("Index ");
+            Serial.print(i);
+            Serial.print(": ");
+            
+            printTelemetryData(buf[i]);
+            Serial.println();
+        }
+        Serial.println();
+    }
+
 private:
 std::unique_ptr<T[]> buf;
 const size_t max_size;
