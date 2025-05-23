@@ -6,6 +6,7 @@
 #include <cassert>
 #include <malloc.h>
 #include <mutex>
+#include <memory>
 
 template <typename T>
 class CircularBuffer {
@@ -70,10 +71,10 @@ public:
     }
 
 private:
-    mutable std::mutex mutex_;
-    std::unique_ptr<T[]> buf;
-    size_t head;
-    size_t tail;
-    const size_t max_size;
-    bool is_full = false;
+std::unique_ptr<T[]> buf;
+const size_t max_size;
+size_t head;
+size_t tail;
+bool is_full = false;
+mutable std::mutex mutex_;
 };
