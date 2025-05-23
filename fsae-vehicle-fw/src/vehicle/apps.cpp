@@ -12,6 +12,7 @@
 #define APPS_IMPLAUSABILITY_THRESHOLD 0.1            // 10%
 #define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.25 // 25%
 #define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD 200    // PSI
+#define APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD 0.05 // 5%
 
 typedef struct {
     float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
@@ -57,7 +58,7 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
 
     // Map voltage to percentage of throttle travel, limiting to 0-1 range
     appsData.appsReading1_Percentage = LINEAR_MAP(appsData.appsReading1_Voltage, APPS_3V3_MIN, APPS_3V3_MAX, 0.0F, 1.0F);
-    appsData.appsReading2_Percentage = LINEAR_MAP(appsData.appsReading2_Voltage, APPS_3V3_MIN, APPS_3V3_MAX, 0.0F, 1.0F);
+    appsData.appsReading2_Percentage = LINEAR_MAP(appsData.appsReading2_Voltage, APPS_5V_MIN, APPS_5V_MAX, 0.0F, 1.0F);
 
     if(appsData.appsReading1_Percentage < 0.0F) {
         appsData.appsReading1_Percentage = 0.0F;
@@ -73,6 +74,7 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
 
     checkAndHandleAPPSFault();
     checkAndHandlePlausibilityFault();
+    // Faults_HandleFaults();
 }
 
 float APPS_GetAPPSReading() {
@@ -92,16 +94,25 @@ float APPS_GetAPPSReading2() {
 static void checkAndHandleAPPSFault() {
     // Check for open/short circuit
     float difference = abs(appsData.appsReading1_Percentage - appsData.appsReading2_Percentage);
-
-    if(appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
-       appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
-       appsData.appsReading2_Voltage < APPS_3V3_FAULT_MIN ||
-       appsData.appsReading2_Voltage > APPS_3V3_FAULT_MAX) {
+    Serial.print("Difference is: ");
+    Serial.println(difference);
+    Serial.print("Percent APPS1: ");
+    Serial.println(appsData.appsReading1_Percentage);
+    Serial.print("Percent APPS2: ");
+    Serial.println(appsData.appsReading2_Percentage);
+    if(appsData.appsReading1_Percentage < APPS_FAULT_PERCENT_MIN ||
+       appsData.appsReading1_Percentage > APPS_FAULT_PERCENT_MAX ||
+       appsData.appsReading2_Percentage < APPS_FAULT_PERCENT_MIN ||
+       appsData.appsReading2_Percentage > APPS_FAULT_PERCENT_MAX) {
+        Serial.println("Setting APPS fault");
         Faults_SetFault(FAULT_APPS);
+        return;
     }
-    else if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
+    if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
         Faults_SetFault(FAULT_APPS);
+        return;
     } else {
+        Serial.println("Clearing fault in handle");
         Faults_ClearFault(FAULT_APPS);
     }
 }
@@ -118,6 +129,8 @@ static void checkAndHandlePlausibilityFault() {
         BSEReading > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD) {
         Faults_SetFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
     } else {
-        Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
+        if (APPS_GetAPPSReading() < APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD){
+            Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
+        }
     }
 }
