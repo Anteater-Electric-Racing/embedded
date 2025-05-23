@@ -14,7 +14,10 @@
 static void threadMCU(void *pvParameters);
 static uint32_t rx_id;
 static uint64_t rx_data;
-static TelemetryData* telemetryData;
+
+static MCU1Data mcu1Data;
+static MCU2Data mcu2Data;
+static MCU3Data mcu3Data;
 
 void MCU_Init() {
     // Initialize the motor thread
@@ -25,7 +28,6 @@ static void threadMCU(void *pvParameters) {
     while (true) {
         // Read the CAN messages
         CAN_Receive(&rx_id, &rx_data);
-        telemetryData = Telemetry_GetData();
         switch(rx_id) {
             case mMCU1_ID:
             {
@@ -40,13 +42,15 @@ static void threadMCU(void *pvParameters) {
                     torqueDirection = -1;
                 }
 
-                telemetryData->motorSpeed = mcu1.MCU_ActMotorSpd * 0.25F; // convert to RPM
-                telemetryData->motorTorque = mcu1.MCU_ActMotorTq * 0.392 * torqueDirection * MOTOR_MAX_TORQUE; // convert to Nm
-                telemetryData->maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392 * MOTOR_MAX_TORQUE; // convert to Nm
-                telemetryData->maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392 * MOTOR_MAX_TORQUE; // convert to Nm
-                telemetryData->motorDirection = mcu1.MCU_MotorRatoteDirection;
-                telemetryData->mcuMainState = mcu1.MCU_MotorMainState;
-                telemetryData->mcuWorkMode = mcu1.MCU_MotorWorkMode;
+                mcu1Data = {
+                    .motorSpeed = mcu1.MCU_ActMotorSpd * 0.25F, // convert to RPM
+                    .motorTorque = mcu1.MCU_ActMotorTq * 0.392F * torqueDirection * MOTOR_MAX_TORQUE, // convert to Nm
+                    .maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm
+                    .maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm
+                    .motorDirection = (uint8_t) mcu1.MCU_MotorRotateDirection,
+                    .mcuMainState = mcu1.MCU_MotorMainState,
+                    .mcuWorkMode = mcu1.MCU_MotorWorkMode
+                };
                 break;
             }
             case mMCU2_ID:
