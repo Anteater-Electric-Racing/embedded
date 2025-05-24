@@ -39,12 +39,14 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
     float bseVoltage1 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawFront);
     float bseVoltage2 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawRear);
 
+    Serial.print("BSE Voltage: ");
+    Serial.println(bseVoltage1);
+
     // Check BSE open/short circuit
     if(bseVoltage1 < BSE_LOWER_THRESHOLD ||
        bseVoltage1 > BSE_UPPER_THRESHOLD ||
        bseVoltage2 < BSE_LOWER_THRESHOLD ||
        bseVoltage2 > BSE_UPPER_THRESHOLD) {
-
         if (bseFaultDetected){
             if(bseFaultDetectedTime == 0){
                 Serial.print("FAULT TIME NOT PROPERLY SET");
@@ -53,7 +55,8 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
                 TickType_t now = xTaskGetTickCount();
                 TickType_t elapsedTicks = now - bseFaultDetectedTime;
                 TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
-                if (elapsedMs > 100){
+                if (elapsedMs > BSE_FAULT_TIME_THRESHOLD_MS){
+                    Serial.println("Setting BSE fault");
                     Faults_SetFault(FAULT_BSE);
                 }
             }

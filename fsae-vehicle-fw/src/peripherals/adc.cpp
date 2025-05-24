@@ -16,13 +16,9 @@
 # ifndef EV_ADC
 # define EV_ADC
 
-#define THREAD_ADC_STACK_SIZE 128
+#define THREAD_ADC_STACK_SIZE 256
 #define THREAD_ADC_PRIORITY 2
 #define THREAD_ADC_TELEMETRY_PRIORITY 1
-
-#define LOGIC_LEVEL_V 3.3
-#define ADC_RESOLUTION 10
-#define adc0_MAX_VALUE (1 << ADC_RESOLUTION) - 1
 
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
@@ -47,10 +43,12 @@ enum SensorIndexesADC1 { // TODO: Update with real values
 };
 
 uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {A0, A1, A2, A3, A4, A5, A6, A7}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
-volatile uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
+uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 
 uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {A7, A6, A5, A4, A3, A2, A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
-volatile uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
+uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
+
+int adcCycle = 0;
 
 ADC *adc = new ADC();
 
@@ -85,6 +83,8 @@ void threadADC( void *pvParameters ){
 
     while(true){
         vTaskDelayUntil(&lastWakeTime, xFrequency);
+
+        /*
         for(uint16_t currentIndexADC0 = 0; currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0){
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
             uint16_t adcRead = adc->adc1->analogRead(currentPinADC0); // in callbacks.h
@@ -96,9 +96,35 @@ void threadADC( void *pvParameters ){
             uint16_t adcRead = adc->adc1->analogRead(currentPinADC1); // in callbacks.h
             adc1Reads[currentIndexADC1] = adcRead;
         }
+        */
+
+        /*
         bool rtmButton = digitalRead(RTM_BUTTON_PIN);
         bool wheelSpeed1 = digitalRead(WHEEL_SPEED_1_PIN);
         bool wheelSpeed2 = digitalRead(WHEEL_SPEED_2_PIN);
+        */
+
+        uint16_t testAdc0Reads[SENSOR_PIN_AMT_ADC0] = {1799, 2668, 1240, 1240, 0, 0, 0, 0};
+        uint16_t testAdc1Reads[SENSOR_PIN_AMT_ADC1] = {0, 0, 0, 0, 0, 0, 0, 0};
+        uint16_t testAdc0Reads2[SENSOR_PIN_AMT_ADC0] = {651, 828, 1240, 1240, 0, 0, 0, 0};
+        uint16_t testAdc1Reads2[SENSOR_PIN_AMT_ADC1] = {0, 0, 0, 0, 0, 0, 0, 0};
+        uint16_t testAdc0Reads3[SENSOR_PIN_AMT_ADC0] = {364, 552, 1240, 1240, 0, 0, 0, 0};
+        uint16_t testAdc1Reads3[SENSOR_PIN_AMT_ADC1] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+       if (adcCycle < 10000) {
+            Serial.println("CYCLE 1");
+            memcpy(adc0Reads, (const uint16_t*)testAdc0Reads, SENSOR_PIN_AMT_ADC0);
+            memcpy(adc1Reads, (const uint16_t*)testAdc1Reads, SENSOR_PIN_AMT_ADC1);
+        } else if (adcCycle < 20000) {
+            Serial.println("CYCLE 2");
+            memcpy(adc0Reads, (const uint16_t*)testAdc0Reads2, SENSOR_PIN_AMT_ADC0);
+            memcpy(adc1Reads, (const uint16_t*)testAdc1Reads2, SENSOR_PIN_AMT_ADC1);
+        } else {
+            Serial.println("CYCLE 3");
+            memcpy(adc0Reads, (const uint16_t*)testAdc0Reads3, SENSOR_PIN_AMT_ADC0);
+            memcpy(adc1Reads, (const uint16_t*)testAdc1Reads3, SENSOR_PIN_AMT_ADC1);
+        }
+
 
         // Update each sensors data
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
@@ -122,8 +148,24 @@ void threadADC( void *pvParameters ){
 
 
         Telemetry_UpdateData(&telemetryData);
-            Telemetry_UpdateADCData(adc0Reads, adc1Reads);
-        }
+        Telemetry_UpdateADCData(adc0Reads, adc1Reads);
+
+        // Serial.print("ADC 0 reads: {");
+        // for(uint16_t currentIndexADC0 = 0; currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0){
+        //     Serial.print(adc0Reads[currentIndexADC0]);
+        //     Serial.print(", ");
+        // }
+        // Serial.println("}");
+        // Serial.print("ADC 1 reads: {");
+        // for(uint16_t currentIndexADC1 = 0; currentIndexADC1 < SENSOR_PIN_AMT_ADC1; ++currentIndexADC1){
+        //     Serial.print(adc1Reads[currentIndexADC1]);
+        //     Serial.print(", ");
+        // }
+        // Serial.println("}");
+        ++adcCycle;
+
+    }
 }
+
 
 # endif

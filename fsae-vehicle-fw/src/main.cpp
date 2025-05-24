@@ -32,6 +32,7 @@ void threadMain(void *pvParameters) {
 
     Faults_Init();
     Telemetry_Init();
+    Motor_Init();
 
     while (true) {
         TelemetryData const* telem = Telemetry_GetData();
@@ -39,7 +40,8 @@ void threadMain(void *pvParameters) {
         // Serial.print(" ");
         // Serial.print(telem->debug[1], 4);
         // Serial.print(" ");
-        Serial.print(telem->motorState);
+        // Serial.print("Motor state is ");
+        // Serial.println(telem->motorState);
         Serial.println();
         vTaskDelay(50);
     }

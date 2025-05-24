@@ -115,6 +115,9 @@ static void checkAndHandlePlausibilityFault() {
     if (BSEReading_Rear > BSEReading_Front)
         BSEReading = BSEReading_Rear;
 
+    Serial.print("BSE Reading: ");
+    Serial.println(BSEReading);
+
     if (APPS_GetAPPSReading() > APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD &&
         BSEReading > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD) {
         Faults_SetFault(FAULT_APPS_BRAKE_PLAUSIBILITY);

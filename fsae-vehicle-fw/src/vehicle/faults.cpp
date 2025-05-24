@@ -10,10 +10,13 @@
 
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
+#include <Arduino.h> // TODO remove this, this is just for serial printing during testing
 
-static uint32_t faultBitMap;
+static volatile uint32_t faultBitMap;
 
-void Faults_Init() { faultBitMap = 0; }
+void Faults_Init() {
+    faultBitMap = 0;
+    }
 
 void Faults_SetFault(FaultType fault) {
     switch (fault) {
@@ -34,6 +37,7 @@ void Faults_SetFault(FaultType fault) {
         }
         case FAULT_APPS: {
             faultBitMap |= FAULT_APPS_MASK;
+            Serial.println("Setting APPS fault");
             break;
         }
         case FAULT_BSE: {
@@ -45,6 +49,7 @@ void Faults_SetFault(FaultType fault) {
             break;
         }
         case FAULT_APPS_BRAKE_PLAUSIBILITY: {
+            Serial.println("Setting APPS Plausibility fault");
             faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
             break;
         }
@@ -72,6 +77,7 @@ void Faults_ClearFault(FaultType fault) {
         break;
     }
     case FAULT_APPS: {
+        Serial.println("Clearing APPS fault in clr fault");
         faultBitMap &= ~FAULT_APPS_MASK;
         break;
     }
@@ -84,6 +90,7 @@ void Faults_ClearFault(FaultType fault) {
         break;
     }
     case FAULT_APPS_BRAKE_PLAUSIBILITY: {
+        Serial.println("Clearing APPS_BRAKE_PLAUSIBILITY fault in clr fault");
         faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }
@@ -96,7 +103,11 @@ void Faults_ClearFault(FaultType fault) {
 // currently having all faults being handled the same but leaving room for
 // future customization
 void Faults_HandleFaults() {
+
+    Serial.print("Fault bitmap: ");
+    Serial.println(faultBitMap);
     if (faultBitMap == 0) {
+        Serial.println("Clearing all faults in handle faults");
         Motor_ClearFaultState();
         return;
     }
@@ -124,6 +135,6 @@ void Faults_HandleFaults() {
 }
 
 // for telemetry
-uint32_t *Faults_GetFaults() { return &faultBitMap; }
+uint32_t Faults_GetFaults() { return faultBitMap; }
 
 bool Faults_CheckAllClear() { return faultBitMap == 0; }
