@@ -12,7 +12,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/rtm_button.h"
-#include "apps.h";
+#include "apps.h"
 
 typedef struct{
     MotorState state;
@@ -23,8 +23,7 @@ static MotorData motorData;
 void threadMotor(void *pvParameters);
 
 void Motor_Init(){
-    motorData.state = MOTOR_STATE_IDLE; // TODO Check if we want this to be idle
-    RTMButton_Update(true); // TODO remove, this is just for testing motor states
+    motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
 }
 
@@ -33,10 +32,12 @@ void threadMotor(void *pvParameters){
         // Send CAN message to inverter
         CAN_SendVCU1Message(motorData.torqueDemand);
         vTaskDelay(10);
-        Serial.print("Motor state is ");
-        Serial.println(motorData.state);
-        Serial.print("Motor torqueDemand is ");
-        Serial.println(motorData.torqueDemand);
+        # if DEBUG_FLAG
+            Serial.print("Motor state is ");
+            Serial.println(motorData.state);
+            Serial.print("Motor torqueDemand is ");
+            Serial.println(motorData.torqueDemand);
+        # endif
     }
 }
 

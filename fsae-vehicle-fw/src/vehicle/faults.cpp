@@ -10,7 +10,9 @@
 
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
-#include <Arduino.h> // TODO remove this, this is just for serial printing during testing
+# if DEBUG_FLAG
+    #include <Arduino.h>
+# endif
 
 static volatile uint32_t faultBitMap;
 
@@ -36,11 +38,16 @@ void Faults_SetFault(FaultType fault) {
             break;
         }
         case FAULT_APPS: {
+            # if DEBUG_FLAG
+                Serial.println("Setting APPS fault");
+            # endif
             faultBitMap |= FAULT_APPS_MASK;
-            Serial.println("Setting APPS fault");
             break;
         }
         case FAULT_BSE: {
+            # if DEBUG_FLAG
+                Serial.println("Setting BSE fault");
+            # endif
             faultBitMap |= FAULT_BSE_MASK;
             break;
         }
@@ -49,7 +56,9 @@ void Faults_SetFault(FaultType fault) {
             break;
         }
         case FAULT_APPS_BRAKE_PLAUSIBILITY: {
-            Serial.println("Setting APPS Plausibility fault");
+            # if DEBUG_FLAG
+                Serial.println("Setting APPS Plausibility fault");
+            # endif
             faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
             break;
         }
@@ -77,7 +86,9 @@ void Faults_ClearFault(FaultType fault) {
         break;
     }
     case FAULT_APPS: {
-        Serial.println("Clearing APPS fault in clr fault");
+        # if DEBUG_FLAG
+            Serial.println("Clearing APPS fault");
+        # endif
         faultBitMap &= ~FAULT_APPS_MASK;
         break;
     }
@@ -90,7 +101,9 @@ void Faults_ClearFault(FaultType fault) {
         break;
     }
     case FAULT_APPS_BRAKE_PLAUSIBILITY: {
-        Serial.println("Clearing APPS_BRAKE_PLAUSIBILITY fault in clr fault");
+        # if DEBUG_FLAG
+            Serial.println("Clearing APPS BSE plausibility fault");
+        # endif
         faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }
@@ -103,11 +116,16 @@ void Faults_ClearFault(FaultType fault) {
 // currently having all faults being handled the same but leaving room for
 // future customization
 void Faults_HandleFaults() {
+    # if DEBUG_FLAG
+        Serial.print("Fault bitmap: ");
+        Serial.println(faultBitMap);
+    # endif
 
-    Serial.print("Fault bitmap: ");
-    Serial.println(faultBitMap);
     if (faultBitMap == 0) {
-        Serial.println("Clearing all faults in handle faults");
+        # if DEBUG_FLAG
+            Serial.println("Clearing all faults in handle faults");
+        # endif
+
         Motor_ClearFaultState();
         return;
     }

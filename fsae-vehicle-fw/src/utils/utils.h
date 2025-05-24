@@ -2,6 +2,8 @@
 
 #pragma once
 
+#define DEBUG_FLAG 0
+
 #define WHEEL_SPEED_1_PIN 2
 #define WHEEL_SPEED_2_PIN 3
 #define RTM_BUTTON_PIN 4

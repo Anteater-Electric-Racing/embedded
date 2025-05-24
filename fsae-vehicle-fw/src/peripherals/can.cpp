@@ -69,21 +69,23 @@ void CAN_SendVCU1Message(float torqueValue)
     memcpy(motorMsg.buf, &vcu1, sizeof(vcu1));
     motorMsg.buf[7] = ComputeChecksum(motorMsg.buf, 8);
 
-    if (can3.write(motorMsg)) {
-        Serial.println("VCU1 message sent");
-        Serial.print("Torque: ");
-        Serial.println(vcu1.TorqueReq);
-        Serial.print("Motor message buf: ");
-        for (int i = 0; i < 8; ++i){
-            Serial.print(motorMsg.buf[i]);
-            Serial.print(" ");
+    # if DEBUG_FLAG
+        if (can3.write(motorMsg)) {
+            Serial.println("VCU1 message sent");
+            Serial.print("Torque: ");
+            Serial.println(vcu1.TorqueReq);
+            Serial.print("Motor message buf: ");
+            for (int i = 0; i < 8; ++i){
+                Serial.print(motorMsg.buf[i]);
+                Serial.print(" ");
+            }
+            Serial.println();
+
+
+        } else {
+            Serial.println("VCU1 message failed to send");
         }
-        Serial.println();
-
-
-    } else {
-        Serial.println("VCU1 message failed to send");
-    }
+    # endif
 }
 
 // checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF

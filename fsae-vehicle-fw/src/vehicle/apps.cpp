@@ -66,7 +66,6 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
 
     checkAndHandleAPPSFault();
     checkAndHandlePlausibilityFault();
-    // Faults_HandleFaults();
 }
 
 float APPS_GetAPPSReading() {
@@ -84,17 +83,25 @@ float APPS_GetAPPSReading2() {
 static void checkAndHandleAPPSFault() {
     // Check for open/short circuit
     float difference = abs(appsData.appsReading1_Percentage - appsData.appsReading2_Percentage);
-    Serial.print("Difference is: ");
-    Serial.println(difference);
-    Serial.print("Percent APPS1: ");
-    Serial.println(appsData.appsReading1_Percentage);
-    Serial.print("Percent APPS2: ");
-    Serial.println(appsData.appsReading2_Percentage);
+
+    # if DEBUG_FLAG
+        Serial.print("Difference is: ");
+        Serial.println(difference);
+        Serial.print("Percent APPS1: ");
+        Serial.println(appsData.appsReading1_Percentage);
+        Serial.print("Percent APPS2: ");
+        Serial.println(appsData.appsReading2_Percentage);
+    # endif
+
     if(appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
        appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
        appsData.appsReading2_Voltage < APPS_5V_FAULT_MIN ||
        appsData.appsReading2_Voltage > APPS_5V_FAULT_MAX) {
-        Serial.println("Setting APPS fault");
+
+        # if DEBUG_FLAG
+            Serial.println("Setting APPS fault");
+        # endif
+
         Faults_SetFault(FAULT_APPS);
         return;
     }
@@ -102,7 +109,11 @@ static void checkAndHandleAPPSFault() {
         Faults_SetFault(FAULT_APPS);
         return;
     } else {
-        Serial.println("Clearing fault in handle");
+
+        # if DEBUG_FLAG
+            Serial.println("Clearing fault in handle");
+        # endif
+
         Faults_ClearFault(FAULT_APPS);
     }
 }
@@ -112,11 +123,14 @@ static void checkAndHandlePlausibilityFault() {
     float BSEReading_Rear = BSE_GetBSEReading()->bseRear_PSI;
 
     float BSEReading = BSEReading_Front;
-    if (BSEReading_Rear > BSEReading_Front)
+    if (BSEReading_Rear > BSEReading_Front){
         BSEReading = BSEReading_Rear;
+    }
 
-    Serial.print("BSE Reading: ");
-    Serial.println(BSEReading);
+    # if DEBUG_FLAG
+        Serial.print("BSE Reading: ");
+        Serial.println(BSEReading);
+    # endif
 
     if (APPS_GetAPPSReading() > APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD &&
         BSEReading > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD) {
