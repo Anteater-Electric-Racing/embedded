@@ -38,8 +38,8 @@ void APPS_Init() {
 
 void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
     // Filter incoming values
-    // LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
-    // LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
+    LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
+    LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
 
     appsData.apps1RawReading = rawReading1;
     appsData.apps2RawReading = rawReading2;
@@ -75,12 +75,10 @@ float APPS_GetAPPSReading() {
 
 float APPS_GetAPPSReading1() {
     return appsData.appsReading1_Percentage;
-    // return appsData.appsReading1_Voltage;
 }
 
 float APPS_GetAPPSReading2() {
     return appsData.appsReading2_Percentage;
-    // return appsData.appsReading2_Voltage;
 }
 
 static void checkAndHandleAPPSFault() {
@@ -92,10 +90,10 @@ static void checkAndHandleAPPSFault() {
     Serial.println(appsData.appsReading1_Percentage);
     Serial.print("Percent APPS2: ");
     Serial.println(appsData.appsReading2_Percentage);
-    if(appsData.appsReading1_Percentage < APPS_FAULT_PERCENT_MIN ||
-       appsData.appsReading1_Percentage > APPS_FAULT_PERCENT_MAX ||
-       appsData.appsReading2_Percentage < APPS_FAULT_PERCENT_MIN ||
-       appsData.appsReading2_Percentage > APPS_FAULT_PERCENT_MAX) {
+    if(appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
+       appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
+       appsData.appsReading2_Voltage < APPS_5V_FAULT_MIN ||
+       appsData.appsReading2_Voltage > APPS_5V_FAULT_MAX) {
         Serial.println("Setting APPS fault");
         Faults_SetFault(FAULT_APPS);
         return;
