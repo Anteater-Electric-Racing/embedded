@@ -17,8 +17,7 @@ typedef struct{
 static BSEData bseData;
 static BSERawData bseRawData;
 static float bseAlpha;
-static bool bseFaultDetected = false;
-static TickType_t bseFaultDetectedTime = 0; // Set to 0 when fault not detected
+static TickType_t bseLatestHealthyStateTime = 0; // Set to 0 when fault not detected
 
 
 void BSE_Init() {
@@ -49,30 +48,18 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
        bseVoltage1 > BSE_UPPER_THRESHOLD ||
        bseVoltage2 < BSE_LOWER_THRESHOLD ||
        bseVoltage2 > BSE_UPPER_THRESHOLD) {
-        if (bseFaultDetected){
-            if(bseFaultDetectedTime == 0){
-                #if DEBUG_FLAG
-                    Serial.print("FAULT TIME NOT PROPERLY SET");
-                #endif
-                bseFaultDetectedTime = xTaskGetTickCount();
-            } else {
-                TickType_t now = xTaskGetTickCount();
-                TickType_t elapsedTicks = now - bseFaultDetectedTime;
-                TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
-                if (elapsedMs > BSE_FAULT_TIME_THRESHOLD_MS){
-                    # if DEBUG_FLAG
-                        Serial.println("Setting BSE fault");
-                    # endif
-                    Faults_SetFault(FAULT_BSE);
-                }
-            }
-        } else {
-            bseFaultDetected = true;
-            bseFaultDetectedTime = xTaskGetTickCount();
+        TickType_t now = xTaskGetTickCount();
+        TickType_t elapsedTicks = now - bseLatestHealthyStateTime;
+        TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
+        if (elapsedMs > BSE_FAULT_TIME_THRESHOLD_MS){
+            # if DEBUG_FLAG
+                Serial.println("Setting BSE fault");
+            # endif
+            Faults_SetFault(FAULT_BSE);
         }
+
     } else {
-        bseFaultDetected = false;
-        bseFaultDetectedTime = 0;
+        bseLatestHealthyStateTime = xTaskGetTickCount();
         Faults_ClearFault(FAULT_BSE);
     }
 
