@@ -10,11 +10,13 @@
 
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
+#include "utils/utils.h"
+
 # if DEBUG_FLAG
     #include <Arduino.h>
 # endif
 
-static volatile uint32_t faultBitMap;
+static uint32_t faultBitMap;
 
 void Faults_Init() {
     faultBitMap = 0;
