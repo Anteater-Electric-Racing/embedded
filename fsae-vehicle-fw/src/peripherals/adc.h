@@ -1,6 +1,5 @@
 // Anteater Electric Racing, 2025
-#ifndef ADC_EV_H
-#define ADC_EV_H
+#pragma once
 
 #include <ADC.h>
 #define SENSOR_PIN_AMT_ADC0 8
@@ -18,5 +17,3 @@ extern ADC *adc;
 
 void ADC_Init();
 void ADC_Begin();
-
-#endif // ADC_EV_H
