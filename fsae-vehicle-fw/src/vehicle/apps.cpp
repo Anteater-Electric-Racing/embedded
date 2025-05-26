@@ -44,9 +44,6 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
 
-    appsData.apps1RawReading = rawReading1;
-    appsData.apps2RawReading = rawReading2;
-
     // Convert ADC values to voltage
     appsData.appsReading1_Voltage = ADC_VALUE_TO_VOLTAGE(appsData.apps1RawReading);
     appsData.appsReading2_Voltage = ADC_VALUE_TO_VOLTAGE(appsData.apps2RawReading);
