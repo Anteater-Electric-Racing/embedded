@@ -5,6 +5,7 @@
 #include "apps.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
+#include <arduino_freertos.h>
 
 typedef struct {
     float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
@@ -19,6 +20,8 @@ typedef struct {
 
 static APPSData appsData;
 static float appsAlpha;
+static TickType_t appsLatestHealthyStateTime = 0; // Set to 0 when fault not detected
+
 
 static void checkAndHandleAPPSFault();
 static void checkAndHandlePlausibilityFault();
@@ -97,23 +100,28 @@ static void checkAndHandleAPPSFault() {
        appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
        appsData.appsReading2_Voltage < APPS_5V_FAULT_MIN ||
        appsData.appsReading2_Voltage > APPS_5V_FAULT_MAX) {
-
-        # if DEBUG_FLAG
-            Serial.println("Setting APPS fault");
-        # endif
-
-        Faults_SetFault(FAULT_APPS);
-        return;
+        TickType_t now = xTaskGetTickCount();
+        TickType_t elapsedTicks = now - appsLatestHealthyStateTime;
+        TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
+        if (elapsedMs > APPS_FAULT_TIME_THRESHOLD_MS){
+            # if DEBUG_FLAG
+                Serial.println("Setting APPS fault");
+            # endif
+            Faults_SetFault(FAULT_APPS);
+            return;
+        }
+    } else {
+        appsLatestHealthyStateTime = xTaskGetTickCount();
+        Faults_ClearFault(FAULT_APPS);
     }
+
     if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
         Faults_SetFault(FAULT_APPS);
         return;
     } else {
-
         # if DEBUG_FLAG
             Serial.println("Clearing fault in handle");
         # endif
-
         Faults_ClearFault(FAULT_APPS);
     }
 }
