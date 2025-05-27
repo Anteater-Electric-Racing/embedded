@@ -17,6 +17,14 @@
 void threadMain(void *pvParameters);
 
 void setup() { // runs once on bootup
+    ADC_Init();
+    CAN_Init();
+    APPS_Init();
+    BSE_Init();
+    Faults_Init();
+    Telemetry_Init();
+    Motor_Init();
+
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
     xTaskCreate(threadTelemetryCAN, "threadTelemetryCAN", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
@@ -27,13 +35,7 @@ void setup() { // runs once on bootup
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
-    ADC_Init();
-    CAN_Init();
-    APPS_Init();
-    BSE_Init();
-    Faults_Init();
-    Telemetry_Init();
-    Motor_Init();
+
 
     while (true) {
         # if DEBUG_FLAG
