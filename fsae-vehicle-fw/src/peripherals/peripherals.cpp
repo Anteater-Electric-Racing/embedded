@@ -6,6 +6,5 @@
 
 void Peripherals_Init() {
     ADC_Init();
-    ADC_Begin();
     CAN_Init();
 }

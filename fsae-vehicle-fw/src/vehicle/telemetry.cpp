@@ -1,6 +1,4 @@
 // Anteater Electric Racing, 2025
-#define THREAD_CAN_TELEMETRY_STACK_SIZE 128
-#define THREAD_CAN_TELEMETRY_PRIORITY 2
 
 #include "telemetry.h"
 #include <FlexCAN_T4.h>
@@ -37,10 +35,6 @@ void Telemetry_Init() {
     tp.begin();
     tp.setWriteBus(&can2); /* we write to this bus */
 
-}
-
-void Telemetry_Begin() {
-    xTaskCreate(threadTelemetryCAN, "threadTelemetryCAN", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
 }
 
 void threadTelemetryCAN(void *pvParameters){
