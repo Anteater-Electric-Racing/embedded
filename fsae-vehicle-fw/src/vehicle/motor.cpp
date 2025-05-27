@@ -12,6 +12,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/rtm_button.h"
+#include "apps.h"
 #include "vehicle/ifl100-36.h"
 
 typedef struct{
@@ -27,8 +28,7 @@ static BMS2 bms2 = {0};
 static void threadMotor(void *pvParameters);
 
 void Motor_Init(){
-    motorData.state = MOTOR_STATE_IDLE;
-    Serial.println("Motor thread starting");
+    motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
 }
 
@@ -50,7 +50,7 @@ static void threadMotor(void *pvParameters){
                 // T4 BMS_Main_Relay_Cmd == 1 && Pre_charge_Finish_Sts == 1 && Ubat>=200V
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
-                
+
                 bms1.Fast_charge_Relay_FB = 1;
                 bms2.sAllowMaxDischarge = 500;
                 bms2.sAllowMaxRegenCharge = 500;
@@ -68,7 +68,7 @@ static void threadMotor(void *pvParameters){
                 // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
-                
+
                 vcu1.VCU_TorqueReq = motorData.torqueDemand; // Troque demand in percentage (0-99.6) 350Nm
             }
             case MOTOR_STATE_FAULT:
@@ -99,7 +99,7 @@ static void threadMotor(void *pvParameters){
 }
 
 void Motor_UpdateMotor(){
-    float throttleCommand = Telemetry_GetData()->APPS_Travel;
+    float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
     switch(motorData.state){
         // LV on, HV off
         case MOTOR_STATE_OFF:
@@ -109,7 +109,7 @@ void Motor_UpdateMotor(){
             if(RTMButton_GetState()){
                 motorData.state = MOTOR_STATE_IDLE;
             }
-            
+
             motorData.torqueDemand = 0.0F;
             break;
         }
