@@ -5,7 +5,7 @@
 #include <arduino_freertos.h>
 
 #include "peripherals/adc.h"
-#include "peripherals/peripherals.h"
+#include "peripherals/can.h"
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -27,7 +27,8 @@ void setup() { // runs once on bootup
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
-    Peripherals_Init();
+    ADC_Init();
+    CAN_Init();
     APPS_Init();
     BSE_Init();
     Faults_Init();
