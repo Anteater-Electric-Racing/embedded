@@ -13,9 +13,6 @@
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
 
-# ifndef EV_ADC
-# define EV_ADC
-
 #define THREAD_ADC_STACK_SIZE 128
 #define THREAD_ADC_PRIORITY 8
 #define THREAD_ADC_TELEMETRY_PRIORITY 1
@@ -85,10 +82,8 @@ void threadADC( void *pvParameters ){
     # endif
 
     lastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = TICKTYPE_FREQUENCY;
-
     while(true){
-        vTaskDelayUntil(&lastWakeTime, xFrequency);
+        vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
         for(uint16_t currentIndexADC0 = 0; currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0){
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
             uint16_t adcRead = adc->adc1->analogRead(currentPinADC0);
@@ -110,6 +105,3 @@ void threadADC( void *pvParameters ){
         Motor_UpdateMotor();
     }
 }
-
-
-# endif
