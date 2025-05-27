@@ -15,6 +15,7 @@ void Motor_UpdateMotor();
 
 float Motor_GetTorqueDemand();
 MotorState Motor_GetState();
+void threadMotor(void *pvParameters);
 
 void Motor_SetFaultState();
 void Motor_ClearFaultState();

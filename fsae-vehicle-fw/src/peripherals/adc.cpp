@@ -13,9 +13,6 @@
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
 
-#define THREAD_ADC_STACK_SIZE 128
-#define THREAD_ADC_PRIORITY 8
-#define THREAD_ADC_TELEMETRY_PRIORITY 1
 
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
@@ -64,15 +61,6 @@ void ADC_Init() {
 
     # if DEBUG_FLAG
         Serial.println("Done initializing ADCs");
-    # endif
-}
-
-void threadADC( void *pvParameters );
-
-void ADC_Begin() {
-    xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
-    # if DEBUG_FLAG
-        Serial.print("Beginning adc task");
     # endif
 }
 

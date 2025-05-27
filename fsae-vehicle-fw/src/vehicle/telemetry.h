@@ -25,8 +25,8 @@ struct TelemetryData{
 } __attribute__((packed)); // need this to ensure data is packed without gaps in between;
 
 void Telemetry_Init();
+void threadTelemetryCAN(void *pvParameters);
 TelemetryData const* Telemetry_GetData();
-void Telemetry_Init();
 void Telemetry_SerializeData(TelemetryData data, uint8_t* serializedTelemetryBuf);
 void Telemetry_UpdateData(TelemetryData* data);
 void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
