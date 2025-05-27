@@ -26,21 +26,23 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
     Peripherals_Init();
-
     APPS_Init();
     BSE_Init();
-
     Faults_Init();
     Telemetry_Init();
+    Motor_Init();
 
     while (true) {
-        TelemetryData const* telem = Telemetry_GetData();
-        // Serial.print(telem->APPS_Travel, 4);
-        // Serial.print(" ");
-        // Serial.print(telem->debug[1], 4);
-        // Serial.print(" ");
-        Serial.print(telem->motorState);
-        Serial.println();
+        # if DEBUG_FLAG
+            TelemetryData const* telem = Telemetry_GetData();
+            Serial.print(telem->APPS_Travel, 4);
+            Serial.print(" ");
+            Serial.print(telem->debug[1], 4);
+            Serial.print(" ");
+            Serial.print("Motor state is ");
+            Serial.println(telem->motorState);
+            Serial.println();
+        # endif
         vTaskDelay(50);
     }
 }
