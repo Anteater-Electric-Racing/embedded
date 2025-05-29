@@ -40,17 +40,17 @@ void threadTelemetryCAN(void *pvParameters){
     TickType_t lastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = 1;
     while(true){
-        vTaskDelayUntil(&lastWakeTime, xFrequency);
-        Serial.print("Semaphor take successful");
-        xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-        Telemetry_SerializeData(telemetryDataCAN, serializedTelemetryBuf);
-        xSemaphoreGive(xSemaphore);
+        // vTaskDelayUntil(&lastWakeTime, xFrequency);
+        // Serial.print("Semaphor take successful");
+        // xSemaphoreTake(xSemaphore, (TickType_t) 1000);
+        // Telemetry_SerializeData(telemetryDataCAN, serializedTelemetryBuf);
+        // xSemaphoreGive(xSemaphore);
 
-        ISOTP_data config;
-        config.id = 0x666;
-        config.flags.extended = 0; /* standard frame */
-        config.separation_time = 10; /* time between back-to-back frames in millisec */
-        tp.write(config, serializedTelemetryBuf, sizeof(serializedTelemetryBuf));
+        // ISOTP_data config;
+        // config.id = 0x666;
+        // config.flags.extended = 0; /* standard frame */
+        // config.separation_time = 10; /* time between back-to-back frames in millisec */
+        // tp.write(config, serializedTelemetryBuf, sizeof(serializedTelemetryBuf));
     }
 }
 
