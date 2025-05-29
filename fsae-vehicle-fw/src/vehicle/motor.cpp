@@ -108,7 +108,9 @@ static void threadMotor(void *pvParameters){
     }
 }
 
-void Motor_UpdateMotor(float torqueDemand){
+void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enableRun){
+    // Update the motor state based on the RTM button state
+
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
     switch(motorData.state){
         // LV on, HV off
@@ -116,8 +118,8 @@ void Motor_UpdateMotor(float torqueDemand){
         // HV switch on (PCC CAN message)
         case MOTOR_STATE_PRECHARGING:
         {
-            if(RTMButton_GetState()){
-                motorData.state = MOTOR_STATE_IDLE;
+            if(enableRun){
+                motorData.state = MOTOR_STATE_DRIVING;
             }
 
             motorData.desiredTorque = 0.0F;
@@ -126,15 +128,15 @@ void Motor_UpdateMotor(float torqueDemand){
         // PCC CAN message finished
         case MOTOR_STATE_IDLE:
         {
-            if(RTMButton_GetState()){
-                motorData.state = MOTOR_STATE_DRIVING;
+            if(enablePrecharge){
+                motorData.state = MOTOR_STATE_PRECHARGING;
             }
             break;
         }
         // Ready to drive button pressed
         case MOTOR_STATE_DRIVING:
         {
-            if(RTMButton_GetState() == false){
+            if(!enableRun){
                 motorData.state = MOTOR_STATE_IDLE;
             }
 
