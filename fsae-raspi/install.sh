@@ -12,7 +12,9 @@ influx -execute \"CREATE DATABASE fsae-raspi\"
 sudo apt install -y apt-transport-https software-properties-common wget
 sudo mkdir -p /etc/apt/keyrings/
 wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+if ! grep -q "^deb .*\[signed-by=/etc/apt/keyrings/grafana.gpg\] https://apt.grafana.com stable main" /etc/apt/sources.list.d/grafana.list 2>/dev/null; then
+    echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+fi
 sudo apt update
 sudo apt install -y grafana
 sudo service grafana-server start
