@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 typedef enum {
     MOTOR_STATE_OFF,
     MOTOR_STATE_PRECHARGING,
@@ -11,7 +13,7 @@ typedef enum {
 } MotorState;
 
 void Motor_Init();
-void Motor_UpdateMotor();
+void Motor_UpdateMotor(float torqueDemand);
 
 float Motor_GetTorqueDemand();
 MotorState Motor_GetState();

@@ -3,6 +3,10 @@
 #define THREAD_MOTOR_STACK_SIZE 128
 #define THREAD_MOTOR_PRIORITY 1
 
+#define SPEED_CONTROL_ENABLED 0
+#define SPEED_P_GAIN 0.01F // Proportional gain for speed control
+#define SPEED_I_GAIN 0.1F // Integral gain for speed control
+
 #include <arduino_freertos.h>
 
 #include "utils/utils.h"
@@ -17,7 +21,7 @@
 
 typedef struct{
     MotorState state;
-    float torqueDemand;
+    float desiredTorque; // Torque demand in Nm;
 } MotorData;
 
 static MotorData motorData;
@@ -29,6 +33,7 @@ static void threadMotor(void *pvParameters);
 
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
+    motorData.desiredTorque = 0.0F; // No torque demand at start
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
 }
 
@@ -43,6 +48,13 @@ static void threadMotor(void *pvParameters){
                 bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
 
                 vcu1.VCU_TorqueReq = 0; // 0 = No torque
+                vcu1.VehicleState = 0; // 0 = Not ready, 1 = Ready
+                vcu1.GearLeverPos_Sts = 0; // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
+                vcu1.AC_Control_Cmd = 0; // 0 = Not active, 1 = Active
+                vcu1.BMS_Aux_Relay_Cmd = 0; // 0 = not work, 1 = work
+                vcu1.VCU_MotorMode = 0; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
+                vcu1.KeyPosition = 0; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
+
             }
             case MOTOR_STATE_IDLE:
             {
@@ -67,8 +79,7 @@ static void threadMotor(void *pvParameters){
                 // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
-
-                vcu1.VCU_TorqueReq = motorData.torqueDemand; // Troque demand in percentage (0-99.6) 350Nm
+                vcu1.VCU_TorqueReq = (motorData.desiredTorque / MOTOR_MAX_TORQUE); // Torque demand in percentage (0-99.6) 350Nm
             }
             case MOTOR_STATE_FAULT:
             {
@@ -97,19 +108,19 @@ static void threadMotor(void *pvParameters){
     }
 }
 
-void Motor_UpdateMotor(){
-    float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
+void Motor_UpdateMotor(float torqueDemand){
+    // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
     switch(motorData.state){
         // LV on, HV off
         case MOTOR_STATE_OFF:
-        // HV swtich on (PCC CAN message)
+        // HV switch on (PCC CAN message)
         case MOTOR_STATE_PRECHARGING:
         {
             if(RTMButton_GetState()){
                 motorData.state = MOTOR_STATE_IDLE;
             }
 
-            motorData.torqueDemand = 0.0F;
+            motorData.desiredTorque = 0.0F;
             break;
         }
         // PCC CAN message finished
@@ -128,7 +139,13 @@ void Motor_UpdateMotor(){
             }
 
             // torque is communicated as a percentage
-            motorData.torqueDemand = throttleCommand;
+            #if !SPEED_CONTROL_ENABLED
+            motorData.desiredTorque = torqueDemand;
+            #else
+            // Speed control is enabled, we need to set the torque demand to 0
+            vcu1.VCU_TorqueReq = 0; // 0 = No torque
+            #endif
+
             break;
         }
         case MOTOR_STATE_FAULT:
@@ -136,7 +153,7 @@ void Motor_UpdateMotor(){
             if(RTMButton_GetState() == false){
                 motorData.state = MOTOR_STATE_IDLE;
             }
-            motorData.torqueDemand = 0.0F;
+            motorData.desiredTorque = 0.0F;
             break;
         }
         default:
@@ -147,7 +164,7 @@ void Motor_UpdateMotor(){
 }
 
 float Motor_GetTorqueDemand(){
-    return motorData.torqueDemand;
+    return motorData.desiredTorque;
 }
 
 void Motor_SetFaultState(){

@@ -18,7 +18,9 @@
 
 #include <iostream>
 #include <unistd.h>
-#define TORQUE_STEP 0.1F
+
+#define TORQUE_STEP 1
+#define TORQUE_MAX_NM 20 // Maximum torque demand in Nm
 
 void threadMain(void *pvParameters);
 
@@ -38,41 +40,54 @@ void threadMain(void *pvParameters) {
 
     Motor_Init();
 
-    float torqueDemand = 0.0F;
+    float torqueDemand = 0;
+    TickType_t xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
     while (true) {
+        /*
+            * Read user input from Serial to control torque demand.
+            * 'w' or 'W' to increase torque demand,
+            * 's' or 'S' to decrease torque demand,
+            * 'p' or 'P' to enter precharging state from standby,
+            * 'o' or 'O' to enter run state,
+            * ' ' (space) to stop all torque.
+            * The torque demand is limited between 0 and TORQUE_MAX_NM.
+        */
         if (Serial.available()) {
             char input = Serial.read();
 
             switch (input) {
                 case 'w': // Increase torque demand
                 case 'W':
-                    torqueDemand += TORQUE_STEP; // Increment torque demand
-                    Motor_UpdateMotor();
-                    Serial.print("Torque - ");
-                    Serial.print(torqueDemand);
-                    Serial.print("\r");
+                {
+                    if (torqueDemand < TORQUE_MAX_NM) {
+                        torqueDemand += TORQUE_STEP; // Increment torque demand
+                    }
                     break;
+                }
                 case 's': // Decrease torque demand
                 case 'S':
-                    torqueDemand -= TORQUE_STEP; // Decrement torque demand
-                    Motor_UpdateMotor();
-                    Serial.print("Torque - ");
-                    Serial.print(torqueDemand);
-                    Serial.print("\r");
+                {
+                    if( torqueDemand > 0) {
+                        torqueDemand -= TORQUE_STEP; // Decrement torque demand
+                    }
                     break;
+                }
                 case ' ': // Stop all torque
-                    Motor_UpdateMotor();
-                    torqueDemand = 0.0F;
-                    Serial.print("Torque - 0.0");
-                    Serial.print("\r");
+                    torqueDemand = 0;
                     break;
                 default:
-                    Serial.print("Unknown command. (W, S, space)");
-                    Serial.print("\r");
                     break;
             }
         }
+
+        Serial.print("Torque - ");
+        Serial.print(torqueDemand);
+        Serial.print("      \r");
+
+        Motor_UpdateMotor(torqueDemand); // Update motor with the current torque demand
+
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1)); // Delay for 100ms
     }
 }
 

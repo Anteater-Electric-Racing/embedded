@@ -101,7 +101,7 @@ void threadADC( void *pvParameters ){
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
 
         // Handle any faults that were raised
-        Faults_HandleFaults();
-        Motor_UpdateMotor();
+        // Faults_HandleFaults();
+        // Motor_UpdateMotor();
     }
 }
