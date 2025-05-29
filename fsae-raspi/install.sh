@@ -18,7 +18,7 @@ sudo apt install -y grafana
 sudo service grafana-server start
 
 # rust
-curl https://sh.rustup.rs -sSf | sh
+curl https://sh.rustup.rs -sSf | sh -s -- -y
 
 # installing service
 sudo ./add_service.sh
