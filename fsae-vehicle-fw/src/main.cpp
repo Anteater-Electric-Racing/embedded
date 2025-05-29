@@ -16,6 +16,10 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 
+#include <iostream>
+#include <unistd.h>
+#define TORQUE_STEP 0.1F
+
 void threadMain(void *pvParameters);
 
 void setup() { // runs once on bootup
@@ -36,16 +40,43 @@ void threadMain(void *pvParameters) {
 
     Motor_Init();
 
+    float torqueDemand = 0.0F;
+
     while (true) {
-        // TelemetryData const* telem = Telemetry_GetData();
-        // // Serial.print(telem->APPS_Travel, 4);
-        // // Serial.print(" ");
-        // // Serial.print(telem->debug[1], 4);
-        // // Serial.print(" ");
-        // Serial.print(telem->motorState);
-        // Serial.println();
-        vTaskDelay(50);
+        if (Serial.available()) {
+            char input = Serial.read();
+
+            switch (input) {
+                case 'w': // Increase torque demand
+                case 'W':
+                    torqueDemand += TORQUE_STEP; // Increment torque demand
+                    Motor_UpdateMotor();
+                    Serial.print("Torque - ");
+                    Serial.print(torqueDemand);
+                    Serial.print("\r");
+                    break;
+                case 's': // Decrease torque demand
+                case 'S':
+                    torqueDemand -= TORQUE_STEP; // Decrement torque demand
+                    Motor_UpdateMotor();
+                    Serial.print("Torque - ");
+                    Serial.print(torqueDemand);
+                    Serial.print("\r");
+                    break;
+                case ' ': // Stop all torque
+                    Motor_UpdateMotor();
+                    torqueDemand = 0.0F;
+                    Serial.print("Torque - 0.0");
+                    Serial.print("\r");
+                    break;
+                default:
+                    Serial.print("Unknown command. (W, S, space)");
+                    Serial.print("\r");
+                    break;
+            }
+        }
     }
 }
 
 void loop() {}
+
