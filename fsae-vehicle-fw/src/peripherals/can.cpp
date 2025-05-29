@@ -46,23 +46,26 @@ void CAN_Send(uint32_t id, uint64_t msg)
 
     memcpy(motorMsg.buf, &msg, sizeof(msg));
 
-    # if DEBUG_FLAG
-        if (can3.write(motorMsg)) {
-            Serial.println("VCU1 message sent");
-            Serial.print("Torque: ");
-            Serial.println(vcu1.TorqueReq);
-            Serial.print("Motor message buf: ");
-            for (int i = 0; i < 8; ++i){
-                Serial.print(motorMsg.buf[i]);
-                Serial.print(" ");
-            }
-            Serial.println();
+
+
+    // if DEBUG_FLAG
+        if (can2.write(motorMsg)) {
+            //Serial.println(motorMsg.id, 16);
+           // Serial.println("VCU1 message sent");
+            // //Serial.print("Torque: ");
+            // //Serial.println(vcu1.TorqueReq);
+            // Serial.print("Motor message buf: ");
+            // for (int i = 0; i < 8; ++i){
+            //     Serial.print(motorMsg.buf[i]);
+            //     Serial.print(" ");
+            // }
+            // Serial.println();
 
 
         } else {
             Serial.println("VCU1 message failed to send");
         }
-    # endif
+    //# endif
 }
 
 void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
