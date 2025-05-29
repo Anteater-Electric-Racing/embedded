@@ -1,3 +1,7 @@
+// Anteater Electric Racing, 2025
+
+#pragma once
+
 #include <stdint.h>
 
 #define mVCU1_ID 0x101
@@ -10,6 +14,33 @@
 #define mBMS1_ID 0x1A0
 #define mBMS2_ID 0x1A1
 
+typedef enum {
+    DIRECTION_STANDBY = 0,
+    DIRECTION_FORWARD = 1,
+    DIRECTION_BACKWARD = 2,
+    DIRECTION_ERROR = 3,
+} MotorRotateDirection;
+
+typedef enum {
+    STATE_STANDBY = 0,
+    STATE_PRECHARGE = 1,
+    STATE_POWER_READY = 2,
+    STATE_RUN = 3,
+    STATE_POWER_OFF = 4,
+} MCUMainState;
+
+typedef enum {
+    WORK_MODE_STANDBY = 0,
+    WORK_MODE_TORQUE = 1,
+    WORK_MODE_SPEED = 2,
+} MCUWorkMode;
+
+typedef enum {
+    ERROR_NONE = 0,
+    ERROR_LOW = 1,
+    ERROR_MEDIUM = 2,
+    ERROR_HIGH = 3,
+} MCUWarningLevel;
 
 typedef struct __attribute__((packed)) {
     uint64_t VCU_TorqueReq : 8; // end of byte 0
@@ -38,7 +69,7 @@ typedef struct __attribute__((packed)) {
     uint64_t MCU_ActMotorTq: 8; // end of byte 2
     uint64_t MCU_MaxMotorTq : 8; // end of byte 3
     uint64_t MCU_MaxMotorBrakeTq : 8; // end of byte 4
-    uint64_t MCU_MotorRatoteDirection : 2;
+    uint64_t MCU_MotorRotateDirection : 2;
     uint64_t Reserved: 3;
     uint64_t MCU_MotorMainState : 3; // end of byte 5
     uint64_t MCU_MotorState : 2;
@@ -115,6 +146,46 @@ typedef struct __attribute__((packed)) {
     uint64_t Reserved3 : 4; // end of byte 6
     uint64_t CheckSum : 8; // end of byte 7
 } BMS2;
+
+typedef struct {
+    // MCU1 data
+    float motorSpeed; // Motor speed in RPM
+    float motorTorque; // Motor torque in Nm
+    float maxMotorTorque; // Max motor torque in Nm
+    float maxMotorBrakeTorque; // Max motor brake torque in Nm
+    MotorRotateDirection motorDirection; // Motor direction
+    MCUMainState mcuMainState; // Motor main state
+    MCUWorkMode mcuWorkMode; // MCU work mode
+} MCU1Data;
+
+typedef struct {
+    int32_t motorTemp; // Motor temperature in C
+    int32_t mcuTemp; // Hardware temperature in C
+    bool dcMainWireOverVoltFault; // DC over voltage fault
+    bool motorPhaseCurrFault; // MCU motor phase current fault
+    bool mcuOverHotFault; // MCU overheat fault
+    bool resolverFault; // Resolver fault
+    bool phaseCurrSensorFault; // Phase current sensor fault
+    bool motorOverSpdFault; // MCU motor over speed fault
+    bool drvMotorOverHotFault; // Driver motor overheat fault
+    bool dcMainWireOverCurrFault; // DC main wire over voltage fault
+    bool drvMotorOverCoolFault; // Driver motor overcool fault
+    bool mcuMotorSystemState; // MCU motor system state
+    bool mcuTempSensorState; // MCU temperature sensor state
+    bool motorTempSensorState; // MCU motor temperature sensor state
+    bool dcVoltSensorState; // MCU DC voltage sensor state
+    bool dcLowVoltWarning; // MCU DC low voltage warning
+    bool mcu12VLowVoltWarning; // MCU 12V low voltage warning
+    bool motorStallFault; // MCU motor stall fault
+    bool motorOpenPhaseFault; // MCU motor open phase fault
+    MCUWarningLevel mcuWarningLevel; // MCU warning level
+} MCU2Data;
+
+typedef struct {
+    float mcuVoltage; // DC main wire voltage in V
+    float mcuCurrent; // DC main wire current in A
+    float motorPhaseCurr; // Motor phase current in A
+} MCU3Data;
 
 void MCU_Init();
 uint8_t ComputeChecksum(uint8_t* data, uint8_t length);

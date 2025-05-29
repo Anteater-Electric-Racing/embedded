@@ -7,17 +7,7 @@
 #include "bse.h"
 
 #include "vehicle/faults.h"
-
-#define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
-#define BSE_ADC_VALUE_TO_VOLTAGE(x) (x * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
-
-#define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
-
-#define BSE_LOWER_THRESHOLD 0.5F
-#define BSE_UPPER_THRESHOLD 4.5F
-#define BSE_IMPLAUSABILITY_THRESHOLD 0.1F
-
-#define BSE_CUTOFF_HZ 100.0F
+#include <arduino_freertos.h>
 
 typedef struct{
     float bseRawFront;
@@ -27,6 +17,8 @@ typedef struct{
 static BSEData bseData;
 static BSERawData bseRawData;
 static float bseAlpha;
+static TickType_t bseLatestHealthyStateTime = 0; // Set to 0 when fault not detected
+
 
 void BSE_Init() {
     bseData.bseFront_PSI = 0;
@@ -46,13 +38,28 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
     float bseVoltage1 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawFront);
     float bseVoltage2 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawRear);
 
+    # if DEBUG_FLAG
+        Serial.print("BSE Voltage: ");
+        Serial.println(bseVoltage1);
+    # endif
+
     // Check BSE open/short circuit
     if(bseVoltage1 < BSE_LOWER_THRESHOLD ||
        bseVoltage1 > BSE_UPPER_THRESHOLD ||
        bseVoltage2 < BSE_LOWER_THRESHOLD ||
        bseVoltage2 > BSE_UPPER_THRESHOLD) {
-        // Faults_SetFault(FAULT_BSE);
+        TickType_t now = xTaskGetTickCount();
+        TickType_t elapsedTicks = now - bseLatestHealthyStateTime;
+        TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
+        if (elapsedMs > BSE_FAULT_TIME_THRESHOLD_MS){
+            # if DEBUG_FLAG
+                Serial.println("Setting BSE fault");
+            # endif
+            Faults_SetFault(FAULT_BSE);
+        }
+
     } else {
+        bseLatestHealthyStateTime = xTaskGetTickCount();
         Faults_ClearFault(FAULT_BSE);
     }
 

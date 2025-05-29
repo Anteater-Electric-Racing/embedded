@@ -31,10 +31,8 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
 
     Peripherals_Init();
-
     APPS_Init();
     BSE_Init();
-
     Faults_Init();
     Telemetry_Init();
 
