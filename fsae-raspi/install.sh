@@ -21,7 +21,7 @@ sudo service grafana-server start
 curl https://sh.rustup.rs -sSf | sh
 
 # installing service
-./add_service.sh
+sudo ./add_service.sh
 
 # installing network
-./add_network.sh
+sudo ./add_network.sh
