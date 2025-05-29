@@ -54,7 +54,7 @@ static void threadMotor(void *pvParameters){
                 vcu1.BMS_Aux_Relay_Cmd = 0; // 0 = not work, 1 = work
                 vcu1.VCU_MotorMode = 0; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
                 vcu1.KeyPosition = 0; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
-
+                break;
             }
             case MOTOR_STATE_IDLE:
             {
@@ -73,6 +73,7 @@ static void threadMotor(void *pvParameters){
                 vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
                 vcu1.KeyPosition = 2; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
+                break;
             }
             case MOTOR_STATE_DRIVING:
             {
@@ -80,13 +81,14 @@ static void threadMotor(void *pvParameters){
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
                 vcu1.VCU_TorqueReq = (motorData.desiredTorque / MOTOR_MAX_TORQUE); // Torque demand in percentage (0-99.6) 350Nm
+                break;
             }
             case MOTOR_STATE_FAULT:
             {
                 // T7 MCU_Warning_Level == 3
                 vcu1.VCU_Warning_Level = 3; // 0 = No Warning, 1 = Warning, 2 = Fault, 3 = Critical Fault
-
                 vcu1.VCU_TorqueReq = 0; // 0 = No torque
+                break;
             }
             default:
                 break;
@@ -114,7 +116,12 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enableRun)
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
     switch(motorData.state){
         // LV on, HV off
-        case MOTOR_STATE_OFF:
+        case MOTOR_STATE_OFF:{
+            if (enablePrecharge){
+                motorData.state = MOTOR_STATE_PRECHARGING;
+            }
+            break;
+        }
         // HV switch on (PCC CAN message)
         case MOTOR_STATE_PRECHARGING:
         {
@@ -128,8 +135,8 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enableRun)
         // PCC CAN message finished
         case MOTOR_STATE_IDLE:
         {
-            if(enablePrecharge){
-                motorData.state = MOTOR_STATE_PRECHARGING;
+            if(enableRun){
+                motorData.state = MOTOR_STATE_DRIVING;
             }
             break;
         }
