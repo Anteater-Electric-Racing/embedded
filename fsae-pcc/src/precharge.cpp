@@ -53,7 +53,7 @@ void prechargeInit(){
 
 // Main precharge task: handles state machine and status updates
 void prechargeTask(void *pvParameters){
-    
+
     // Stores the last time the last time task was ran
     TickType_t xLastWakeTime;
     // 10ms task freq
@@ -62,21 +62,26 @@ void prechargeTask(void *pvParameters){
     xLastWakeTime = xTaskGetTickCount();
 
     while (1){
+        Serial.println("In precharge task");
         if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE){
             switch(state){
                 case STATE_STANDBY:
+                    Serial.println("In standby state");
                     standby();
                     break;
 
                 case STATE_PRECHARGE:
+                    Serial.println("In precharge state");
                     precharge();
                     break;
 
                 case STATE_ONLINE:
+                    Serial.println("In online state");
                     running();
                     break;
 
                 case STATE_ERROR:
+                    Serial.println("In error state");
                     errorState();
                     break;
 
@@ -93,6 +98,7 @@ void prechargeTask(void *pvParameters){
         }
         // Wait for next cycle
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        delay(1000);
     }
 }
 
@@ -127,8 +133,8 @@ static unsigned long epoch;
         lastState = STATE_STANDBY;
         statusLEDsOff();
         statusLED[0].on();
-        Serial.println(F(" === STANDBY"));
-        Serial.println(F("* Waiting for stable shutdown circuit"));
+        Serial.println(" === STANDBY");
+        Serial.println("* Waiting for stable shutdown circuit");
         epoch = millis(); // make sure to reset if we've circled back to standby
 
         // Reset moving averages
@@ -226,8 +232,8 @@ void running(){
         lastState = STATE_ONLINE;
         statusLEDsOff();
         statusLED[2].on();
-        Serial.println(F(" === ONLINE"));
-        Serial.println(F("* Precharge complete, closing AIR+"));
+        Serial.println(" === ONLINE");
+        Serial.println("* Precharge complete, closing AIR+");
         epoch = now;
     }
 
@@ -250,22 +256,22 @@ void errorState(){
         lastState = STATE_ERROR;
         statusLEDsOff();
         statusLED[3].update(50,50); // Strobe STS LED
-        Serial.println(F(" === ERROR"));
+        Serial.println(" === ERROR");
 
         // Display errors: Serial and Status LEDs
         if (errorCode == ERR_NONE){
-        Serial.println(F("   *Error state, but no error code logged..."));
+        Serial.println("   *Error state, but no error code logged...");
         }
         if (errorCode & ERR_PRECHARGE_TOO_FAST) {
-        Serial.println(F("   *Precharge too fast. Suspect wiring fault / chatter in shutdown circuit."));
+        Serial.println("   *Precharge too fast. Suspect wiring fault / chatter in shutdown circuit.");
         statusLED[0].on();
         }
         if (errorCode & ERR_PRECHARGE_TOO_SLOW) {
-        Serial.println(F("   *Precharge too slow. Potential causes:\n   - Wiring fault\n   - Discharge is stuck-on\n   - Target precharge percent is too high"));
+        Serial.println("   *Precharge too slow. Potential causes:\n   - Wiring fault\n   - Discharge is stuck-on\n   - Target precharge percent is too high");
         statusLED[1].on();
         }
         if (errorCode & ERR_STATE_UNDEFINED) {
-        Serial.println(F("   *State not defined in The State Machine."));
+        Serial.println("   *State not defined in The State Machine.");
         }
     }
 }

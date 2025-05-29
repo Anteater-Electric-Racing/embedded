@@ -10,33 +10,27 @@
 #define SHUTDOWN_CIRCUIT_STACK_SIZE 512
 
 // monitorShutdownCircuitTask defines
-#define ACCUMULATOR_VOLTAGE_PIN 21 
-#define TS_VOLTAGE_PIN 22
+#define ACCUMULATOR_VOLTAGE_PIN 14
+#define TS_VOLTAGE_PIN 15
 #define PCC_RATIO .9
 
+// Lowpass filter
+#define TIME_STEP 0.001F // 1ms time step
+#define COMPUTE_ALPHA(CUTOFF_HZ) \
+    (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))
+#define LOWPASS_FILTER(NEW, OLD, ALPHA) \
+    OLD = ALPHA * NEW + (1.0F - ALPHA) * OLD
 
 #include <Arduino.h>
 #include <arduino_freertos.h>
-#include "precharge.cpp"
+#include "precharge.h"
 #include "states.h"
+
+static float alpha;
+static float filteredFreq = 0.0F;
 
 void threadMain(void *pvParameters);
 void prechargeTask(void *pvParameters);
-void monitorShutdownCircuitTask(void *pvParamters){
-    float accumulator_voltage, ts_voltage;
-    do {
-        accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
-        ts_voltage = getVoltage(TS_VOLTAGE_PIN);
-    } 
-    while(ts_voltage < accumulator_voltage * PCC_RATIO);
-    // update variable containing voltage state
-}
-
-float getVoltage(int pin){
-    float voltage, freq = getFrequency(pin);
-    // still need to convert freq to voltage here
-    return voltage;
-}
 
 float getFrequency(int pin){
     const unsigned int TIMEOUT = 10000;
@@ -48,28 +42,56 @@ float getFrequency(int pin){
     return ( 1000000.0 / (float)(tHigh + tLow) );    // f = 1/T
 }
 
+float getVoltage(int pin){
+    float voltage, rawFreq = getFrequency(pin);
+
+    LOWPASS_FILTER(rawFreq, filteredFreq, alpha);
+
+    Serial.print("frequency: ");
+    Serial.print(filteredFreq);
+    Serial.print("\r");
+    // still need to convert freq to voltage here
+    return voltage;
+}
+
+void monitorShutdownCircuitTask(void *pvParamters){
+    float accumulator_voltage, ts_voltage;
+    while (true) {
+        accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
+        // ts_voltage = getVoltage(TS_VOLTAGE_PIN);
+        // Serial.println("Accumulator Voltage: " + String(accumulator_voltage) + "V");
+        // Serial.println("TS Voltage: " + String(ts_voltage) + "V");
+        vTaskDelay(pdMS_TO_TICKS(1)); // Delay for 100ms before next reading
+    }
+}
+
 void setup() {
+    Serial.begin(9600);
+    delay(2000);
+
+    alpha = COMPUTE_ALPHA(1.0F); // 10Hz cutoff frequency for lowpass filter
+
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
                 THREAD_MAIN_PRIORITY, NULL);
 
-    xTaskCreate(prechargeTask,          // Task function
-                "PrechargeTask",        // Task name
-                PRECHARGE_STACK_SIZE,   // Stack size
-                NULL,                   // Parameters
-                PRECHARGE_PRIORITY,     // Priority
-                NULL);                  // Task handle
+    // prechargeInit(); // Initialize precharge system
 
-    xTaskCreate(monitorShutdownCircuitTask, 
-                "MonitorShutdownCircuitTask", 
-                SHUTDOWN_CIRCUIT_STACK_SIZE, 
+    xTaskCreate(monitorShutdownCircuitTask,
+                "MonitorShutdownCircuitTask",
+                SHUTDOWN_CIRCUIT_STACK_SIZE,
                 NULL,
-                SHUTDOWN_CIRCUIT_PRIORITY, 
+                SHUTDOWN_CIRCUIT_PRIORITY,
                 NULL);
-    
+
     vTaskStartScheduler();
 }
 
 void threadMain(void *pvParameters) {
+    while (true) {
+        // Serial.println("Thead main running");
+        // delay(1000); // Simulate some work
+    }
 }
 
-void loop() {}
+void loop() {
+}
