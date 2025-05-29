@@ -73,6 +73,6 @@ void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
         *rx_id = 0; // No message received
         *rx_data = 0;
     }
-    Serial.print("Received CAN message ID? ");
-    Serial.println(*rx_id, 16);
+    // Serial.print("Received CAN message ID? ");
+    // Serial.println(*rx_id, 16);
 }

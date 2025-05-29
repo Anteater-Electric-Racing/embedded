@@ -38,6 +38,7 @@ void threadMain(void *pvParameters) {
     BSE_Init();
     Faults_Init();
     Telemetry_Init();
+    MCU_Init();
 
     Motor_Init();
 
@@ -112,34 +113,34 @@ void threadMain(void *pvParameters) {
             }
         }
 
-        // Serial.print("Torque - ");
-        // Serial.print(torqueDemand);
-        // Serial.print("      \n");
+        Serial.print("Torque - ");
+        Serial.print(torqueDemand);
+        Serial.print("      \n");
 
-        // //Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        // Serial.print("Battery Voltage: ");
-        // Serial.print(MCU_GetMCU3Data().mcuVoltage);
-        // Serial.print("      \n");
+        //Telemetry: Read battery current, phase current, motor speed, temperature(s)
+        Serial.print("Battery Voltage: ");
+        Serial.print(MCU_GetMCU3Data().mcuVoltage);
+        Serial.print("      \n");
 
-        // Serial.print("Battery Current: ");
-        // Serial.print(MCU_GetMCU3Data().mcuCurrent);
-        // Serial.print("      \n");
+        Serial.print("Battery Current: ");
+        Serial.print(MCU_GetMCU3Data().mcuCurrent);
+        Serial.print("      \n");
 
-        // Serial.print("Phase Current: ");
-        // Serial.print(MCU_GetMCU3Data().motorPhaseCurr);
-        // Serial.print("      \n");
+        Serial.print("Phase Current: ");
+        Serial.print(MCU_GetMCU3Data().motorPhaseCurr);
+        Serial.print("      \n");
 
-        // Serial.print("Motor Speed: ");
-        // Serial.print(MCU_GetMCU1Data().motorSpeed);
-        // Serial.print("      \n");
+        Serial.print("Motor Speed: ");
+        Serial.print(MCU_GetMCU1Data().motorSpeed);
+        Serial.print("      \n");
 
-        // Serial.print("MCU Temp: ");
-        // Serial.print(MCU_GetMCU2Data().mcuTemp);
-        // Serial.print("      \n");
+        Serial.print("MCU Temp: ");
+        Serial.print(MCU_GetMCU2Data().mcuTemp);
+        Serial.print("      \n");
 
-        // Serial.print("Motor Temp: ");
-        // Serial.print(MCU_GetMCU2Data().motorTemp);
-        // Serial.print("      \n");
+        Serial.print("Motor Temp: ");
+        Serial.print(MCU_GetMCU2Data().motorTemp);
+        Serial.print("      \n");
 
         Motor_UpdateMotor(torqueDemand, enablePrecharge, enableRun); // Update motor with the current torque demand
 

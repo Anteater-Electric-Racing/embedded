@@ -100,7 +100,7 @@ static void threadMCU(void *pvParameters) {
             }
             default:
             {
-                Serial.println("Unknown message received");
+                //Serial.println("Unknown message received");
                 break;
             }
         }
