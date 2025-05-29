@@ -18,7 +18,7 @@ typedef enum {
 void Faults_Init();
 
 void Faults_SetFault(FaultType fault);
-uint32_t *Faults_GetFaults();
+uint32_t Faults_GetFaults();
 void Faults_ClearFault(FaultType fault);
 void Faults_HandleFaults();
 bool Faults_CheckAllClear();

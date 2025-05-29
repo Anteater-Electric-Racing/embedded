@@ -12,6 +12,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/rtm_button.h"
+#include "apps.h"
 #include "vehicle/ifl100-36.h"
 
 typedef struct{
@@ -27,8 +28,7 @@ static BMS2 bms2 = {0};
 static void threadMotor(void *pvParameters);
 
 void Motor_Init(){
-    motorData.state = MOTOR_STATE_IDLE;
-    Serial.println("Motor thread starting");
+    motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
 }
 
@@ -98,7 +98,7 @@ static void threadMotor(void *pvParameters){
 }
 
 void Motor_UpdateMotor(){
-    float throttleCommand = Telemetry_GetData()->APPS_Travel;
+    float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
     switch(motorData.state){
         // LV on, HV off
         case MOTOR_STATE_OFF:

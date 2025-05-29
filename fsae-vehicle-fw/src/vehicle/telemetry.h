@@ -2,10 +2,10 @@
 #pragma once
 
 #include <stdint.h>
-
 #include "motor.h"
+#include <peripherals/adc.h>
 
-typedef struct {
+struct TelemetryData{
     float APPS_Travel; // APPS travel in %
 
     float BSEFront_PSI; // front brake pressure in PSI
@@ -37,7 +37,7 @@ typedef struct {
     bool phaseCurrSensorFault; // Phase current sensor fault
     bool motorOverSpdFault; // MCU motor over speed fault
     bool drvMotorOverHotFault; // Driver motor overheat fault
-    bool dcMainWireOverVoltFault; // DC main wire over voltage fault
+    bool dcMainWireOverCurrFault; // DC main wire over voltage fault
     bool drvMotorOverCoolFault; // Driver motor overcool fault
     bool mcuMotorSystemState; // MCU motor system state
     bool mcuTempSensorState; // MCU temperature sensor state
@@ -55,9 +55,16 @@ typedef struct {
     float motorPhaseCurr; // Motor phase current in A
 
     float debug[4]; // Debug data
-} TelemetryData;
+    uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
+    uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
+
+} __attribute__((packed)); // need this to ensure data is packed without gaps in between;
 
 void Telemetry_Init();
-TelemetryData* Telemetry_GetData();
+TelemetryData const* Telemetry_GetData();
+void Telemetry_Init();
+void Telemetry_SerializeData(TelemetryData data, uint8_t* serializedTelemetryBuf);
 void Telemetry_UpdateData(TelemetryData* data);
+void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
+
 

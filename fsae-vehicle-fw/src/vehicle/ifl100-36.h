@@ -1,3 +1,7 @@
+// Anteater Electric Racing, 2025
+
+#pragma once
+
 #include <stdint.h>
 
 #define mVCU1_ID 0x101

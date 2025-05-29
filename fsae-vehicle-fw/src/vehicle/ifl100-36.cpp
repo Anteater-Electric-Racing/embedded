@@ -1,3 +1,5 @@
+// Anteater Electric Racing, 2025
+
 #include "ifl100-36.h"
 
 #include "arduino_freertos.h"
