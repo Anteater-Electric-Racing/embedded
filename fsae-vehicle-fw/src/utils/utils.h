@@ -23,6 +23,9 @@
 
 #define MOTOR_MAX_TORQUE 250.0F // TODO: Update with real value
 
+#define BATTERY_MAX_CURRENT_A 1.0F
+#define BATTERY_MAX_REGEN_A 1.0F
+
 #define COMPUTE_ALPHA(CUTOFF_HZ) \
     (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))
 
