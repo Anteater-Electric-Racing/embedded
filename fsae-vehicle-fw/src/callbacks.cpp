@@ -138,9 +138,5 @@ void ADCConversionCompleteCallback() {
         .motorState = Motor_GetState(),
     };
 
-    telemetryData.debug[0] = APPS_GetAPPSReading1();
-    telemetryData.debug[1] = APPS_GetAPPSReading2();
-
-
     Telemetry_UpdateData(&telemetryData);
 }
