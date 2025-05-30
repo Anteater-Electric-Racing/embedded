@@ -41,6 +41,7 @@ static void threadMotor(void *pvParameters){
     while(true){
         switch (motorData.state){
             case MOTOR_STATE_OFF:
+                vcu1.VCU_TorqueReq = (motorData.desiredTorque / MOTOR_MAX_TORQUE); // Torque demand in percentage (0-99.6) 350Nm
                 break;
             case MOTOR_STATE_PRECHARGING:
             {
@@ -119,6 +120,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enableRun)
             if (enablePrecharge){
                 Serial.println("Precharging...");
                 motorData.state = MOTOR_STATE_PRECHARGING;
+                motorData.desiredTorque = torqueDemand;
             }
             break;
         }

@@ -47,26 +47,26 @@ typedef struct __attribute__((packed)) {
 
     uint64_t VCU_MotorSpdReq : 16; // end of byte 1 and 2
 
-    uint64_t ChangeGearAlarm: 1;
+    uint64_t Reserved : 5;
     uint64_t VCUAuthenticationStatus : 2;
-    uint64_t Reserved : 5; // end of byte 3
+    uint64_t ChangeGearAlarm: 1; // end of byte 3
 
-    // flipped
     uint64_t VehicleState: 1;
     uint64_t Brake_Pedal_Sts: 2;
     uint64_t BMS_Main_Relay_Cmd: 1;
     uint64_t GearLeverPos_Sts : 3;
     uint64_t GearLeverPos_Sts_F : 1; // end of byte 4
 
-    uint64_t KeyPosition : 2;
-    uint64_t VCU_Warning_Level : 2;
-    uint64_t VCU_MotorMode : 2;
+    uint64_t AC_Control_Cmd : 1;
     uint64_t VCU_WorkMode : 1;
-    uint64_t AC_Control_Cmd : 1; // end of byte 5
+    uint64_t VCU_MotorMode : 2;
+    uint64_t VCU_Warning_Level : 2;
+    uint64_t KeyPosition : 2; // end of byte 5
 
-    uint64_t PowerReduceReq : 3;
+    uint64_t RollingCounter : 4;
     uint64_t BMS_Aux_Relay_Cmd: 1;
-    uint64_t RollingCounter : 4; // end of byte 6
+    uint64_t PowerReduceReq : 3; // end of byte 6
+
     uint64_t CheckSum : 8; // end of byte 7
 } VCU1;
 
@@ -128,17 +128,16 @@ typedef struct __attribute__((packed)) {
 } MCU3;
 
 typedef struct __attribute__((packed)) {
-    uint64_t Batt_Charge_Sts_F : 1;
-    uint64_t HighVoltLoopLockSts: 1;
-    uint64_t Positive_Relay_FB : 1;
-    uint64_t Negative_Relay_FB : 1;
+    uint64_t BMS_Warning_Level : 2;
     uint64_t Batt_charge_Sts : 2;
-    uint64_t BMS_Warning_Level : 2; // end of byte 0
+    uint64_t Negative_Relay_FB : 1;
+    uint64_t Positive_Relay_FB : 1;
+    uint64_t HighVoltLoopLockSts: 1;
+    uint64_t Batt_Charge_Sts_F : 1; // end of byte 0
 
     uint64_t Batt_SOC_Value: 8; // end of byte 1
     uint64_t Batt_SOH_Value: 8; // end of byte 2
 
-    // flipped
     uint64_t BMS_Cmd_AC_DC : 2;
     uint64_t Pre_charge_Relay_FB : 1;
     uint64_t Fast_charge_Relay_FB : 1;
@@ -146,18 +145,20 @@ typedef struct __attribute__((packed)) {
     uint64_t Pre_charge_Finish_Sts_F : 1;
     uint64_t BMS_Req_Mode : 2; // end of byte 3
 
-
-    uint64_t RelayAdhereDetectionSts : 1;
-    uint64_t ChargeRelayAdhereDetectionSts : 1;
-    uint64_t HighVoltLoopLockSts_F: 1;
-    uint64_t Insulation_Resistance_Low_F : 1;
-    uint64_t Batt_Pack_Matching_Alarm : 1;
+    uint64_t Reserved1 : 2;
     uint64_t Batt_Pack_Coincidence_Alarm : 1;
+    uint64_t Batt_Pack_Matching_Alarm : 1;
+    uint64_t Insulation_Resistance_Low_F : 1;
+    uint64_t HighVoltLoopLockSts_F: 1;
+    uint64_t ChargeRelayAdhereDetectionSts : 1;
+    uint64_t RelayAdhereDetectionSts : 1; // end of byte 4
 
-    uint64_t Reserved : 14; // end of byte 4
+    uint64_t Reserved2 : 8; // end of byte 5
+
+    uint64_t RollingCounter : 4;
+    uint64_t Reserved3 : 4; // end of byte 6
     //uint64_t BMS_Allow_Max_Discharge : 14; // end of byte 4 and byte 5 and half of byte 6
 
-    uint64_t RollingCounter : 4; // end of byte 6
     uint64_t CheckSum : 8; // end of byte 7
 } BMS1;
 
