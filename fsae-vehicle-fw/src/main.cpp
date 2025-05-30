@@ -114,11 +114,26 @@ void threadMain(void *pvParameters) {
             }
         }
 
+
         // Serial.print("State: ");
         // Serial.print(MCU_GetMCU1Data().mcuMainState);
-        // Serial.print("   ");
+        // Serial.print(" | ");
+        // Serial.print("Internal State: ");
         // Serial.print(Motor_GetState());
+        //Serial.print("      \n");
+
+
+        // Serial.print("Torque - ");
+        // Serial.print(torqueDemand);
         // Serial.print("      \n");
+
+        // Telemetry: Read battery current, phase current, motor speed, temperature(s)
+        Serial.print("State: ");
+        Serial.print(MCU_GetMCU1Data().mcuMainState);
+        Serial.print(" | ");
+        Serial.print("Internal State: ");
+        Serial.print(Motor_GetState());
+        Serial.print("  | ");
 
         // Serial.print("Torque - ");
         // Serial.print(torqueDemand);
@@ -127,6 +142,12 @@ void threadMain(void *pvParameters) {
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
         Serial.print("Battery Voltage: ");
         Serial.print(MCU_GetMCU3Data().mcuVoltage);
+        Serial.print("  |  ");
+        Serial.print("Battery Current: ");
+        Serial.print(MCU_GetMCU3Data().mcuCurrent);
+        Serial.print("  | ");
+        Serial.print("MCU Warning Levl: ");
+        Serial.print(MCU_GetMCU2Data().mcuWarningLevel);
         Serial.print("      \r");
 
         // Serial.print("Battery Current: ");
