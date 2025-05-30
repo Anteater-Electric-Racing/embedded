@@ -13,7 +13,7 @@ typedef enum {
 } MotorState;
 
 void Motor_Init();
-void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enableRun);
+void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun);
 
 float Motor_GetTorqueDemand();
 MotorState Motor_GetState();

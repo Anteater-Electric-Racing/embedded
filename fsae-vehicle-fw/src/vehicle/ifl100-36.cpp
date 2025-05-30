@@ -45,7 +45,7 @@ static void threadMCU(void *pvParameters) {
                 }
 
                 mcu1Data = {
-                    .motorSpeed = mcu1.MCU_ActMotorSpd * 0.25F, // convert to RPM
+                    .motorSpeed = (((mcu1.MCU_ActMotorSpd & 0xFF) << 8) | (mcu1.MCU_ActMotorSpd >> 8)) * 0.25F, // convert to RPM
                     .motorTorque = mcu1.MCU_ActMotorTq * 0.392F * torqueDirection * MOTOR_MAX_TORQUE, // convert to Nm
                     .maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm
                     .maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm

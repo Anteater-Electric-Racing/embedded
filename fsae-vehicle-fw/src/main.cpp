@@ -46,6 +46,7 @@ void threadMain(void *pvParameters) {
     TickType_t xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
     bool enablePrecharge = false;
+    bool enablePower = false;
     bool enableRun = false;
 
     while (true) {
@@ -84,18 +85,29 @@ void threadMain(void *pvParameters) {
                 case 'P':
                 {
                     enablePrecharge = true; // Set flag to enable precharging
+                    enablePower = false; // Disable run state
                     enableRun = false; // Disable run state
                     torqueDemand = 0; // Reset torque demand
                     // Serial.println("Entering precharge state...");
                 }
                     break;
-                case 'o': // Run state
+                case 'o': // Power Ready state
                 case 'O':
                     {
-                        enableRun = true; // Set flag to enable run state
                         enablePrecharge = false; // Disable precharging
+                        enablePower = true; // Set flag to enable power ready state
+                        enableRun = false; // Set flag to enable run state
                     }
                 break;
+
+                case 'i':
+                case 'I': // Run state
+                    {
+                        enablePrecharge = false; // Disable precharging
+                        enablePower = false; // Set flag to enable power ready state
+                        enableRun = true; // Set flag to enable run state
+                    }
+                    break;
 
                 case ' ': // Stop all torque
                     torqueDemand = 0;
@@ -135,7 +147,7 @@ void threadMain(void *pvParameters) {
         Serial.print(Motor_GetState());
         Serial.print("  | ");
 
-        Serial.print("Torque:");
+        Serial.print("Torque: ");
         Serial.print(torqueDemand);
         Serial.print("  |  ");
         Serial.print("Motor Speed: ");
@@ -184,8 +196,8 @@ void threadMain(void *pvParameters) {
         // if (MCU_GetMCU2Data().motorStallFault) Serial.print("Motor Stall Fault, ");
         // if (MCU_GetMCU2Data().motorOpenPhaseFault) Serial.print("Motor Open Phase Fault, ");
 
-        Serial.print("\r");
-        Motor_UpdateMotor(torqueDemand, enablePrecharge, enableRun); // Update motor with the current torque demand
+        Serial.print("             \r");
+        Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun); // Update motor with the current torque demand
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
