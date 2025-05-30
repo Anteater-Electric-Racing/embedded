@@ -43,7 +43,6 @@ static void threadMotor(void *pvParameters){
             case MOTOR_STATE_OFF:
             case MOTOR_STATE_PRECHARGING:
             {
-                Serial.println("000");
                 // T2 BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
@@ -94,6 +93,10 @@ static void threadMotor(void *pvParameters){
             default:
                 break;
         }
+
+        vcu1.CheckSum = ComputeChecksum((uint8_t*)&vcu1);
+        bms1.CheckSum = ComputeChecksum((uint8_t*)&bms1);
+        bms2.CheckSum = ComputeChecksum((uint8_t*)&bms2);
 
         uint64_t vcu1_msg;
         memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));

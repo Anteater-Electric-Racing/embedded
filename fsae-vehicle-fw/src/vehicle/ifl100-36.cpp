@@ -35,7 +35,7 @@ static void threadMCU(void *pvParameters) {
             {
                 MCU1 mcu1 = {0};
                 memcpy(&mcu1, &rx_data, sizeof(mcu1));
-                Serial.println("MCU1 message received");
+                // Serial.println("MCU1 message received");
                 // lock mutex i think
                 uint8_t torqueDirection = 0; // 1 if power drive state, -1 if generate electricity state
                 if (mcu1.MCU_MotorState == 1) {
@@ -59,7 +59,7 @@ static void threadMCU(void *pvParameters) {
             {
                 MCU2 mcu2 = {0};
                 memcpy(&mcu2, &rx_data, sizeof(mcu2));
-                Serial.println("MCU2 message received");
+                // Serial.println("MCU2 message received");
 
                 mcu2Data = {
                     .motorTemp = mcu2.MCU_Motor_Temp - 40, // convert to C
@@ -89,7 +89,7 @@ static void threadMCU(void *pvParameters) {
             {
                 MCU3 mcu3 = {0};
                 memcpy(&mcu3, &rx_data, sizeof(mcu3));
-                Serial.println("MCU3 message received");
+                // Serial.println("MCU3 message received");
                 mcu3Data = {
                     .mcuVoltage = mcu3.MCU_DC_MainWireVolt * 0.01F, // convert to V
                     .mcuCurrent = mcu3.MCU_DC_MainWireCurr * 0.01F, // convert to A
@@ -122,9 +122,9 @@ MCU3Data MCU_GetMCU3Data() {
 
 
 // checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
-uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
+uint8_t ComputeChecksum(uint8_t* data) {
     uint8_t sum = 0;
-    for (uint8_t i = 0; i < length - 1; i++) {
+    for (uint8_t i = 0; i < 7; i++) {
         sum += data[i];
     }
     return sum ^ 0xFF;

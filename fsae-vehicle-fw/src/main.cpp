@@ -86,7 +86,7 @@ void threadMain(void *pvParameters) {
                     enablePrecharge = true; // Set flag to enable precharging
                     enableRun = false; // Disable run state
                     torqueDemand = 0; // Reset torque demand
-                    Serial.println("Entering precharge state...");
+                    // Serial.println("Entering precharge state...");
                 }
                     break;
                 case 'o': // Run state
@@ -114,20 +114,20 @@ void threadMain(void *pvParameters) {
             }
         }
 
-        Serial.print("State: ");
-        Serial.print(MCU_GetMCU1Data().mcuMainState);
-        Serial.print("   ");
-        Serial.print(Motor_GetState());
-        Serial.print("      \n");
+        // Serial.print("State: ");
+        // Serial.print(MCU_GetMCU1Data().mcuMainState);
+        // Serial.print("   ");
+        // Serial.print(Motor_GetState());
+        // Serial.print("      \n");
 
         // Serial.print("Torque - ");
         // Serial.print(torqueDemand);
         // Serial.print("      \n");
 
-        //Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        // Serial.print("Battery Voltage: ");
-        // Serial.print(MCU_GetMCU3Data().mcuVoltage);
-        // Serial.print("      \n");
+        // Telemetry: Read battery current, phase current, motor speed, temperature(s)
+        Serial.print("Battery Voltage: ");
+        Serial.print(MCU_GetMCU3Data().mcuVoltage);
+        Serial.print("      \r");
 
         // Serial.print("Battery Current: ");
         // Serial.print(MCU_GetMCU3Data().mcuCurrent);
@@ -151,7 +151,7 @@ void threadMain(void *pvParameters) {
 
         Motor_UpdateMotor(torqueDemand, enablePrecharge, enableRun); // Update motor with the current torque demand
 
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1)); // Delay for 100ms
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
 }
 

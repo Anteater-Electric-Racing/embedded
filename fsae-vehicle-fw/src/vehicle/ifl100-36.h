@@ -188,7 +188,7 @@ typedef struct {
 } MCU3Data;
 
 void MCU_Init();
-uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
+uint8_t ComputeChecksum(uint8_t* data);
 
 
 MCU1Data MCU_GetMCU1Data();
