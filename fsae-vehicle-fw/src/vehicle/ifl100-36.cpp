@@ -91,9 +91,9 @@ static void threadMCU(void *pvParameters) {
                 memcpy(&mcu3, &rx_data, sizeof(mcu3));
                 // Serial.println("MCU3 message received");
                 mcu3Data = {
-                    .mcuVoltage = mcu3.MCU_DC_MainWireVolt * 0.01F, // convert to V
-                    .mcuCurrent = mcu3.MCU_DC_MainWireCurr * 0.01F, // convert to A
-                    .motorPhaseCurr = mcu3.MCU_MotorPhaseCurr * 0.01F // convert to A
+                    .mcuVoltage = (((mcu3.MCU_DC_MainWireVolt & 0xFF) << 8) | (mcu3.MCU_DC_MainWireVolt >> 8)) * 0.01F, // convert to V
+                    .mcuCurrent = (((mcu3.MCU_DC_MainWireCurr & 0xFF) << 8) | (mcu3.MCU_DC_MainWireCurr >> 8)) * 0.01F, // convert to A
+                    .motorPhaseCurr = (((mcu3.MCU_MotorPhaseCurr & 0xFF) << 8) | (mcu3.MCU_MotorPhaseCurr >> 8)) * 0.01F, // convert to A
                 };
 
                 break;

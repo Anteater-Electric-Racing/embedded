@@ -41,6 +41,7 @@ static void threadMotor(void *pvParameters){
     while(true){
         switch (motorData.state){
             case MOTOR_STATE_OFF:
+                break;
             case MOTOR_STATE_PRECHARGING:
             {
                 // T2 BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
@@ -48,12 +49,6 @@ static void threadMotor(void *pvParameters){
                 bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
 
                 vcu1.VCU_TorqueReq = 0; // 0 = No torque
-                // vcu1.VehicleState = 0; // 0 = Not ready, 1 = Ready
-                // vcu1.GearLeverPos_Sts = 0; // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
-                // vcu1.AC_Control_Cmd = 0; // 0 = Not active, 1 = Active
-                // vcu1.BMS_Aux_Relay_Cmd = 0; // 0 = not work, 1 = work
-                // vcu1.VCU_MotorMode = 0; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
-                // vcu1.KeyPosition = 0; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
                 break;
             }
             case MOTOR_STATE_IDLE:
@@ -122,6 +117,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enableRun)
         // LV on, HV off
         case MOTOR_STATE_OFF:{
             if (enablePrecharge){
+                Serial.println("Precharging...");
                 motorData.state = MOTOR_STATE_PRECHARGING;
             }
             break;
@@ -130,7 +126,8 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enableRun)
         case MOTOR_STATE_PRECHARGING:
         {
             if(enableRun){
-                motorData.state = MOTOR_STATE_DRIVING;
+                Serial.println("Precharge finished, ready to drive...");
+                motorData.state = MOTOR_STATE_IDLE;
             }
 
             motorData.desiredTorque = 0.0F;
