@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
+#include <stdint.h>
 #include "semphr.h"
 #include "precharge.h"
 #include "states.h"
@@ -9,20 +10,22 @@
 #define PRECHARGE_PRIORITY 3
 
 // Constants
-const float MIN_EXPECTED = 500; // [ms] Minimum expected precharge time
-const float MAX_EXPECTED = 3000; // Max expected precharge time, TODO: (can change later)
-const float TARGET_PERCENT = 90.0; // TSV = 0.9 * ACV
-const unsigned int SETTLING_TIME = 200; // [ms] Precharge amount must be over TARGET_PERCENT for this long before we consider precharge complete
-const float MIN_SDC_VOLTAGE = 11.0; // [V] Minimum voltage for shutdown circuit
+const uint32_t MIN_EXPECTED = 500U; // [ms] Minimum expected precharge time
+const uint32_t MAX_EXPECTED = 3000U; // [ms] Max expected precharge time, TODO: (can change later)
+const uint32_t TARGET_PERCENT = 90U; // TSV = 0.9 * ACV
+const uint32_t SETTLING_TIME = 200U; // [ms] Precharge amount must be over TARGET_PERCENT for this long before we consider precharge complete
+const uint32_t MIN_SDC_VOLTAGE = 11U; // [V] Minimum voltage for shutdown circuit
+const uint32_t WAIT_TIME = 200U; // [ms] Time to wait for stable voltage
 
-char lineBuffer[50]; // Buffer for serial output
+// Buffer for serial output
+char lineBuffer[50]; 
 
 // Mutex to protect shared resource
 SemaphoreHandle_t stateMutex;
 
 // States (Global Variables)
-volatile STATEVAR state = STATE_STANDBY;
-volatile STATEVAR lastState = STATE_UNDEFINED;
+STATEVAR state = STATE_STANDBY;
+STATEVAR lastState = STATE_UNDEFINED;
 int errorCode = ERR_NONE;
 
 StatusLight statusLED[4] {{ STATUS_LED[0] },
@@ -148,7 +151,6 @@ static unsigned long epoch;
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
     // Check for stable shutdown circuit
-    const unsigned int WAIT_TIME = 200; // ms to wait for stable voltage
     if (SDC_Average.value() >= MIN_SDC_VOLTAGE){
         if (millis() > epoch + WAIT_TIME){
         state = STATE_PRECHARGE;
@@ -176,8 +178,8 @@ void precharge(){
     }
 
     // Sample the voltages and update moving averages
-    const unsigned long samplePeriod = 10; // [ms] Period to measure voltages
-    static unsigned long lastSample = 0;
+    const uint32_t samplePeriod = 10U; // [ms] Period to measure voltages
+    static uint32_t lastSample = 0U;
     if (now > lastSample + samplePeriod){  // samplePeriod and movingAverage alpha value will affect moving average response.
         lastSample = now;
         // TODO: Fix this below to use the frequency-to-voltage converter
@@ -191,7 +193,7 @@ void precharge(){
     double prechargeProgress = 100.0 * tsv / acv; // [%]
 
     // Print Precharging progress
-    static unsigned long lastPrint = 0;
+    static uint32_t lastPrint = 0U;
     if (now >= lastPrint + 100) {
         lastPrint = now;
         sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, TSV_Average.value());
@@ -224,9 +226,9 @@ void precharge(){
 
 // ONLINE STATE: Close AIR+ to connect ACC to TS, Open Precharge relay, indicate status
 void running(){
-    const unsigned int T_OVERLAP = 500; // [ms] Time to overlap the switching of AIR and Precharge
-    static unsigned long epoch;
-    unsigned long now = millis();
+    const uint32_t T_OVERLAP = 500U; // [ms] Time to overlap the switching of AIR and Precharge
+    static uint32_t epoch;
+    uint32_t now = millis();
 
     if (lastState != STATE_ONLINE) {
         lastState = STATE_ONLINE;
