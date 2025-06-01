@@ -35,7 +35,7 @@ static void threadMCU(void *pvParameters) {
             {
                 MCU1 mcu1 = {0};
                 memcpy(&mcu1, &rx_data, sizeof(mcu1));
-                Serial.println("MCU1 message received");
+                // Serial.println("MCU1 message received");
                 // lock mutex i think
                 uint8_t torqueDirection = 0; // 1 if power drive state, -1 if generate electricity state
                 if (mcu1.MCU_MotorState == 1) {
@@ -45,7 +45,7 @@ static void threadMCU(void *pvParameters) {
                 }
 
                 mcu1Data = {
-                    .motorSpeed = mcu1.MCU_ActMotorSpd * 0.25F, // convert to RPM
+                    .motorSpeed = (((mcu1.MCU_ActMotorSpd & 0xFF) << 8) | (mcu1.MCU_ActMotorSpd >> 8)) * 0.25F, // convert to RPM
                     .motorTorque = mcu1.MCU_ActMotorTq * 0.392F * torqueDirection * MOTOR_MAX_TORQUE, // convert to Nm
                     .maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm
                     .maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392F * MOTOR_MAX_TORQUE, // convert to Nm
@@ -59,7 +59,7 @@ static void threadMCU(void *pvParameters) {
             {
                 MCU2 mcu2 = {0};
                 memcpy(&mcu2, &rx_data, sizeof(mcu2));
-                Serial.println("MCU2 message received");
+                // Serial.println("MCU2 message received");
 
                 mcu2Data = {
                     .motorTemp = mcu2.MCU_Motor_Temp - 40, // convert to C
@@ -89,28 +89,42 @@ static void threadMCU(void *pvParameters) {
             {
                 MCU3 mcu3 = {0};
                 memcpy(&mcu3, &rx_data, sizeof(mcu3));
-                Serial.println("MCU3 message received");
+                // Serial.println("MCU3 message received");
                 mcu3Data = {
-                    .mcuVoltage = mcu3.MCU_DC_MainWireVolt * 0.01F, // convert to V
-                    .mcuCurrent = mcu3.MCU_DC_MainWireCurr * 0.01F, // convert to A
-                    .motorPhaseCurr = mcu3.MCU_MotorPhaseCurr * 0.01F // convert to A
+                    .mcuVoltage = (((mcu3.MCU_DC_MainWireVolt & 0xFF) << 8) | (mcu3.MCU_DC_MainWireVolt >> 8)) * 0.01F, // convert to V
+                    .mcuCurrent = (((mcu3.MCU_DC_MainWireCurr & 0xFF) << 8) | (mcu3.MCU_DC_MainWireCurr >> 8)) * 0.01F, // convert to A
+                    .motorPhaseCurr = (((mcu3.MCU_MotorPhaseCurr & 0xFF) << 8) | (mcu3.MCU_MotorPhaseCurr >> 8)) * 0.01F, // convert to A
                 };
 
                 break;
             }
             default:
             {
-                Serial.println("Unknown message received");
+                //Serial.println("Unknown message received");
                 break;
             }
         }
     }
 }
 
+MCU1Data MCU_GetMCU1Data() {
+    return mcu1Data;
+}
+
+MCU2Data MCU_GetMCU2Data() {
+    return mcu2Data;
+}
+
+MCU3Data MCU_GetMCU3Data() {
+    return mcu3Data;
+}
+
+
+
 // checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
 uint8_t ComputeChecksum(uint8_t* data) {
     uint8_t sum = 0;
-    for (uint8_t i = 0; i < 7 - 1; i++) {
+    for (uint8_t i = 0; i < 7; i++) {
         sum += data[i];
     }
     return sum ^ 0xFF;
