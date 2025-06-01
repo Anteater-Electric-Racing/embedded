@@ -17,7 +17,7 @@
 
 typedef struct{
     MotorState state;
-    float torqueDemand;
+    float desiredTorque; // Torque demand in percentage (0-99.6) 350Nm
 } MotorData;
 
 static MotorData motorData;
@@ -34,9 +34,9 @@ void Motor_Init(){
 
 static void threadMotor(void *pvParameters){
     while(true){
-
         switch (motorData.state){
             case MOTOR_STATE_OFF:
+                break;
             case MOTOR_STATE_PRECHARGING:
             {
                 // T2 BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
@@ -44,6 +44,7 @@ static void threadMotor(void *pvParameters){
                 bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
 
                 vcu1.VCU_TorqueReq = 0; // 0 = No torque
+                break;
             }
             case MOTOR_STATE_IDLE:
             {
@@ -51,9 +52,11 @@ static void threadMotor(void *pvParameters){
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
 
-                bms1.Fast_charge_Relay_FB = 1;
-                bms2.sAllowMaxDischarge = 500;
-                bms2.sAllowMaxRegenCharge = 500;
+                // bms1.Fast_charge_Relay_FB = 1;
+                uint16_t maxDischarge = (BATTERY_MAX_CURRENT_A + 500) * 10; // Convert to mA
+
+                bms2.sAllowMaxDischarge = ((maxDischarge & 0xFF) << 8) | (maxDischarge >> 8); // Convert to little-endian format
+                bms2.sAllowMaxRegenCharge = ((maxDischarge & 0xFF) << 8) | (maxDischarge >> 8);
 
                 vcu1.VCU_TorqueReq = 0; // 0 = No torque
                 vcu1.VehicleState = 1; // 0 = Not ready, 1 = Ready
@@ -62,25 +65,30 @@ static void threadMotor(void *pvParameters){
                 vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
                 vcu1.KeyPosition = 2; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
+                break;
             }
             case MOTOR_STATE_DRIVING:
             {
                 // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
-
-                vcu1.VCU_TorqueReq = motorData.torqueDemand; // Troque demand in percentage (0-99.6) 350Nm
+                vcu1.VCU_TorqueReq = ((motorData.desiredTorque / MOTOR_MAX_TORQUE) * 100); // Torque demand in percentage (0-99.6) 350Nm
+                break;
             }
             case MOTOR_STATE_FAULT:
             {
                 // T7 MCU_Warning_Level == 3
                 vcu1.VCU_Warning_Level = 3; // 0 = No Warning, 1 = Warning, 2 = Fault, 3 = Critical Fault
-
                 vcu1.VCU_TorqueReq = 0; // 0 = No torque
+                break;
             }
             default:
                 break;
         }
+
+        vcu1.CheckSum = ComputeChecksum((uint8_t*)&vcu1);
+        bms1.CheckSum = ComputeChecksum((uint8_t*)&bms1);
+        bms2.CheckSum = ComputeChecksum((uint8_t*)&bms2);
 
         uint64_t vcu1_msg;
         memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));
@@ -92,7 +100,7 @@ static void threadMotor(void *pvParameters){
 
         uint64_t bms2_msg;
         memcpy(&bms2_msg, &bms2, sizeof(bms2_msg));
-        CAN_Send(mBMS1_ID, bms2_msg);
+        CAN_Send(mBMS2_ID, bms2_msg);
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(20));
     }
