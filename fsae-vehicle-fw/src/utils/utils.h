@@ -72,3 +72,6 @@
 
 #define LINEAR_MAP(x, in_min, in_max, out_min, out_max) \
     ((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
+
+#define LITTLE_ENDIAN_SWAP_16(x) \
+    (((x & 0xFF00) >> 8) | ((x & 0x00FF) << 8))
