@@ -64,14 +64,14 @@ static void threadMCU(void *pvParameters) {
                 mcu2Data = {
                     .motorTemp = mcu2.MCU_Motor_Temp - 40, // convert to C
                     .mcuTemp = mcu2.MCU_hardwareTemp - 40, // convert to C
-                    .dcMainWireOverVoltFault = mcu2.MCU_DC_MainWireOverVoltFault ? true : false,
+                    .dcMainWireOverVoltFault = mcu2.MCU_DCMainWireOverVoltFault ? true : false,
                     .motorPhaseCurrFault = mcu2.MCU_MotorPhaseCurrFault ? true : false,
                     .mcuOverHotFault = mcu2.MCU_OverHotFault ? true : false,
-                    .resolverFault = mcu2.sResolver_Fault ? true : false,
+                    .resolverFault = mcu2.MCU_MotorResolver_Fault ? true : false,
                     .phaseCurrSensorFault = mcu2.MCU_PhaseCurrSensorState ? true : false,
                     .motorOverSpdFault = mcu2.MCU_MotorOverSpdFault ? true : false,
                     .drvMotorOverHotFault = mcu2.Drv_MotorOverHotFault ? true : false,
-                    .dcMainWireOverCurrFault = mcu2.MCU_DC_MainWireOverVoltFault ? true : false,
+                    .dcMainWireOverCurrFault = mcu2.MCU_DCMainWireOverCurrFault ? true : false,
                     .drvMotorOverCoolFault = mcu2.Drv_MotorOverCoolFault ? true : false,
                     .mcuMotorSystemState = mcu2.MCU_MotorSystemState ? true : false,
                     .mcuTempSensorState = mcu2.MCU_TempSensorState ? true : false,

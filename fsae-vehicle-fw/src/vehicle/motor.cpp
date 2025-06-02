@@ -39,61 +39,72 @@ void Motor_Init(){
 
 static void threadMotor(void *pvParameters){
     while(true){
+        // Clear packet contents
+        vcu1 = {0};
+        bms1 = {0};
+        bms2 = {0};
         switch (motorData.state){
             case MOTOR_STATE_OFF:
+            {
                 break;
+            }
             case MOTOR_STATE_PRECHARGING:
             {
-                // T2 BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
+                // T2 State transition: BMS_Main_Relay_Cmd == 1 && Pre_charge_Relay_FB == 1
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
                 bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
-
-                vcu1.VCU_TorqueReq = 0; // 0 = No torque
                 break;
             }
             case MOTOR_STATE_IDLE:
             {
                 // T4 BMS_Main_Relay_Cmd == 1 && Pre_charge_Finish_Sts == 1 && Ubat>=200V
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
+                bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF NOTE: see if we can omit this bit
                 bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
-
-                // bms1.Fast_charge_Relay_FB = 1;
-                uint16_t maxDischarge = (BATTERY_MAX_CURRENT_A + 500) * 10; // Convert to mA
-
-                bms2.sAllowMaxDischarge = ((maxDischarge & 0xFF) << 8) | (maxDischarge >> 8); // Convert to little-endian format
-                bms2.sAllowMaxRegenCharge = ((maxDischarge & 0xFF) << 8) | (maxDischarge >> 8);
-
-                vcu1.VCU_TorqueReq = 0; // 0 = No torque
-                vcu1.VehicleState = 1; // 0 = Not ready, 1 = Ready
-                vcu1.GearLeverPos_Sts = 3; // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
-                vcu1.AC_Control_Cmd = 1; // 0 = Not active, 1 = Active
-                vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
-                vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
-                vcu1.KeyPosition = 2; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
                 break;
             }
             case MOTOR_STATE_DRIVING:
             {
+                uint16_t maxDischarge = (uint16_t) (BATTERY_MAX_CURRENT_A + 500) * 10;
+                uint16_t maxRegen = (uint16_t) (BATTERY_MAX_REGEN_A + 500) * 10;
+
+                bms2.sAllowMaxDischarge = CHANGE_ENDIANESS_16(maxDischarge); // Convert to little-endian format
+                bms2.sAllowMaxRegenCharge = CHANGE_ENDIANESS_16(maxRegen); // Convert to little-endian format
+
                 // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
-                vcu1.VCU_MotorMode = 1; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
-                vcu1.VCU_TorqueReq = ((motorData.desiredTorque / MOTOR_MAX_TORQUE) * 100); // Torque demand in percentage (0-99.6) 350Nm
+                bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF NOTE: see if we can omit this bit
+                bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
+
+                vcu1.VehicleState = 1; // 0 = Not ready, 1 = Ready
+                vcu1.GearLeverPos_Sts = 3; // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
+                vcu1.AC_Control_Cmd = 1; // 0 = Not active, 1 = Active
+                vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
+                vcu1.KeyPosition = 2; // 0 = Off, 1 = ACC, 2 = ON, 2 = Crank+On
+
+                vcu1.VCU_TorqueReq = (uint8_t) ((fabsf(motorData.desiredTorque) / MOTOR_MAX_TORQUE) * 100); // Torque demand in percentage (0-99.6) 350Nm
+                vcu1.VCU_MotorMode = motorData.desiredTorque >= 0 ? 1 : 2; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
                 break;
             }
             case MOTOR_STATE_FAULT:
             {
                 // T7 MCU_Warning_Level == 3
-                vcu1.VCU_Warning_Level = 3; // 0 = No Warning, 1 = Warning, 2 = Fault, 3 = Critical Fault
-                vcu1.VCU_TorqueReq = 0; // 0 = No torque
+                vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
+                bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF NOTE: see if we can omit this bit
+                bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
+                vcu1.VCU_Warning_Level = 1; // 0 = No Warning, 1 = Warning, 2 = Fault, 3 = Critical Fault
+                vcu1.VCU_MotorMode = 0; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
                 break;
             }
             default:
+            {
                 break;
+            }
         }
 
-        vcu1.CheckSum = ComputeChecksum((uint8_t*)&vcu1);
-        bms1.CheckSum = ComputeChecksum((uint8_t*)&bms1);
-        bms2.CheckSum = ComputeChecksum((uint8_t*)&bms2);
+        vcu1.CheckSum = ComputeChecksum((uint8_t*) &vcu1);
+        bms1.CheckSum = ComputeChecksum((uint8_t*) &bms1);
+        bms2.CheckSum = ComputeChecksum((uint8_t*) &bms2);
 
         uint64_t vcu1_msg;
         memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));
