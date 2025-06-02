@@ -4,7 +4,7 @@
 #define THREAD_CAN_TELEMETRY_PRIORITY 2
 
 #define TELEMETRY_CAN_ID 0x666 // Example CAN ID for telemetry messages
-#define TELEMETRY_PERIOD_MS 1 // Telemetry update period in milliseconds
+#define TELEMETRY_PERIOD_MS 10 // Telemetry update period in milliseconds
 
 #include <arduino_freertos.h>
 
@@ -21,7 +21,7 @@ static void threadTelemetry(void *pvParameters);
 
 void Telemetry_Init() {
     // TODO: Update initialization
-    telemetryData = { // fill with reasonable dummy values
+    telemetryData = { // Fill with reasonable dummy values
         .APPS_Travel = 0.0F,
         .BSEFront_PSI = 0.0F,
         .BSERear_PSI = 0.0F,
