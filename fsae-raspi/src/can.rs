@@ -1,7 +1,10 @@
+use std::time::Duration;
+
 use crate::send::{send_message, Reading};
 use chrono::{DateTime, Utc};
 use influxdb::InfluxDbWriteable;
 use serde::Serialize;
+use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
 const CAN_INTERFACE: &str = "can0";
@@ -162,11 +165,12 @@ pub async fn read_can() {
             StandardId::new(0x777).expect("Invalid src id"),
         ) else {
             println!("Failed to open socket");
+            sleep(Duration::from_secs(1)).await;
             continue;
         };
 
         while let Ok(packet) = socket.read_packet().await {
-            if packet.len() != 128 {
+            if packet.len() != 108 {
                 println!("Invalid packet length: {}", packet.len());
                 continue;
             }
