@@ -1,24 +1,20 @@
 // Anteater Electric Racing, 2025
 
-#include <isotp.h>
+#define THREAD_CAN_TELEMETRY_STACK_SIZE 128
+#define THREAD_CAN_TELEMETRY_PRIORITY 2
+
+#define TELEMETRY_CAN_ID 0x666 // Example CAN ID for telemetry messages
+#define TELEMETRY_PERIOD_MS 1 // Telemetry update period in milliseconds
+
 #include <arduino_freertos.h>
-#include <semphr.h>
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
 #include "vehicle/telemetry.h"
+
 #include "peripherals/can.h"
 
-#define THREAD_CAN_TELEMETRY_STACK_SIZE 128
-#define THREAD_CAN_TELEMETRY_PRIORITY 2
-
-SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
-
-// TODO: Update IDs to be more logical values
-const uint32_t canid = 0x666;
-const uint32_t request = 0x777;
 TelemetryData telemetryData;
-isotp<RX_BANKS_16, 512> tp;
 static TickType_t lastWakeTime;
 
 static void threadTelemetry(void *pvParameters);
@@ -30,7 +26,7 @@ void Telemetry_Init() {
         .BSEFront_PSI = 0.0F,
         .BSERear_PSI = 0.0F,
         .accumulatorVoltage = 0.0F,
-        .accumulatorTemp_F = 0.0F,
+        .accumulatorTemp_F = 25.0F,
         .motorState = MOTOR_STATE_OFF,
         .motorSpeed = 0.0F,
         .motorTorque = 0.0F,
@@ -63,9 +59,6 @@ void Telemetry_Init() {
         .mcuCurrent = 0.0F,
         .motorPhaseCurr = 0.0F,
     };
-
-    tp.begin();
-    // tp.setWriteBus(&can2); /* we write to this bus */
 }
 
 void Telemetry_Begin() {
@@ -73,8 +66,6 @@ void Telemetry_Begin() {
 }
 
 void threadTelemetry(void *pvParameters){
-    uint8_t serializedTelemetryBuf[sizeof(TelemetryData)];
-    const TickType_t xFrequency = 1;
     while(true){
         lastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
@@ -86,6 +77,7 @@ void threadTelemetry(void *pvParameters){
             .accumulatorVoltage = 0.0F, // TODO: Replace with actual accumulator voltage reading
             .accumulatorTemp_F = 0.0F, // TODO: Replace with actual accumulator temperature reading
             .motorState = Motor_GetState(),
+
             .motorSpeed = MCU_GetMCU1Data()->motorSpeed,
             .motorTorque = MCU_GetMCU1Data()->motorTorque,
             .maxMotorTorque = MCU_GetMCU1Data()->maxMotorTorque,
@@ -93,6 +85,7 @@ void threadTelemetry(void *pvParameters){
             .motorDirection = MCU_GetMCU1Data()->motorDirection,
             .mcuMainState = MCU_GetMCU1Data()->mcuMainState,
             .mcuWorkMode = MCU_GetMCU1Data()->mcuWorkMode,
+
             .motorTemp = MCU_GetMCU2Data()->motorTemp,
             .mcuTemp = MCU_GetMCU2Data()->mcuTemp,
             .dcMainWireOverVoltFault = MCU_GetMCU2Data()->dcMainWireOverVoltFault,
@@ -113,37 +106,20 @@ void threadTelemetry(void *pvParameters){
             .motorStallFault = MCU_GetMCU2Data()->motorStallFault,
             .motorOpenPhaseFault = MCU_GetMCU2Data()->motorOpenPhaseFault,
             .mcuWarningLevel = MCU_GetMCU2Data()->mcuWarningLevel,
+
             .mcuVoltage = MCU_GetMCU3Data()->mcuVoltage,
             .mcuCurrent = MCU_GetMCU3Data()->mcuCurrent,
             .motorPhaseCurr = MCU_GetMCU3Data()->motorPhaseCurr,
         };
+
+        uint8_t* serializedData = (uint8_t*) &telemetryData;
+        CAN_ISOTP_Send(TELEMETRY_CAN_ID, serializedData, sizeof(TelemetryData));
+
         taskEXIT_CRITICAL();
-
-        // Serial.print("Semaphor take successful");
-        // xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-        // Telemetry_SerializeData(telemetryDataCAN, serializedTelemetryBuf);
-        // xSemaphoreGive(xSemaphore);
-
-        // ISOTP_data config;
-        // config.id = 0x666;
-        // config.flags.extended = 0; /* standard frame */
-        // config.separation_time = 10; /* time between back-to-back frames in millisec */
-        // tp.write(config, serializedTelemetryBuf, sizeof(serializedTelemetryBuf));
-        vTaskDelayUntil(&lastWakeTime, xFrequency);
+        vTaskDelayUntil(&lastWakeTime, pdTICKS_TO_MS(TELEMETRY_PERIOD_MS)); // Delay until the next telemetry update
     }
-}
-
-void Telemetry_SerializeData(TelemetryData data, uint8_t* serializedTelemetryBuf){
-    memcpy(serializedTelemetryBuf, &data, sizeof(data));
 }
 
 TelemetryData const* Telemetry_GetData() {
     return &telemetryData;
 }
-
-// void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads){
-//     xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-//     memcpy(telemetryDataCAN.adc0Reads, (const uint16_t*)adc0reads, sizeof(telemetryDataCAN.adc0Reads));
-//     memcpy(telemetryDataCAN.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryDataCAN.adc1Reads));
-//     xSemaphoreGive(xSemaphore);
-// }

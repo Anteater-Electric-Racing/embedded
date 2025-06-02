@@ -59,8 +59,5 @@ typedef struct __attribute__((packed)){
 
 void Telemetry_Init();
 TelemetryData const* Telemetry_GetData();
-void Telemetry_Init();
-void Telemetry_SerializeData(TelemetryData data, uint8_t* serializedTelemetryBuf);
-// void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
 
 

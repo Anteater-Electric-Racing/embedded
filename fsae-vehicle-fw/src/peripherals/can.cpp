@@ -4,6 +4,7 @@
 #define THREAD_CAN_PRIORITY 1
 
 #include <stdint.h>
+#include <isotp.h>
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
@@ -17,6 +18,7 @@
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+isotp<RX_BANKS_16, 512> tp;
 
 CAN_message_t motorMsg;
 CAN_message_t rx_msg;
@@ -29,14 +31,14 @@ void CAN_Init() {
     can2.setRX(DEF);
     can2.enableFIFO();
 
-    // can3.begin();
-    // can3.setBaudRate(CAN_BAUD_RATE);
-    // can3.setTX(DEF);
-    // can3.setRX(DEF);
-    // can3.enableFIFO();
-    // can3.enableFIFOInterrupt();
-    // can3.enableMBInterrupts();
-    // can3.setMaxMB(16);
+    can3.begin();
+    can3.setBaudRate(CAN_BAUD_RATE);
+    can3.setTX(DEF);
+    can3.setRX(DEF);
+    can3.enableFIFO();
+
+    tp.begin();
+    tp.setWriteBus(&can3); // Set the bus to write to can3
 }
 
 void CAN_Send(uint32_t id, uint64_t msg)
@@ -55,4 +57,12 @@ void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
         *rx_id = 0;
         *rx_data = 0;
     }
+}
+
+void CAN_ISOTP_Send(uint32_t id, uint8_t* msg, uint16_t size) {
+    ISOTP_data config;
+    config.id = id;
+    config.flags.extended = 0; // Standard frame
+    config.separation_time = 10; // Time between back-to-back frames in milliseconds
+    tp.write(config, msg, size);
 }
