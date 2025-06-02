@@ -63,8 +63,8 @@ static void threadMotor(void *pvParameters){
                 uint16_t maxDischarge = (uint16_t) (BATTERY_MAX_CURRENT_A + 500) * 10;
                 uint16_t maxRegen = (uint16_t) (BATTERY_MAX_REGEN_A + 500) * 10;
 
-                bms2.sAllowMaxDischarge = LITTLE_ENDIAN_SWAP_16(maxDischarge); // Convert to little-endian format
-                bms2.sAllowMaxRegenCharge = LITTLE_ENDIAN_SWAP_16(maxRegen); // Convert to little-endian format
+                bms2.sAllowMaxDischarge = CHANGE_ENDIANESS_16(maxDischarge); // Convert to little-endian format
+                bms2.sAllowMaxRegenCharge = CHANGE_ENDIANESS_16(maxRegen); // Convert to little-endian format
 
                 // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
                 vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
