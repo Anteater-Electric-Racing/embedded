@@ -44,6 +44,8 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
 
+    println!("Sending message: {}", json);
+
     if let Err(e) = MQTT_CLIENT
         .publish(T::topic(), QoS::AtLeastOnce, false, json)
         .await
