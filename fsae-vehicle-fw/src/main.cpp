@@ -150,7 +150,7 @@ void threadMain(void *pvParameters) {
         Serial.print("Torque: ");
         Serial.print(torqueDemand);
         Serial.print("  |  ");
-        Serial.print("Motor Speed: ");
+        Serial.print("Mtr Speed: ");
         Serial.print(MCU_GetMCU1Data()->motorSpeed);
 
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
@@ -158,14 +158,20 @@ void threadMain(void *pvParameters) {
         Serial.print("Battery Voltage: ");
         Serial.print(MCU_GetMCU3Data()->mcuVoltage);
         Serial.print("  |  ");
-        Serial.print("B Current: ");
+        Serial.print("B Curr: ");
         Serial.print(MCU_GetMCU3Data()->mcuCurrent);
         Serial.print("  |  ");
-        Serial.print("P Current: ");
+        Serial.print("P Curr: ");
         Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
         Serial.print("  | ");
-        Serial.print("MCU Warning Levl: ");
+        Serial.print("MCU Warn Levl: ");
         Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
+        Serial.print("  | ");
+        Serial.print("MCU Temp: ");
+        Serial.print(MCU_GetMCU2Data()->mcuTemp);
+        Serial.print("  | ");
+        Serial.print("Mtr Temp: ");
+        Serial.print(MCU_GetMCU2Data()->motorTemp);
 
         // Serial.print("Battery Current: ");
         // Serial.print(MCU_GetMCU3Data().mcuCurrent);
