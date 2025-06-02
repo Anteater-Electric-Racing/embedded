@@ -48,6 +48,7 @@ void threadMain(void *pvParameters) {
     bool enablePrecharge = false;
     bool enablePower = false;
     bool enableRun = false;
+    bool enableRegen = false;
 
     while (true) {
         /*
@@ -123,9 +124,9 @@ void threadMain(void *pvParameters) {
                     Motor_SetFaultState(); // Set motor to fault state
                     break;
                 }
-                case 'g':
-                case 'G':
-                    torqueDemand -= TORQUE_STEP; // Decrement torque demand
+                case 'r':
+                case 'R':
+                    enableRegen = !enableRegen;
                 default:
                     break;
             }
@@ -211,7 +212,7 @@ void threadMain(void *pvParameters) {
         // if (MCU_GetMCU2Data().motorOpenPhaseFault) Serial.print("Motor Open Phase Fault, ");
 
         Serial.print("             \r");
-        Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun); // Update motor with the current torque demand
+        Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun, enableRegen); // Update motor with the current torque demand
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }

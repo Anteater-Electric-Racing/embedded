@@ -122,7 +122,7 @@ static void threadMotor(void *pvParameters){
     }
 }
 
-void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun){
+void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun, bool enableRegen){
     // Update the motor state based on the RTM button state
 
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
@@ -165,7 +165,14 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
 
             // torque is communicated as a percentage
             #if !SPEED_CONTROL_ENABLED
-            motorData.desiredTorque = torqueDemand;
+
+            if (enableRegen && torqueDemand <= 0.0F && MCU_GetMCU1Data()->motorSpeed > 0.0F) {
+                // If regen is enabled and the torque demand is negative, we need to set the torque demand to 0
+                // to prevent the motor from applying torque in the wrong direction
+                motorData.desiredTorque = -6; // -6 is minimum torque demand for regen, TODO: make macro for driver bias
+            } else {
+                motorData.desiredTorque = torqueDemand;
+            }
             #else
             // Speed control is enabled, we need to set the torque demand to 0
             vcu1.VCU_TorqueReq = 0; // 0 = No torque
