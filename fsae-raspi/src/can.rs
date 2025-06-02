@@ -174,6 +174,11 @@ pub async fn read_can() {
                 println!("Invalid packet length: {}", packet.len());
                 continue;
             }
+            println!("[{}] Received packet: ", Utc::now());
+            for byte in &packet {
+                print!("{:02x} ", byte);
+            }
+            println!();
             send_message(TelemetryData {
                 time: Utc::now(),
                 apps_travel: f32::from_le_bytes(packet[0..4].try_into().unwrap()),
