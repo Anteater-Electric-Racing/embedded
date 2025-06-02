@@ -31,26 +31,26 @@ fn main() -> Result<(), socketcan_isotp::Error> {
     )?;
 
     loop {
-        // let buffer = tp_socket.read()?;
-        // println!("read {} bytes", buffer.len());
+        let buffer = tp_socket.read()?;
+        println!("read {} bytes", buffer.len());
 
-        // print!("    Buffer: ");
-        // for x in buffer {
-        //     print!("{:X?} ", x);
-        // }
-        // println!();
+        print!("    Buffer: ");
+        for x in buffer {
+            print!("{:X?} ", x);
+        }
+        println!();
 
-        // if buffer.len() < 44 {
-        //     println!("    Buffer too small to construct TelemetryData");
-        //     continue;
-        // }
-        // let t = TelemetryData {
-        //     _accumulator_voltage: f32::from_le_bytes(buffer[0..4].try_into().unwrap()),
-        //     _accumulator_temp: f32::from_le_bytes(buffer[4..8].try_into().unwrap()),
-        //     _tractive_system_voltage: f32::from_le_bytes(buffer[8..12].try_into().unwrap()),
-        //     _adc_0_reads: extract_adc_reads(&buffer[12..28], SENSOR_PIN_AMT_ADC0),
-        //     _adc_1_reads: extract_adc_reads(&buffer[28..44], SENSOR_PIN_AMT_ADC1),
-        // };
-        // println!("    TelemetryData: {:#?}", t);
+        if buffer.len() < 44 {
+            println!("    Buffer too small to construct TelemetryData");
+            continue;
+        }
+        let t = TelemetryData {
+            _accumulator_voltage: f32::from_le_bytes(buffer[0..4].try_into().unwrap()),
+            _accumulator_temp: f32::from_le_bytes(buffer[4..8].try_into().unwrap()),
+            _tractive_system_voltage: f32::from_le_bytes(buffer[8..12].try_into().unwrap()),
+            _adc_0_reads: extract_adc_reads(&buffer[12..28], SENSOR_PIN_AMT_ADC0),
+            _adc_1_reads: extract_adc_reads(&buffer[28..44], SENSOR_PIN_AMT_ADC1),
+        };
+        println!("    TelemetryData: {:#?}", t);
     }
 }
