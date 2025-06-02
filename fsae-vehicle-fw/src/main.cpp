@@ -141,7 +141,7 @@ void threadMain(void *pvParameters) {
 
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
         Serial.print("State: ");
-        Serial.print(MCU_GetMCU1Data().mcuMainState);
+        Serial.print(MCU_GetMCU1Data()->mcuMainState);
         Serial.print(" | ");
         Serial.print("Internal State: ");
         Serial.print(Motor_GetState());
@@ -151,35 +151,35 @@ void threadMain(void *pvParameters) {
         Serial.print(torqueDemand);
         Serial.print("  |  ");
         Serial.print("Motor Speed: ");
-        Serial.print(MCU_GetMCU1Data().motorSpeed);
+        Serial.print(MCU_GetMCU1Data()->motorSpeed);
 
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
         Serial.print("  |  ");
         Serial.print("Battery Voltage: ");
-        Serial.print(MCU_GetMCU3Data().mcuVoltage);
+        Serial.print(MCU_GetMCU3Data()->mcuVoltage);
         Serial.print("  |  ");
         Serial.print("Battery Current: ");
-        Serial.print(MCU_GetMCU3Data().mcuCurrent);
+        Serial.print(MCU_GetMCU3Data()->mcuCurrent);
         Serial.print("  | ");
         Serial.print("MCU Warning Levl: ");
-        Serial.print(MCU_GetMCU2Data().mcuWarningLevel);
-        
+        Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
+
         // Serial.print("Battery Current: ");
         // Serial.print(MCU_GetMCU3Data().mcuCurrent);
         // Serial.print("      \n");
-        
+
         // Serial.print("Phase Current: ");
         // Serial.print(MCU_GetMCU3Data().motorPhaseCurr);
         // Serial.print("      \n");
-        
+
         // Serial.print("MCU Temp: ");
         // Serial.print(MCU_GetMCU2Data().mcuTemp);
         // Serial.print("      \n");
-        
+
         // Serial.print("Motor Temp: ");
         // Serial.print(MCU_GetMCU2Data().motorTemp);
         // Serial.print("      \n");
-        
+
         // print all errors if they are true in one line
         // Serial.print("  |  ");
         // if (MCU_GetMCU2Data().dcMainWireOverVoltFault) Serial.print("DC Over Volt Fault, ");

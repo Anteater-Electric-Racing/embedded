@@ -106,16 +106,16 @@ static void threadMCU(void *pvParameters) {
     }
 }
 
-MCU1Data MCU_GetMCU1Data() {
-    return mcu1Data;
+MCU1Data* MCU_GetMCU1Data() {
+    return &mcu1Data;
 }
 
-MCU2Data MCU_GetMCU2Data() {
-    return mcu2Data;
+MCU2Data* MCU_GetMCU2Data() {
+    return& mcu2Data;
 }
 
-MCU3Data MCU_GetMCU3Data() {
-    return mcu3Data;
+MCU3Data* MCU_GetMCU3Data() {
+    return& mcu3Data;
 }
 
 // checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF

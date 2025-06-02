@@ -2,10 +2,12 @@
 #pragma once
 
 #include <stdint.h>
-#include "motor.h"
-#include <peripherals/adc.h>
 
-struct TelemetryData{
+#include "vehicle/motor.h"
+#include "peripherals/adc.h"
+#include "vehicle/ifl100-36.h"
+
+typedef struct __attribute__((packed)){
     float APPS_Travel; // APPS travel in %
 
     float BSEFront_PSI; // front brake pressure in PSI
@@ -14,8 +16,6 @@ struct TelemetryData{
     float accumulatorVoltage;
     float accumulatorTemp_F;
 
-    float tractiveSystemVoltage;
-
     MotorState motorState; // Motor state
 
     // MCU1 data
@@ -23,13 +23,13 @@ struct TelemetryData{
     float motorTorque; // Motor torque in Nm
     float maxMotorTorque; // Max motor torque in Nm
     float maxMotorBrakeTorque; // Max motor brake torque in Nm
-    float motorDirection; // Motor direction
-    float mcuMainState; // Motor main state
-    float mcuWorkMode; // MCU work mode
+    MotorRotateDirection motorDirection; // Motor direction
+    MCUMainState mcuMainState; // Motor main state
+    MCUWorkMode mcuWorkMode; // MCU work mode
 
     // MCU2 data
     int32_t motorTemp; // Motor temperature in C
-    int32_t mcuTemp; // Hardware temperature in C
+    int32_t mcuTemp; // Inverter temperature in C
     bool dcMainWireOverVoltFault; // DC over voltage fault
     bool motorPhaseCurrFault; // MCU motor phase current fault
     bool mcuOverHotFault; // MCU overheat fault
@@ -47,7 +47,7 @@ struct TelemetryData{
     bool mcu12VLowVoltWarning; // MCU 12V low voltage warning
     bool motorStallFault; // MCU motor stall fault
     bool motorOpenPhaseFault; // MCU motor open phase fault
-    uint8_t mcuWarningLevel; // MCU warning level
+    MCUWarningLevel mcuWarningLevel; // MCU warning level
 
     // MCU3 data
     float mcuVoltage; // DC main wire voltage in V
@@ -55,16 +55,12 @@ struct TelemetryData{
     float motorPhaseCurr; // Motor phase current in A
 
     float debug[4]; // Debug data
-    uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
-    uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
-
-} __attribute__((packed)); // need this to ensure data is packed without gaps in between;
+} TelemetryData;
 
 void Telemetry_Init();
 TelemetryData const* Telemetry_GetData();
 void Telemetry_Init();
 void Telemetry_SerializeData(TelemetryData data, uint8_t* serializedTelemetryBuf);
-void Telemetry_UpdateData(TelemetryData* data);
-void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
+// void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
 
 

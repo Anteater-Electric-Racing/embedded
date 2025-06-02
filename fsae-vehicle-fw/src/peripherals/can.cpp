@@ -3,13 +3,12 @@
 #define THREAD_CAN_STACK_SIZE 128
 #define THREAD_CAN_PRIORITY 1
 
-#include "stdint.h"
-#include "can.h"
+#include <stdint.h>
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
+#include "peripherals/can.h"
 #include "utils/utils.h"
-
 #include "vehicle/motor.h"
 #include "vehicle/ifl100-36.h"
 
@@ -30,52 +29,30 @@ void CAN_Init() {
     can2.setRX(DEF);
     can2.enableFIFO();
 
-    can3.begin();
-    can3.setBaudRate(CAN_BAUD_RATE);
-    can3.setTX(DEF);
-    can3.setRX(DEF);
-    can3.enableFIFO();
-    can3.enableFIFOInterrupt();
-    can3.enableMBInterrupts();
-    can3.setMaxMB(16);
+    // can3.begin();
+    // can3.setBaudRate(CAN_BAUD_RATE);
+    // can3.setTX(DEF);
+    // can3.setRX(DEF);
+    // can3.enableFIFO();
+    // can3.enableFIFOInterrupt();
+    // can3.enableMBInterrupts();
+    // can3.setMaxMB(16);
 }
 
 void CAN_Send(uint32_t id, uint64_t msg)
 {
     motorMsg.id = id;
-
     memcpy(motorMsg.buf, &msg, sizeof(msg));
 
-
-
-    // if DEBUG_FLAG
-        if (can2.write(motorMsg)) {
-            //Serial.println(motorMsg.id, 16);
-           // Serial.println("VCU1 message sent");
-            // //Serial.print("Torque: ");
-            // //Serial.println(vcu1.TorqueReq);
-            // Serial.print("Motor message buf: ");
-            // for (int i = 0; i < 8; ++i){
-            //     Serial.print(motorMsg.buf[i]);
-            //     Serial.print(" ");
-            // }
-            // Serial.println();
-
-
-        } else {
-            Serial.println("VCU1 message failed to send");
-        }
-    //# endif
+    can2.write(motorMsg);
 }
 
 void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
     if (can2.read(rx_msg)) {
         *rx_id = rx_msg.id;
         memcpy(rx_data, rx_msg.buf, sizeof(*rx_data));
-    } else {
-        *rx_id = 0; // No message received
+    } else { // No message received, assign default values
+        *rx_id = 0;
         *rx_data = 0;
     }
-    // Serial.print("Received CAN message ID? ");
-    // Serial.println(*rx_id, 16);
 }

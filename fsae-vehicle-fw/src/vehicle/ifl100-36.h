@@ -213,6 +213,6 @@ void MCU_Init();
 uint8_t ComputeChecksum(uint8_t* data);
 
 
-MCU1Data MCU_GetMCU1Data();
-MCU2Data MCU_GetMCU2Data();
-MCU3Data MCU_GetMCU3Data();
+MCU1Data* MCU_GetMCU1Data();
+MCU2Data* MCU_GetMCU2Data();
+MCU3Data* MCU_GetMCU3Data();
