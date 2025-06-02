@@ -33,10 +33,11 @@ StatusLight statusLED[4] {{ STATUS_LED[0] },
                           { STATUS_LED[2] },
                           { STATUS_LED[3] }};
 
-// Exponential Moving Averages
-MovingAverage TSV_Average(0, 0.1); // 10% of new value is added to the average (more filtering)
-MovingAverage ACV_Average(0, 0.1);
-MovingAverage SDC_Average(0, 0.5); // 50% of new value is added to the average (less filtering -> quicker response)
+// Low pass filter
+static const float alpha = COMPUTE_ALPHA(1.0F); // 10Hz cutoff frequency for lowpass filter
+static float TSV_filt = 0.0F;   // filtered Transmission Side Voltage
+static float ACV_filt = 0.0F;   // filtered Accumulator Voltage
+static float SDC_filt = 0.0F;   // filtered Shutdown Circuit Voltage
 
 // Initialize mutex and precharge task
 void prechargeInit(){
@@ -141,17 +142,21 @@ static unsigned long epoch;
         epoch = millis(); // make sure to reset if we've circled back to standby
 
         // Reset moving averages
-        TSV_Average.reset();
-        ACV_Average.reset();
-        SDC_Average.reset();
+        TSV_filt = 0.0F;
+        ACV_filt = 0.0F;
+        SDC_filt = 0.0F;
     }
 
     // Disable AIR, Disable Precharge
     digitalWrite(PRECHARGE_CTRL_PIN, LOW);
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
+    // Sample the raw SDC voltage each cycle
+    //float rawSDC = getSDCvoltage(); // TODO: replace with function that returns raw SDC value
+    // LOWPASS_FILTER(rawSDC, SDC_filt, alpha); // Uncommment once done
+
     // Check for stable shutdown circuit
-    if (SDC_Average.value() >= MIN_SDC_VOLTAGE){
+    if (SDC_filt >= MIN_SDC_VOLTAGE){
         if (millis() > epoch + WAIT_TIME){
         state = STATE_PRECHARGE;
         }
@@ -182,12 +187,12 @@ void precharge(){
     static uint32_t lastSample = 0U;
     if (now > lastSample + samplePeriod){  // samplePeriod and movingAverage alpha value will affect moving average response.
         lastSample = now;
-        // TODO: Fix this below to use the frequency-to-voltage converter
-        //ACV_Average.update(getAccuVoltage());
-        //TSV_Average.update(getTsVoltage());
+        // TODO: Fix this below to use the voltage-freq converter
+        // float rawACV = getACCvoltage();
+        // LOWPASS_FILTER(rawACV, ACV_filt, alpha);
     }
-    double acv = ACV_Average.value();
-    double tsv = TSV_Average.value();
+    double acv = ACV_filt;
+    double tsv = TSV_filt;
 
     // The precharge progress is a function of the accumulator voltage
     double prechargeProgress = 100.0 * tsv / acv; // [%]
@@ -196,7 +201,7 @@ void precharge(){
     static uint32_t lastPrint = 0U;
     if (now >= lastPrint + 100) {
         lastPrint = now;
-        sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, TSV_Average.value());
+        sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, TSV_filt);
         Serial.print(lineBuffer);
     }
 
@@ -205,7 +210,7 @@ void precharge(){
         // Precharge complete
         if (now > epoch + SETTLING_TIME){
             state = STATE_ONLINE;
-            sprintf(lineBuffer, "* Precharge complete at: %2.0f%%   %5.1fV\n", prechargeProgress, TSV_Average.value());
+            sprintf(lineBuffer, "* Precharge complete at: %2.0f%%   %5.1fV\n", prechargeProgress, TSV_filt);
             Serial.print(lineBuffer);
         }
         else if (now < timePrechargeStart + MIN_EXPECTED && now > epoch + SETTLING_TIME) {    // Precharge too fast - something's wrong!

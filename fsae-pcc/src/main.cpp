@@ -14,13 +14,6 @@
 #define TS_VOLTAGE_PIN 15
 #define PCC_RATIO .9
 
-// Lowpass filter
-#define TIME_STEP 0.001F // 1ms time step
-#define COMPUTE_ALPHA(CUTOFF_HZ) \
-    (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))
-#define LOWPASS_FILTER(NEW, OLD, ALPHA) \
-    OLD = ALPHA * NEW + (1.0F - ALPHA) * OLD
-
 #include <Arduino.h>
 #include <arduino_freertos.h>
 #include "precharge.h"
