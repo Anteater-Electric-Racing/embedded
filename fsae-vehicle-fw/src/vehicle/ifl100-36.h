@@ -68,7 +68,7 @@ typedef struct __attribute__((packed)) {
     uint64_t PowerReduceReq : 3; // end of byte 6
 
     uint64_t CheckSum : 8; // end of byte 7
-} VCU1;
+} VCU1; // bit order verified
 
 typedef struct __attribute__((packed)) {
     uint64_t MCU_ActMotorSpd : 16; // end of byte 0 and byte 1
@@ -78,54 +78,52 @@ typedef struct __attribute__((packed)) {
 
     // flipped
     uint64_t Reserved: 3;
-    uint64_t MCU_MotorMainState : 3; 
+    uint64_t MCU_MotorMainState : 3;
     uint64_t MCU_MotorRotateDirection : 2; // end of byte 5
 
-    uint64_t MCU_MotorWorkMode: 2;
-    uint64_t MCU_MotorState : 2;
     uint64_t RollingCounter : 4; // end of byte 6
+    uint64_t MCU_MotorState : 2;
+    uint64_t MCU_MotorWorkMode: 2;
 
     uint64_t CheckSum : 8; // end of byte 7
-} MCU1;
+} MCU1; // order fixed, needs to be verified
 
 typedef struct __attribute__((packed)) {
     uint64_t MCU_Motor_Temp : 8; // end of byte 0
     uint64_t MCU_hardwareTemp: 8; // end of byte 1
 
-
-    uint64_t MCU_DC_MainWireOverVoltFault : 1;
-    uint64_t Drv_MotorOverHotFault : 1;
-    uint64_t MCU_MotorOverSpdFault : 1;
-    uint64_t MCU_PhaseCurrSensorState : 1;
-    uint64_t sResolver_Fault: 1; // ?? MCU_RotateTransformerFault
-    uint64_t MCU_OverHotFault: 1;
+    uint64_t MCU_DCMainWireOverCurrFault : 1;
     uint64_t MCU_MotorPhaseCurrFault : 1;
-    uint64_t MCU_DC_MainWireOverCurrFault : 1;
+    uint64_t MCU_OverHotFault: 1;
+    uint64_t MCU_MotorResolver_Fault: 1;
+    uint64_t MCU_PhaseCurrSensorState : 1;
+    uint64_t MCU_MotorOverSpdFault : 1;
+    uint64_t Drv_MotorOverHotFault : 1;
+    uint64_t MCU_DCMainWireOverVoltFault : 1; // end of byte 2
 
-    uint64_t MCU_12V_LowVoltWarning : 1;
-    uint64_t MCU_DC_LowVoltWarning : 1;
-    uint64_t MCU_DC_VoltSensorState : 1;
-    uint64_t MCU_MotorTempSensorState : 1;
-    uint64_t MCU_TempSensorState : 1;
-    uint64_t MCU_MotorSystemState : 1;
     uint64_t Drv_MotorOverCoolFault : 1;
-    // end of byte 2
-
+    uint64_t MCU_MotorSystemState : 1;
+    uint64_t MCU_TempSensorState : 1;
+    uint64_t MCU_MotorTempSensorState : 1;
+    uint64_t MCU_DC_VoltSensorState : 1;
+    uint64_t MCU_DC_LowVoltWarning : 1;
+    uint64_t MCU_12V_LowVoltWarning : 1;
     uint64_t Reserved : 17; // end of byte 3, byte 4, and byte 5
-    uint64_t MCU_MotorStallFault : 1; // end of byte 6
-    uint64_t MCU_MotorOpenPhaseFault : 1;
-    uint64_t MCU_Warning_Level : 2;
-    uint64_t RollingCounter : 4;
-    uint64_t CheckSum : 8; // end of byte 7
 
-} MCU2;
+    uint64_t RollingCounter : 4;
+    uint64_t MCU_Warning_Level : 2;
+    uint64_t MCU_MotorOpenPhaseFault : 1;
+    uint64_t MCU_MotorStallFault : 1; // end of byte 6
+
+    uint64_t CheckSum : 8; // end of byte 7
+} MCU2; // fixed order, needs to be verified
 
 typedef struct __attribute__((packed)) {
     uint64_t MCU_DC_MainWireVolt : 16; // end of byte 0 and byte 1
     uint64_t MCU_DC_MainWireCurr: 16; // end of byte 2 and byte 3
     uint64_t MCU_MotorPhaseCurr : 16; // end of byte 4 and byte 5
     uint64_t Reserved : 16; // end of byte 6 and byte 7
-} MCU3;
+} MCU3; // bit order verified
 
 typedef struct __attribute__((packed)) {
     uint64_t BMS_Warning_Level : 2;
@@ -157,21 +155,19 @@ typedef struct __attribute__((packed)) {
 
     uint64_t RollingCounter : 4;
     uint64_t Reserved3 : 4; // end of byte 6
-    //uint64_t BMS_Allow_Max_Discharge : 14; // end of byte 4 and byte 5 and half of byte 6
 
     uint64_t CheckSum : 8; // end of byte 7
-} BMS1;
+} BMS1; // bit order verified
 
 typedef struct __attribute__((packed)) {
-    //uint64_t Reserved1 : 8; // end of byte 0
     uint64_t sAllowMaxDischarge : 16; // end of byte 1 and byte 2
     uint64_t sAllowMaxRegenCharge: 16; // end of byte 3 and byte 4
 
-    uint64_t Reserved : 20; // end of byte 6
+    uint64_t Reserved : 20; // end of byte 5
+    uint64_t RollingCounter : 4; // end of byte 6
 
-    uint64_t RollingCounter : 4;
     uint64_t CheckSum : 8; // end of byte 7
-} BMS2;
+} BMS2; // bit order verified
 
 typedef struct {
     // MCU1 data
