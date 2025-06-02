@@ -86,8 +86,39 @@ void threadTelemetry(void *pvParameters){
             .accumulatorVoltage = 0.0F, // TODO: Replace with actual accumulator voltage reading
             .accumulatorTemp_F = 0.0F, // TODO: Replace with actual accumulator temperature reading
             .motorState = Motor_GetState(),
+            .motorSpeed = MCU_GetMCU1Data()->motorSpeed,
+            .motorTorque = MCU_GetMCU1Data()->motorTorque,
+            .maxMotorTorque = MCU_GetMCU1Data()->maxMotorTorque,
+            .maxMotorBrakeTorque = MCU_GetMCU1Data()->maxMotorBrakeTorque,
+            .motorDirection = MCU_GetMCU1Data()->motorDirection,
+            .mcuMainState = MCU_GetMCU1Data()->mcuMainState,
+            .mcuWorkMode = MCU_GetMCU1Data()->mcuWorkMode,
+            .motorTemp = MCU_GetMCU2Data()->motorTemp,
+            .mcuTemp = MCU_GetMCU2Data()->mcuTemp,
+            .dcMainWireOverVoltFault = MCU_GetMCU2Data()->dcMainWireOverVoltFault,
+            .motorPhaseCurrFault = MCU_GetMCU2Data()->motorPhaseCurrFault,
+            .mcuOverHotFault = MCU_GetMCU2Data()->mcuOverHotFault,
+            .resolverFault = MCU_GetMCU2Data()->resolverFault,
+            .phaseCurrSensorFault = MCU_GetMCU2Data()->phaseCurrSensorFault,
+            .motorOverSpdFault = MCU_GetMCU2Data()->motorOverSpdFault,
+            .drvMotorOverHotFault = MCU_GetMCU2Data()->drvMotorOverHotFault,
+            .dcMainWireOverCurrFault = MCU_GetMCU2Data()->dcMainWireOverCurrFault,
+            .drvMotorOverCoolFault = MCU_GetMCU2Data()->drvMotorOverCoolFault,
+            .mcuMotorSystemState = MCU_GetMCU2Data()->mcuMotorSystemState,
+            .mcuTempSensorState = MCU_GetMCU2Data()->mcuTempSensorState,
+            .motorTempSensorState = MCU_GetMCU2Data()->motorTempSensorState,
+            .dcVoltSensorState = MCU_GetMCU2Data()->dcVoltSensorState,
+            .dcLowVoltWarning = MCU_GetMCU2Data()->dcLowVoltWarning,
+            .mcu12VLowVoltWarning = MCU_GetMCU2Data()->mcu12VLowVoltWarning,
+            .motorStallFault = MCU_GetMCU2Data()->motorStallFault,
+            .motorOpenPhaseFault = MCU_GetMCU2Data()->motorOpenPhaseFault,
+            .mcuWarningLevel = MCU_GetMCU2Data()->mcuWarningLevel,
+            .mcuVoltage = MCU_GetMCU3Data()->mcuVoltage,
+            .mcuCurrent = MCU_GetMCU3Data()->mcuCurrent,
+            .motorPhaseCurr = MCU_GetMCU3Data()->motorPhaseCurr,
         };
         taskEXIT_CRITICAL();
+
         // Serial.print("Semaphor take successful");
         // xSemaphoreTake(xSemaphore, (TickType_t) 1000);
         // Telemetry_SerializeData(telemetryDataCAN, serializedTelemetryBuf);
