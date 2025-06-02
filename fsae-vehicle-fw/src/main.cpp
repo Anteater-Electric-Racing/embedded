@@ -115,12 +115,17 @@ void threadMain(void *pvParameters) {
                     enablePrecharge = false; // Disable precharging
                     break;
                 case 'f': // Fault state
-                case 'F':
+                case 'F': {
+                    Serial.println("Entering fault state");
                     enableRun = false; // Disable run state
                     enablePrecharge = false; // Disable precharging
                     torqueDemand = 0; // Reset torque demand
                     Motor_SetFaultState(); // Set motor to fault state
                     break;
+                }
+                case 'g':
+                case 'G':
+                    torqueDemand -= TORQUE_STEP; // Decrement torque demand
                 default:
                     break;
             }
@@ -145,31 +150,31 @@ void threadMain(void *pvParameters) {
         Serial.print(" | ");
         Serial.print("Internal State: ");
         Serial.print(Motor_GetState());
-        Serial.print("  | ");
+        Serial.print(" | ");
 
         Serial.print("Torque: ");
         Serial.print(torqueDemand);
-        Serial.print("  |  ");
+        Serial.print(" | ");
         Serial.print("Mtr Speed: ");
         Serial.print(MCU_GetMCU1Data()->motorSpeed);
 
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        Serial.print("  |  ");
+        Serial.print(" | ");
         Serial.print("Battery Voltage: ");
         Serial.print(MCU_GetMCU3Data()->mcuVoltage);
-        Serial.print("  |  ");
+        Serial.print(" | ");
         Serial.print("B Curr: ");
         Serial.print(MCU_GetMCU3Data()->mcuCurrent);
-        Serial.print("  |  ");
+        Serial.print(" | ");
         Serial.print("P Curr: ");
         Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
-        Serial.print("  | ");
+        Serial.print(" | ");
         Serial.print("MCU Warn Levl: ");
         Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
-        Serial.print("  | ");
+        Serial.print(" | ");
         Serial.print("MCU Temp: ");
         Serial.print(MCU_GetMCU2Data()->mcuTemp);
-        Serial.print("  | ");
+        Serial.print(" | ");
         Serial.print("Mtr Temp: ");
         Serial.print(MCU_GetMCU2Data()->motorTemp);
 

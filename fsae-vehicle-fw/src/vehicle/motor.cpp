@@ -175,6 +175,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
         }
         case MOTOR_STATE_FAULT:
         {
+            // TODO Implement RTM Button
             if(RTMButton_GetState() == false){
                 motorData.state = MOTOR_STATE_IDLE;
             }
