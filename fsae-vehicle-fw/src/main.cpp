@@ -158,8 +158,11 @@ void threadMain(void *pvParameters) {
         Serial.print("Battery Voltage: ");
         Serial.print(MCU_GetMCU3Data()->mcuVoltage);
         Serial.print("  |  ");
-        Serial.print("Battery Current: ");
+        Serial.print("B Current: ");
         Serial.print(MCU_GetMCU3Data()->mcuCurrent);
+        Serial.print("  |  ");
+        Serial.print("P Current: ");
+        Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
         Serial.print("  | ");
         Serial.print("MCU Warning Levl: ");
         Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);

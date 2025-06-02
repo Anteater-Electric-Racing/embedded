@@ -129,11 +129,11 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
     switch(motorData.state){
         // LV on, HV off
         case MOTOR_STATE_OFF:{
-            motorData.desiredTorque = torqueDemand;
             if (enablePrecharge){
                 Serial.println("Precharging...");
                 motorData.state = MOTOR_STATE_PRECHARGING;
             }
+            motorData.desiredTorque = 0.0F;
             break;
         }
         // HV switch on (PCC CAN message)
@@ -143,7 +143,6 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
                 Serial.println("Precharge finished");
                 motorData.state = MOTOR_STATE_IDLE;
             }
-
             motorData.desiredTorque = 0.0F;
             break;
         }
@@ -154,6 +153,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
                 Serial.println("Ready to drive...");
                 motorData.state = MOTOR_STATE_DRIVING;
             }
+            motorData.desiredTorque = 0.0F;
             break;
         }
         // Ready to drive button pressed
