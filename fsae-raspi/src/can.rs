@@ -9,102 +9,67 @@ use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
 const CAN_INTERFACE: &str = "can0";
 
-#[derive(Serialize)]
-enum MotorState {
-    MotorStateOff,
-    MotorStatePrecharging,
-    MotorStateIdle,
-    MotorStateDriving,
-    MotorStateFault,
+macro_rules! define_enum {
+    ($name:ident, $($variant:ident = $value:expr => $text:expr),*) => {
+        #[derive(Serialize)]
+        enum $name {
+            $($variant = $value),*
+        }
+
+        impl Into<influxdb::Type> for $name {
+            fn into(self) -> influxdb::Type {
+                influxdb::Type::Text(match self {
+                    $(Self::$variant => $text.to_string()),*
+                })
+            }
+        }
+
+        impl $name {
+            fn from_byte(byte: u8) -> Self {
+                match byte {
+                    $($value => Self::$variant),*,
+                    _ => panic!("Invalid value for {}", stringify!($name)),
+                }
+            }
+        }
+    };
 }
 
-impl Into<influxdb::Type> for MotorState {
-    fn into(self) -> influxdb::Type {
-        influxdb::Type::Text(match self {
-            MotorState::MotorStateOff => "Off".to_string(),
-            MotorState::MotorStatePrecharging => "Precharging".to_string(),
-            MotorState::MotorStateIdle => "Idle".to_string(),
-            MotorState::MotorStateDriving => "Driving".to_string(),
-            MotorState::MotorStateFault => "Fault".to_string(),
-        })
-    }
-}
+define_enum!(MotorState,
+    MotorStateOff = 0 => "Off",
+    MotorStatePrecharging = 1 => "Precharging",
+    MotorStateIdle = 2 => "Idle",
+    MotorStateDriving = 3 => "Driving",
+    MotorStateFault = 4 => "Fault"
+);
 
-#[derive(Serialize)]
-enum MotorRotateDirection {
-    DirectionStandby = 0,
-    DirectionForward = 1,
-    DirectionBackward = 2,
-    DirectionError = 3,
-}
+define_enum!(MotorRotateDirection,
+    DirectionStandby = 0 => "Standby",
+    DirectionForward = 1 => "Forward",
+    DirectionBackward = 2 => "Backward",
+    DirectionError = 3 => "Error"
+);
 
-impl Into<influxdb::Type> for MotorRotateDirection {
-    fn into(self) -> influxdb::Type {
-        influxdb::Type::Text(match self {
-            MotorRotateDirection::DirectionStandby => "Standby".to_string(),
-            MotorRotateDirection::DirectionForward => "Forward".to_string(),
-            MotorRotateDirection::DirectionBackward => "Backward".to_string(),
-            MotorRotateDirection::DirectionError => "Error".to_string(),
-        })
-    }
-}
+define_enum!(MCUMainState,
+    StateStandby = 0 => "Standby",
+    StatePrecharge = 1 => "Precharge",
+    StatePowerReady = 2 => "PowerReady",
+    StateRun = 3 => "Run",
+    StatePowerOff = 4 => "PowerOff"
+);
 
-#[derive(Serialize)]
-enum MCUMainState {
-    StateStandby = 0,
-    StatePrecharge = 1,
-    StatePowerReady = 2,
-    StateRun = 3,
-    StatePowerOff = 4,
-}
+define_enum!(MCUWorkMode,
+    WorkModeStandby = 0 => "Standby",
+    WorkModeTorque = 1 => "Torque",
+    WorkModeSpeed = 2 => "Speed"
+);
 
-impl Into<influxdb::Type> for MCUMainState {
-    fn into(self) -> influxdb::Type {
-        influxdb::Type::Text(match self {
-            MCUMainState::StateStandby => "Standby".to_string(),
-            MCUMainState::StatePrecharge => "Precharge".to_string(),
-            MCUMainState::StatePowerReady => "PowerReady".to_string(),
-            MCUMainState::StateRun => "Run".to_string(),
-            MCUMainState::StatePowerOff => "PowerOff".to_string(),
-        })
-    }
-}
-
-#[derive(Serialize)]
-enum MCUWorkMode {
-    WorkModeStandby = 0,
-    WorkModeTorque = 1,
-    WorkModeSpeed = 2,
-}
-
-impl Into<influxdb::Type> for MCUWorkMode {
-    fn into(self) -> influxdb::Type {
-        influxdb::Type::Text(match self {
-            MCUWorkMode::WorkModeStandby => "Standby".to_string(),
-            MCUWorkMode::WorkModeTorque => "Torque".to_string(),
-            MCUWorkMode::WorkModeSpeed => "Speed".to_string(),
-        })
-    }
-}
-
-#[derive(Serialize)]
-enum MCUWarningLevel {
-    ErrorNone = 0,
-    ErrorLow = 1,
-    ErrorMedium = 2,
-    ErrorHigh = 3,
-}
-
-impl Into<influxdb::Type> for MCUWarningLevel {
-    fn into(self) -> influxdb::Type {
-        influxdb::Type::Text(match self {
-            MCUWarningLevel::ErrorNone => "None".to_string(),
-            MCUWarningLevel::ErrorLow => "Low".to_string(),
-            MCUWarningLevel::ErrorMedium => "Medium".to_string(),
-            MCUWarningLevel::ErrorHigh => "High".to_string(),
-        })
-    }
-}
+define_enum!(MCUWarningLevel,
+    ErrorNone = 0 => "None",
+    ErrorLow = 1 => "Low",
+    ErrorMedium = 2 => "Medium",
+    ErrorHigh = 3 => "High"
+);
 
 #[derive(Serialize, InfluxDbWriteable)]
 struct TelemetryData {
@@ -157,6 +122,10 @@ impl Reading for TelemetryData {
     }
 }
 
+fn parse_bool(byte: u8) -> bool {
+    byte != 0
+}
+
 pub async fn read_can() {
     loop {
         let Ok(socket) = IsoTpSocket::open(
@@ -186,60 +155,34 @@ pub async fn read_can() {
                 bse_rear_psi: f32::from_le_bytes(packet[8..12].try_into().unwrap()),
                 accumulator_voltage: f32::from_le_bytes(packet[12..16].try_into().unwrap()),
                 accumulator_temp_f: f32::from_le_bytes(packet[16..20].try_into().unwrap()),
-                motor_state: match packet[20] {
-                    0 => MotorState::MotorStateOff,
-                    1 => MotorState::MotorStatePrecharging,
-                    2 => MotorState::MotorStateIdle,
-                    3 => MotorState::MotorStateDriving,
-                    _ => MotorState::MotorStateFault,
-                },
+                motor_state: MotorState::from_byte(packet[20]),
                 motor_speed: f32::from_le_bytes(packet[21..25].try_into().unwrap()),
                 motor_torque: f32::from_le_bytes(packet[25..29].try_into().unwrap()),
                 max_motor_torque: f32::from_le_bytes(packet[29..33].try_into().unwrap()),
                 max_motor_brake_torque: f32::from_le_bytes(packet[33..37].try_into().unwrap()),
-                motor_direction: match packet[37] {
-                    0 => MotorRotateDirection::DirectionStandby,
-                    1 => MotorRotateDirection::DirectionForward,
-                    2 => MotorRotateDirection::DirectionBackward,
-                    _ => MotorRotateDirection::DirectionError,
-                },
-                mcu_main_state: match packet[38] {
-                    0 => MCUMainState::StateStandby,
-                    1 => MCUMainState::StatePrecharge,
-                    2 => MCUMainState::StatePowerReady,
-                    3 => MCUMainState::StateRun,
-                    _ => MCUMainState::StatePowerOff,
-                },
-                mcu_work_mode: match packet[39] {
-                    0 => MCUWorkMode::WorkModeStandby,
-                    1 => MCUWorkMode::WorkModeTorque,
-                    _ => MCUWorkMode::WorkModeSpeed,
-                },
+                motor_direction: MotorRotateDirection::from_byte(packet[37]),
+                mcu_main_state: MCUMainState::from_byte(packet[38]),
+                mcu_work_mode: MCUWorkMode::from_byte(packet[39]),
                 motor_temp: i32::from_le_bytes(packet[40..44].try_into().unwrap()),
                 mcu_temp: i32::from_le_bytes(packet[44..48].try_into().unwrap()),
-                dc_main_wire_over_volt_fault: packet[48] != 0,
-                motor_phase_curr_fault: packet[49] != 0,
-                mcu_over_hot_fault: packet[50] != 0,
-                resolver_fault: packet[51] != 0,
-                phase_curr_sensor_fault: packet[52] != 0,
-                motor_over_spd_fault: packet[53] != 0,
-                drv_motor_over_hot_fault: packet[54] != 0,
-                dc_main_wire_over_curr_fault: packet[55] != 0,
-                drv_motor_over_cool_fault: packet[56] != 0,
-                mcu_motor_system_state: packet[57] != 0,
-                mcu_temp_sensor_state: packet[58] != 0,
-                motor_temp_sensor_state: packet[59] != 0,
-                dc_volt_sensor_state: packet[60] != 0,
-                dc_low_volt_warning: packet[61] != 0,
-                mcu_12v_low_volt_warning: packet[62] != 0,
-                motor_stall_fault: packet[63] != 0,
-                motor_open_phase_fault: packet[64] != 0,
-                mcu_warning_level: match packet[65] {
-                    0 => MCUWarningLevel::ErrorNone,
-                    1 => MCUWarningLevel::ErrorLow,
-                    2 => MCUWarningLevel::ErrorMedium,
-                    _ => MCUWarningLevel::ErrorHigh,
-                },
+                dc_main_wire_over_volt_fault: parse_bool(packet[48]),
+                motor_phase_curr_fault: parse_bool(packet[49]),
+                mcu_over_hot_fault: parse_bool(packet[50]),
+                resolver_fault: parse_bool(packet[51]),
+                phase_curr_sensor_fault: parse_bool(packet[52]),
+                motor_over_spd_fault: parse_bool(packet[53]),
+                drv_motor_over_hot_fault: parse_bool(packet[54]),
+                dc_main_wire_over_curr_fault: parse_bool(packet[55]),
+                drv_motor_over_cool_fault: parse_bool(packet[56]),
+                mcu_motor_system_state: parse_bool(packet[57]),
+                mcu_temp_sensor_state: parse_bool(packet[58]),
+                motor_temp_sensor_state: parse_bool(packet[59]),
+                dc_volt_sensor_state: parse_bool(packet[60]),
+                dc_low_volt_warning: parse_bool(packet[61]),
+                mcu_12v_low_volt_warning: parse_bool(packet[62]),
+                motor_stall_fault: parse_bool(packet[63]),
+                motor_open_phase_fault: parse_bool(packet[64]),
+                mcu_warning_level: MCUWarningLevel::from_byte(packet[65]),
                 mcu_voltage: f32::from_le_bytes(packet[66..70].try_into().unwrap()),
                 mcu_current: f32::from_le_bytes(packet[70..74].try_into().unwrap()),
                 motor_phase_curr: f32::from_le_bytes(packet[74..78].try_into().unwrap()),
