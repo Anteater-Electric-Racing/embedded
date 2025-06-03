@@ -1,285 +1,197 @@
-use crate::send::{Reading, send_message};
+use std::time::Duration;
+
+use crate::send::{send_message, Reading};
 use chrono::{DateTime, Utc};
-use futures_util::StreamExt;
 use influxdb::InfluxDbWriteable;
 use serde::Serialize;
-use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
-use std::any::type_name;
+use tokio::time::sleep;
+use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
-// constants
 const CAN_INTERFACE: &str = "can0";
 
-// this sets up a trait that contains necessary information for all CAN messages that follow
-pub trait CanReading: Reading + InfluxDbWriteable + Serialize {
-    // a function to get the expected ID of a CAN message
-    fn id() -> Id;
-    // a function to construct a CAN reading from the raw data
-    fn construct(data: &[u8]) -> Self;
-    // the expected size of the raw data
-    const SIZE: usize;
+macro_rules! define_enum {
+    ($name:ident, $($variant:ident = $value:expr => $text:expr),*) => {
+        #[derive(Serialize)]
+        enum $name {
+            $($variant = $value),*
+        }
+
+        impl Into<influxdb::Type> for $name {
+            fn into(self) -> influxdb::Type {
+                influxdb::Type::Text(match self {
+                    $(Self::$variant => $text.to_string()),*
+                })
+            }
+        }
+
+        impl $name {
+            fn from_byte(byte: u8) -> Self {
+                match byte {
+                    $($value => Self::$variant),*,
+                    _ => panic!("Invalid value for {}", stringify!($name)),
+                }
+            }
+        }
+    };
 }
 
-// Now we list out all possible CAN messages
-#[derive(InfluxDbWriteable, Serialize)]
-struct BMSReading1 {
+define_enum!(MotorState,
+    MotorStateOff = 0 => "Off",
+    MotorStatePrecharging = 1 => "Precharging",
+    MotorStateIdle = 2 => "Idle",
+    MotorStateDriving = 3 => "Driving",
+    MotorStateFault = 4 => "Fault"
+);
+
+define_enum!(MotorRotateDirection,
+    DirectionStandby = 0 => "Standby",
+    DirectionForward = 1 => "Forward",
+    DirectionBackward = 2 => "Backward",
+    DirectionError = 3 => "Error"
+);
+
+define_enum!(MCUMainState,
+    StateStandby = 0 => "Standby",
+    StatePrecharge = 1 => "Precharge",
+    StatePowerReady = 2 => "PowerReady",
+    StateRun = 3 => "Run",
+    StatePowerOff = 4 => "PowerOff"
+);
+
+define_enum!(MCUWorkMode,
+    WorkModeStandby = 0 => "Standby",
+    WorkModeTorque = 1 => "Torque",
+    WorkModeSpeed = 2 => "Speed"
+);
+
+define_enum!(MCUWarningLevel,
+    ErrorNone = 0 => "None",
+    ErrorLow = 1 => "Low",
+    ErrorMedium = 2 => "Medium",
+    ErrorHigh = 3 => "High"
+);
+
+#[derive(Serialize, InfluxDbWriteable)]
+struct TelemetryData {
     time: DateTime<Utc>,
-    current: i16,
-    inst_voltage: i16,
+    apps_travel: f32,
+    bse_front_psi: f32,
+    bse_rear_psi: f32,
+    accumulator_voltage: f32,
+    accumulator_temp_f: f32,
+    motor_state: MotorState,
+    motor_speed: f32,
+    motor_torque: f32,
+    max_motor_torque: f32,
+    max_motor_brake_torque: f32,
+    motor_direction: MotorRotateDirection,
+    mcu_main_state: MCUMainState,
+    mcu_work_mode: MCUWorkMode,
+    motor_temp: i32,
+    mcu_temp: i32,
+    dc_main_wire_over_volt_fault: bool,
+    motor_phase_curr_fault: bool,
+    mcu_over_hot_fault: bool,
+    resolver_fault: bool,
+    phase_curr_sensor_fault: bool,
+    motor_over_spd_fault: bool,
+    drv_motor_over_hot_fault: bool,
+    dc_main_wire_over_curr_fault: bool,
+    drv_motor_over_cool_fault: bool,
+    mcu_motor_system_state: bool,
+    mcu_temp_sensor_state: bool,
+    motor_temp_sensor_state: bool,
+    dc_volt_sensor_state: bool,
+    dc_low_volt_warning: bool,
+    mcu_12v_low_volt_warning: bool,
+    motor_stall_fault: bool,
+    motor_open_phase_fault: bool,
+    mcu_warning_level: MCUWarningLevel,
+    mcu_voltage: f32,
+    mcu_current: f32,
+    motor_phase_curr: f32,
+    debug_0: f32,
+    debug_1: f32,
+    debug_2: f32,
+    debug_3: f32,
 }
 
-impl CanReading for BMSReading1 {
-    fn id() -> Id {
-        Id::Standard(StandardId::new(0x03B).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        BMSReading1 {
-            time: Utc::now(),
-            current: i16::from_be_bytes([data[0], data[1]]),
-            inst_voltage: i16::from_be_bytes([data[2], data[3]]),
-        }
-    }
-    const SIZE: usize = 4;
-}
-
-impl Reading for BMSReading1 {
+impl Reading for TelemetryData {
     fn topic() -> &'static str {
-        "bms_reading1"
+        "telemetry"
     }
 }
 
-#[derive(InfluxDbWriteable, Serialize)]
-struct BMSReading2 {
-    time: DateTime<Utc>,
-    dlc: u8,
-    ccl: u8,
-    simulated_soc: u8,
-    high_temp: u8,
-    low_temp: u8,
+fn parse_bool(byte: u8) -> bool {
+    byte != 0
 }
 
-impl CanReading for BMSReading2 {
-    fn id() -> Id {
-        Id::Standard(StandardId::new(0x3CB).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        BMSReading2 {
-            time: Utc::now(),
-            dlc: data[0],
-            ccl: data[1],
-            simulated_soc: data[2],
-            high_temp: data[3],
-            low_temp: data[4],
-        }
-    }
-    const SIZE: usize = 5;
-}
-
-impl Reading for BMSReading2 {
-    fn topic() -> &'static str {
-        "bms_reading2"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct BMSReading3 {
-    time: DateTime<Utc>,
-    relay_state: u8,
-    soc: u8,
-    resistance: i16,
-    open_voltage: i16,
-    amphours: u8,
-    pack_health: u8,
-}
-
-impl CanReading for BMSReading3 {
-    fn id() -> Id {
-        Id::Standard(StandardId::new(0x6B2).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        BMSReading3 {
-            time: Utc::now(),
-            relay_state: data[0],
-            soc: data[1],
-            resistance: i16::from_be_bytes([data[2], data[3]]),
-            open_voltage: i16::from_be_bytes([data[4], data[5]]),
-            amphours: data[6],
-            pack_health: data[7],
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for BMSReading3 {
-    fn topic() -> &'static str {
-        "bms_reading3"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct LeftESCReading1 {
-    time: DateTime<Utc>,
-    speed_rpm: u16,
-    motor_current: u16,
-    battery_voltage: u16,
-    error_code: u16,
-}
-
-impl CanReading for LeftESCReading1 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11E06).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        LeftESCReading1 {
-            time: Utc::now(),
-            speed_rpm: u16::from_le_bytes([data[0], data[1]]),
-            motor_current: u16::from_le_bytes([data[2], data[3]]),
-            battery_voltage: u16::from_le_bytes([data[4], data[5]]),
-            error_code: u16::from_be_bytes([data[6], data[7]]),
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for LeftESCReading1 {
-    fn topic() -> &'static str {
-        "left_esc_reading1"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct LeftESCReading2 {
-    time: DateTime<Utc>,
-    throttle_signal: u8,
-    controller_temp: i8,
-    motor_temp: i8,
-    controller_status: u8,
-    switch_status: u8,
-}
-
-impl CanReading for LeftESCReading2 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11F06).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        LeftESCReading2 {
-            time: Utc::now(),
-            throttle_signal: data[0],
-            controller_temp: data[1] as i8 - 40,
-            motor_temp: data[2] as i8 - 30,
-            controller_status: data[5],
-            switch_status: data[6],
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for LeftESCReading2 {
-    fn topic() -> &'static str {
-        "left_esc_reading2"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct RightESCReading1 {
-    time: DateTime<Utc>,
-    speed_rpm: u16,
-    motor_current: u16,
-    battery_voltage: u16,
-    error_code: u16,
-}
-
-impl CanReading for RightESCReading1 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11E05).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        RightESCReading1 {
-            time: Utc::now(),
-            speed_rpm: u16::from_le_bytes([data[0], data[1]]),
-            motor_current: u16::from_le_bytes([data[2], data[3]]),
-            battery_voltage: u16::from_le_bytes([data[4], data[5]]),
-            error_code: u16::from_be_bytes([data[6], data[7]]),
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for RightESCReading1 {
-    fn topic() -> &'static str {
-        "right_esc_reading1"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct RightESCReading2 {
-    time: DateTime<Utc>,
-    throttle_signal: u8,
-    controller_temp: i8,
-    motor_temp: i8,
-    controller_status: u8,
-    switch_status: u8,
-}
-
-impl CanReading for RightESCReading2 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11F05).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        RightESCReading2 {
-            time: Utc::now(),
-            throttle_signal: data[0],
-            controller_temp: data[1] as i8 - 40,
-            motor_temp: data[2] as i8 - 30,
-            controller_status: data[5],
-            switch_status: data[6],
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for RightESCReading2 {
-    fn topic() -> &'static str {
-        "right_esc_reading2"
-    }
-}
-
-// this checks a reading against a specific CAN message, and sends to influx and MQTT if it matches
-async fn check_message<T: CanReading + Send + 'static>(id: Id, data: &[u8]) {
-    if T::id() == id {
-        if data.len() != T::SIZE {
-            eprintln!(
-                "Invalid data length for {}: {}",
-                type_name::<T>(),
-                data.len()
-            );
-            return;
-        }
-
-        let reading = T::construct(data);
-
-        send_message(reading).await;
-    }
-}
-
-// finds all new CAN messages and sends to a check_message function for every possible CAN message
 pub async fn read_can() {
     loop {
-        let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
-            eprintln!("Failed to open CAN socket, retrying...");
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        let Ok(socket) = IsoTpSocket::open(
+            CAN_INTERFACE,
+            StandardId::new(0x666).expect("Invalid src id"),
+            StandardId::new(0x777).expect("Invalid src id"),
+        ) else {
+            println!("Failed to open socket");
+            sleep(Duration::from_secs(1)).await;
             continue;
         };
-        while let Some(Ok(frame)) = sock.next().await {
-            let data = frame.data();
-            let id = frame.id();
 
-            check_message::<BMSReading1>(id, data).await;
-            check_message::<BMSReading2>(id, data).await;
-            check_message::<BMSReading3>(id, data).await;
-            check_message::<LeftESCReading1>(id, data).await;
-            check_message::<LeftESCReading2>(id, data).await;
-            check_message::<RightESCReading1>(id, data).await;
-            check_message::<RightESCReading2>(id, data).await;
+        while let Ok(packet) = socket.read_packet().await {
+            if packet.len() != 94 {
+                println!("Invalid packet length: {}", packet.len());
+                continue;
+            }
+            println!("[{}] Received packet: ", Utc::now());
+            for byte in &packet {
+                print!("{:02x} ", byte);
+            }
+            println!();
+            send_message(TelemetryData {
+                time: Utc::now(),
+                apps_travel: f32::from_le_bytes(packet[0..4].try_into().unwrap()),
+                bse_front_psi: f32::from_le_bytes(packet[4..8].try_into().unwrap()),
+                bse_rear_psi: f32::from_le_bytes(packet[8..12].try_into().unwrap()),
+                accumulator_voltage: f32::from_le_bytes(packet[12..16].try_into().unwrap()),
+                accumulator_temp_f: f32::from_le_bytes(packet[16..20].try_into().unwrap()),
+                motor_state: MotorState::from_byte(packet[20]),
+                motor_speed: f32::from_le_bytes(packet[21..25].try_into().unwrap()),
+                motor_torque: f32::from_le_bytes(packet[25..29].try_into().unwrap()),
+                max_motor_torque: f32::from_le_bytes(packet[29..33].try_into().unwrap()),
+                max_motor_brake_torque: f32::from_le_bytes(packet[33..37].try_into().unwrap()),
+                motor_direction: MotorRotateDirection::from_byte(packet[37]),
+                mcu_main_state: MCUMainState::from_byte(packet[38]),
+                mcu_work_mode: MCUWorkMode::from_byte(packet[39]),
+                motor_temp: i32::from_le_bytes(packet[40..44].try_into().unwrap()),
+                mcu_temp: i32::from_le_bytes(packet[44..48].try_into().unwrap()),
+                dc_main_wire_over_volt_fault: parse_bool(packet[48]),
+                motor_phase_curr_fault: parse_bool(packet[49]),
+                mcu_over_hot_fault: parse_bool(packet[50]),
+                resolver_fault: parse_bool(packet[51]),
+                phase_curr_sensor_fault: parse_bool(packet[52]),
+                motor_over_spd_fault: parse_bool(packet[53]),
+                drv_motor_over_hot_fault: parse_bool(packet[54]),
+                dc_main_wire_over_curr_fault: parse_bool(packet[55]),
+                drv_motor_over_cool_fault: parse_bool(packet[56]),
+                mcu_motor_system_state: parse_bool(packet[57]),
+                mcu_temp_sensor_state: parse_bool(packet[58]),
+                motor_temp_sensor_state: parse_bool(packet[59]),
+                dc_volt_sensor_state: parse_bool(packet[60]),
+                dc_low_volt_warning: parse_bool(packet[61]),
+                mcu_12v_low_volt_warning: parse_bool(packet[62]),
+                motor_stall_fault: parse_bool(packet[63]),
+                motor_open_phase_fault: parse_bool(packet[64]),
+                mcu_warning_level: MCUWarningLevel::from_byte(packet[65]),
+                mcu_voltage: f32::from_le_bytes(packet[66..70].try_into().unwrap()),
+                mcu_current: f32::from_le_bytes(packet[70..74].try_into().unwrap()),
+                motor_phase_curr: f32::from_le_bytes(packet[74..78].try_into().unwrap()),
+                debug_0: f32::from_le_bytes(packet[78..82].try_into().unwrap()),
+                debug_1: f32::from_le_bytes(packet[82..86].try_into().unwrap()),
+                debug_2: f32::from_le_bytes(packet[86..90].try_into().unwrap()),
+                debug_3: f32::from_le_bytes(packet[90..94].try_into().unwrap()),
+            })
+            .await;
         }
     }
 }

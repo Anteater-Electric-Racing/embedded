@@ -1,13 +1,13 @@
 use influxdb::{Client, InfluxDbWriteable};
-use once_cell::sync::Lazy;
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
+use std::sync::LazyLock;
 use tokio::time::Duration;
 
 pub const INFLUXDB_URL: &str = "http://127.0.0.1:8086";
-pub const INFLUXDB_DATABASE: &str = "fsae-raspi";
+pub const INFLUXDB_DATABASE: &str = "fsae";
 
-pub const MQTT_ID: &str = "fsae-raspi";
+pub const MQTT_ID: &str = "fsae";
 pub const MQTT_HOST: &str = "127.0.0.1";
 pub const MQTT_PORT: u16 = 1883;
 
@@ -15,11 +15,10 @@ pub trait Reading: InfluxDbWriteable + Serialize {
     fn topic() -> &'static str;
 }
 
-static INFLUX_CLIENT: Lazy<Client> = Lazy::new(|| {
-    Client::new(INFLUXDB_URL, INFLUXDB_DATABASE)
-});
+static INFLUX_CLIENT: LazyLock<Client> =
+    LazyLock::new(|| Client::new(INFLUXDB_URL, INFLUXDB_DATABASE));
 
-static MQTT_CLIENT: Lazy<AsyncClient> = Lazy::new(|| {
+static MQTT_CLIENT: LazyLock<AsyncClient> = LazyLock::new(|| {
     let mut mqttoptions = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
     mqttoptions.set_keep_alive(Duration::from_secs(5));
     let (mqtt_client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
@@ -32,6 +31,7 @@ static MQTT_CLIENT: Lazy<AsyncClient> = Lazy::new(|| {
             }
         }
     });
+
     mqtt_client
 });
 
@@ -44,6 +44,8 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
 
+    println!("Sending message: {}", json);
+
     if let Err(e) = MQTT_CLIENT
         .publish(T::topic(), QoS::AtLeastOnce, false, json)
         .await
@@ -51,9 +53,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         eprintln!("Failed to publish to MQTT: {}", e);
     }
 
-    tokio::spawn(async move {
-        if let Err(e) = INFLUX_CLIENT.query(message.into_query(T::topic())).await {
-            eprintln!("Failed to write to InfluxDB: {}", e);
-        }
-    });
+    if let Err(e) = INFLUX_CLIENT.query(message.into_query(T::topic())).await {
+        eprintln!("Failed to write to InfluxDB: {}", e);
+    }
 }
