@@ -1,21 +1,14 @@
+// Anteater Electric Racing, 2025
+
 #include <Arduino.h>
 #include <FreeRTOS.h>
 #include <stdint.h>
 #include "semphr.h"
 #include "precharge.h"
-#include "states.h"
-#include "moving-average.h"
+#include "utils.h"
 
 #define PRECHARGE_STACK_SIZE 512
 #define PRECHARGE_PRIORITY 3
-
-// Constants
-const uint32_t MIN_EXPECTED = 500U; // [ms] Minimum expected precharge time
-const uint32_t MAX_EXPECTED = 3000U; // [ms] Max expected precharge time, TODO: (can change later)
-const uint32_t TARGET_PERCENT = 90U; // TSV = 0.9 * ACV
-const uint32_t SETTLING_TIME = 200U; // [ms] Precharge amount must be over TARGET_PERCENT for this long before we consider precharge complete
-const uint32_t MIN_SDC_VOLTAGE = 11U; // [V] Minimum voltage for shutdown circuit
-const uint32_t WAIT_TIME = 200U; // [ms] Time to wait for stable voltage
 
 // Buffer for serial output
 char lineBuffer[50]; 
@@ -24,33 +17,50 @@ char lineBuffer[50];
 SemaphoreHandle_t stateMutex;
 
 // States (Global Variables)
-STATEVAR state = STATE_STANDBY;
-STATEVAR lastState = STATE_UNDEFINED;
+PrechargeState state = STATE_STANDBY;
+PrechargeState lastState = STATE_UNDEFINED;
 int errorCode = ERR_NONE;
 
-StatusLight statusLED[4] {{ STATUS_LED[0] },
-                          { STATUS_LED[1] },
-                          { STATUS_LED[2] },
-                          { STATUS_LED[3] }};
+float getFrequency(int pin){
+    const unsigned int TIMEOUT = 10000;
+    unsigned int tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
+    unsigned int tLow = pulseIn(pin, 0, TIMEOUT);
+    if (tHigh == 0 || tLow == 0){
+        return 0; // timed out
+    }
+    return ( 1000000.0 / (float)(tHigh + tLow) );    // f = 1/T
+}
+
+float getVoltage(int pin){
+    float rawFreq = getFrequency(pin);
+
+    LOWPASS_FILTER(rawFreq, filteredFreq, alpha);
+    
+    // still need to convert freq to voltage here
+    float voltage = (rawFreq / 1000.0F); // Assuming a linear conversion, adjust as needed
+
+    return voltage;
+}
 
 // Low pass filter
-static const float alpha = COMPUTE_ALPHA(1.0F); // 10Hz cutoff frequency for lowpass filter
-static float TSV_filt = 0.0F;   // filtered Transmission Side Voltage
-static float ACV_filt = 0.0F;   // filtered Accumulator Voltage
-static float SDC_filt = 0.0F;   // filtered Shutdown Circuit Voltage
+struct LowPassFilter {
+    static float alpha;
+    static float filteredFreq;
+    static float filtered_TSV;   // filtered Transmission Side Voltage
+    static float filtered_ACV;   // filtered Accumulator Voltage
+    static float filtered_SDC;   // filtered Shutdown Circuit Voltage
+};
+
 
 // Initialize mutex and precharge task
 void prechargeInit(){
     // Create mutex for PCC state
     stateMutex = xSemaphoreCreateMutex();
 
+    alpha = COMPUTE_ALPHA(1.0F); // 10Hz cutoff frequency for lowpass filter
+
     // Create precharge task
-    xTaskCreate(prechargeTask,          // Task function
-                "PrechargeTask",        // Task name
-                PRECHARGE_STACK_SIZE,   // Stack size
-                NULL,                   // Parameters
-                PRECHARGE_PRIORITY,     // Priority
-                NULL);                  // Task handle
+    xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL, PRECHARGE_PRIORITY, NULL);
 
     Serial.println("Precharge initialized");
 }
@@ -65,7 +75,7 @@ void prechargeTask(void *pvParameters){
     // Get current time
     xLastWakeTime = xTaskGetTickCount();
 
-    while (1){
+    while (true){
         Serial.println("In precharge task");
         if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE){
             switch(state){
@@ -102,13 +112,12 @@ void prechargeTask(void *pvParameters){
         }
         // Wait for next cycle
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
-        delay(1000);
     }
 }
 
 // Return current precharge state
-STATEVAR getPrechargeState(){
-    STATEVAR currentPrechargeState;
+PrechargeState getPrechargeState(){
+    PrechargeState currentPrechargeState;
 
     if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE){
         currentPrechargeState = state;
@@ -135,16 +144,14 @@ void standby(){
 static unsigned long epoch;
     if (lastState != STATE_STANDBY) {
         lastState = STATE_STANDBY;
-        statusLEDsOff();
-        statusLED[0].on();
-        Serial.println(" === STANDBY");
+        Serial.println(" === STANDBY ");
         Serial.println("* Waiting for stable shutdown circuit");
         epoch = millis(); // make sure to reset if we've circled back to standby
 
         // Reset moving averages
-        TSV_filt = 0.0F;
-        ACV_filt = 0.0F;
-        SDC_filt = 0.0F;
+        filtered_TSV = 0.0F;
+        filtered_ACV = 0.0F;
+        filtered_SDC = 0.0F;
     }
 
     // Disable AIR, Disable Precharge
@@ -152,12 +159,12 @@ static unsigned long epoch;
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
     // Sample the raw SDC voltage each cycle
-    //float rawSDC = getSDCvoltage(); // TODO: replace with function that returns raw SDC value
-    // LOWPASS_FILTER(rawSDC, SDC_filt, alpha); // Uncommment once done
+    float rawSDC = getSDCvoltage(); // TODO: replace with function that returns raw SDC value
+    LOWPASS_FILTER(rawSDC, filtered_SDC, alpha);
 
     // Check for stable shutdown circuit
-    if (SDC_filt >= MIN_SDC_VOLTAGE){
-        if (millis() > epoch + WAIT_TIME){
+    if (filtered_SDC >= PCC_MIN_SDC_VOLTAGE){
+        if (millis() > epoch + PCC_WAIT_TIME){
         state = STATE_PRECHARGE;
         }
     } else {
@@ -174,9 +181,7 @@ void precharge(){
     if (lastState != STATE_PRECHARGE){
         digitalWrite(PRECHARGE_CTRL_PIN, HIGH);
         lastState = STATE_PRECHARGE;
-        statusLEDsOff();
-        statusLED[1].on();
-        sprintf(lineBuffer, " === PRECHARGE   Target precharge %4.1f%%\n", TARGET_PERCENT);
+        sprintf(lineBuffer, " === PRECHARGE   Target precharge %4.1f%%\n", PCC_TARGET_PERCENT);
         Serial.print(lineBuffer);
         epoch = now;
         timePrechargeStart = now;
@@ -188,11 +193,11 @@ void precharge(){
     if (now > lastSample + samplePeriod){  // samplePeriod and movingAverage alpha value will affect moving average response.
         lastSample = now;
         // TODO: Fix this below to use the voltage-freq converter
-        // float rawACV = getACCvoltage();
-        // LOWPASS_FILTER(rawACV, ACV_filt, alpha);
+        float rawACV = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
+        LOWPASS_FILTER(rawACV, filtered_ACV, alpha);
     }
-    double acv = ACV_filt;
-    double tsv = TSV_filt;
+    double acv = filtered_ACV;
+    double tsv = filtered_TSV;
 
     // The precharge progress is a function of the accumulator voltage
     double prechargeProgress = 100.0 * tsv / acv; // [%]
@@ -201,19 +206,19 @@ void precharge(){
     static uint32_t lastPrint = 0U;
     if (now >= lastPrint + 100) {
         lastPrint = now;
-        sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, TSV_filt);
+        sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, filtered_TSV);
         Serial.print(lineBuffer);
     }
 
     // Check if precharge complete
-    if ( prechargeProgress >= TARGET_PERCENT ) {
+    if ( prechargeProgress >= PCC_TARGET_PERCENT ) {
         // Precharge complete
-        if (now > epoch + SETTLING_TIME){
+        if (now > epoch + PCC_SETTLING_TIME){
             state = STATE_ONLINE;
-            sprintf(lineBuffer, "* Precharge complete at: %2.0f%%   %5.1fV\n", prechargeProgress, TSV_filt);
+            sprintf(lineBuffer, "* Precharge complete at: %2.0f%%   %5.1fV\n", prechargeProgress, filtered_TSV);
             Serial.print(lineBuffer);
         }
-        else if (now < timePrechargeStart + MIN_EXPECTED && now > epoch + SETTLING_TIME) {    // Precharge too fast - something's wrong!
+        else if (now < timePrechargeStart + PCC_MIN_TIME_MS && now > epoch + PCC_MAX_TIME_MS) {    // Precharge too fast - something's wrong!
             state = STATE_ERROR;
             errorCode |= ERR_PRECHARGE_TOO_FAST;
         }
@@ -222,7 +227,7 @@ void precharge(){
         // Precharging
         epoch = now;
 
-        if (now > timePrechargeStart + MAX_EXPECTED) {       // Precharge too slow - something's wrong!
+        if (now > timePrechargeStart + PCC_MAX_TIME_MS) {       // Precharge too slow - something's wrong!
             state = STATE_ERROR;
             errorCode |= ERR_PRECHARGE_TOO_SLOW;
         }
@@ -237,8 +242,6 @@ void running(){
 
     if (lastState != STATE_ONLINE) {
         lastState = STATE_ONLINE;
-        statusLEDsOff();
-        statusLED[2].on();
         Serial.println(" === ONLINE");
         Serial.println("* Precharge complete, closing AIR+");
         epoch = now;
@@ -261,8 +264,6 @@ void errorState(){
 
     if (lastState != STATE_ERROR){
         lastState = STATE_ERROR;
-        statusLEDsOff();
-        statusLED[3].update(50,50); // Strobe STS LED
         Serial.println(" === ERROR");
 
         // Display errors: Serial and Status LEDs
@@ -271,26 +272,12 @@ void errorState(){
         }
         if (errorCode & ERR_PRECHARGE_TOO_FAST) {
         Serial.println("   *Precharge too fast. Suspect wiring fault / chatter in shutdown circuit.");
-        statusLED[0].on();
         }
         if (errorCode & ERR_PRECHARGE_TOO_SLOW) {
         Serial.println("   *Precharge too slow. Potential causes:\n   - Wiring fault\n   - Discharge is stuck-on\n   - Target precharge percent is too high");
-        statusLED[1].on();
         }
         if (errorCode & ERR_STATE_UNDEFINED) {
         Serial.println("   *State not defined in The State Machine.");
         }
     }
-}
-
-// Loop through the array and call update.
-void updateStatusLeds() {
-  for (uint8_t i=0; i<(sizeof(statusLED)/sizeof(*statusLED)); i++){
-    statusLED[i].update();
-  }
-}
-void statusLEDsOff() {
-  for (uint8_t i=0; i<(sizeof(statusLED)/sizeof(*statusLED)); i++){
-    statusLED[i].off();
-  }
 }
