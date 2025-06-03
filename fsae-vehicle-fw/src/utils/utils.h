@@ -76,3 +76,11 @@
 
 #define CHANGE_ENDIANESS_16(x) \
     (((x & 0xFF00) >> 8) | ((x & 0x00FF) << 8))
+
+#define MOTOR_DIRECTION_STANDBY 0
+#define MOTOR_DIRECTION_FORWARD 1
+#define MOTOR_DIRECTION_BACKWARD 2
+#define MOTOR_DIRECTION_ERROR 3
+
+#define MAX_REGEN_TORQUE -9.0F // TODO: test with higher value regen
+#define REGEN_BIAS 1 // Scale 0-1 of max regen torque
