@@ -139,7 +139,7 @@ pub async fn read_can() {
         };
 
         while let Ok(packet) = socket.read_packet().await {
-            if packet.len() != 108 {
+            if packet.len() != 94 {
                 println!("Invalid packet length: {}", packet.len());
                 continue;
             }
