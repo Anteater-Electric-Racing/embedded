@@ -36,6 +36,8 @@ void CAN_Init() {
     can3.setTX(DEF);
     can3.setRX(DEF);
     can3.enableFIFO();
+    // can3.enableFIFOInterrupt();
+    // can3.setMaxMB(16); // Set maximum message buffers to 16
 
     tp.begin();
     tp.setWriteBus(&can3); // Set the bus to write to can3
@@ -63,6 +65,6 @@ void CAN_ISOTP_Send(uint32_t id, uint8_t* msg, uint16_t size) {
     ISOTP_data config;
     config.id = id;
     config.flags.extended = 0; // Standard frame
-    config.separation_time = 10; // Time between back-to-back frames in milliseconds
+    config.separation_time = 1; // Time between back-to-back frames in milliseconds
     tp.write(config, msg, size);
 }

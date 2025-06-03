@@ -22,6 +22,46 @@ static MCU2Data mcu2Data;
 static MCU3Data mcu3Data;
 
 void MCU_Init() {
+    // Fill with reasonable dummy values
+    mcu1Data = {
+        .motorSpeed = 0.0F,
+        .motorTorque = 0.0F,
+        .maxMotorTorque = MOTOR_MAX_TORQUE, // Max torque in Nm
+        .maxMotorBrakeTorque = MOTOR_MAX_TORQUE, // Max brake torque in Nm
+        .motorDirection = DIRECTION_STANDBY,
+        .mcuMainState = STATE_STANDBY,
+        .mcuWorkMode = WORK_MODE_STANDBY
+    };
+
+    mcu2Data = {
+        .motorTemp = 25, // Default temperature in C
+        .mcuTemp = 25, // Default temperature in C
+        .dcMainWireOverVoltFault = false,
+        .motorPhaseCurrFault = false,
+        .mcuOverHotFault = false,
+        .resolverFault = false,
+        .phaseCurrSensorFault = false,
+        .motorOverSpdFault = false,
+        .drvMotorOverHotFault = false,
+        .dcMainWireOverCurrFault = false,
+        .drvMotorOverCoolFault = false,
+        .mcuMotorSystemState = false,
+        .mcuTempSensorState = false,
+        .motorTempSensorState = false,
+        .dcVoltSensorState = false,
+        .dcLowVoltWarning = false,
+        .mcu12VLowVoltWarning = false,
+        .motorStallFault = false,
+        .motorOpenPhaseFault = false,
+        .mcuWarningLevel = ERROR_NONE
+    };
+
+    mcu3Data = {
+        .mcuVoltage = 0.0F, // Default voltage in V
+        .mcuCurrent = 0.0F, // Default current in A
+        .motorPhaseCurr = 0.0F // Default phase current in A
+    };
+
     // Initialize the motor thread
     xTaskCreate(threadMCU, "threadMCU", THREAD_MCU_STACK_SIZE, NULL, THREAD_MCU_PRIORITY, NULL);
 }

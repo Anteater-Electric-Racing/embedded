@@ -1,6 +1,6 @@
 // Anteater Electric Racing, 2025
 
-#define THREAD_CAN_TELEMETRY_STACK_SIZE 128
+#define THREAD_CAN_TELEMETRY_STACK_SIZE 512
 #define THREAD_CAN_TELEMETRY_PRIORITY 2
 
 #define TELEMETRY_CAN_ID 0x666 // Example CAN ID for telemetry messages
@@ -15,7 +15,6 @@
 #include "peripherals/can.h"
 
 TelemetryData telemetryData;
-static TickType_t lastWakeTime;
 
 static void threadTelemetry(void *pvParameters);
 
@@ -59,16 +58,14 @@ void Telemetry_Init() {
         .mcuCurrent = 0.0F,
         .motorPhaseCurr = 0.0F,
     };
-}
 
-void Telemetry_Begin() {
     xTaskCreate(threadTelemetry, "threadTelemetry", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
 }
 
 void threadTelemetry(void *pvParameters){
-    while(true){
-        lastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
+    static TickType_t lastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
+    while(true){
         taskENTER_CRITICAL(); // Enter critical section
         telemetryData = {
             .APPS_Travel = APPS_GetAPPSReading(),
@@ -111,12 +108,12 @@ void threadTelemetry(void *pvParameters){
             .mcuCurrent = MCU_GetMCU3Data()->mcuCurrent,
             .motorPhaseCurr = MCU_GetMCU3Data()->motorPhaseCurr,
         };
+        taskEXIT_CRITICAL();
 
         uint8_t* serializedData = (uint8_t*) &telemetryData;
         CAN_ISOTP_Send(TELEMETRY_CAN_ID, serializedData, sizeof(TelemetryData));
 
-        taskEXIT_CRITICAL();
-        vTaskDelayUntil(&lastWakeTime, pdTICKS_TO_MS(TELEMETRY_PERIOD_MS)); // Delay until the next telemetry update
+        vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(TELEMETRY_PERIOD_MS)); // Delay until the next telemetry update
     }
 }
 

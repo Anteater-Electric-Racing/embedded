@@ -23,6 +23,8 @@
 #define TORQUE_STEP 1
 #define TORQUE_MAX_NM 20 // Maximum torque demand in Nm
 
+static TickType_t xLastWakeTime;
+
 void threadMain(void *pvParameters);
 
 void setup() { // runs once on bootup
@@ -37,13 +39,12 @@ void threadMain(void *pvParameters) {
     APPS_Init();
     BSE_Init();
     Faults_Init();
-    Telemetry_Init();
     MCU_Init();
-
     Motor_Init();
+    Telemetry_Init();
 
     float torqueDemand = 0;
-    TickType_t xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
+    xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
     bool enablePrecharge = false;
     bool enablePower = false;
@@ -146,38 +147,39 @@ void threadMain(void *pvParameters) {
         // Serial.print("      \n");
 
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        Serial.print("State: ");
-        Serial.print(MCU_GetMCU1Data()->mcuMainState);
-        Serial.print(" | ");
-        Serial.print("Internal State: ");
-        Serial.print(Motor_GetState());
-        Serial.print(" | ");
+        // Serial.print("State: ");
+        // Serial.print(MCU_GetMCU1Data()->mcuMainState);
+        // Serial.print(" | ");
+        // Serial.print("Internal State: ");
+        // Serial.print(Motor_GetState());
+        // Serial.print(" | ");
 
-        Serial.print("Torque: ");
-        Serial.print(torqueDemand);
-        Serial.print(" | ");
-        Serial.print("Mtr Speed: ");
-        Serial.print(MCU_GetMCU1Data()->motorSpeed);
+        // Serial.print("Torque: ");
+        // Serial.print(torqueDemand);
+        // Serial.print(" | ");
+        // Serial.print("Mtr Speed: ");
+        // Serial.print(MCU_GetMCU1Data()->motorSpeed);
 
-        // Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        Serial.print(" | ");
-        Serial.print("Battery Voltage: ");
-        Serial.print(MCU_GetMCU3Data()->mcuVoltage);
-        Serial.print(" | ");
-        Serial.print("B Curr: ");
-        Serial.print(MCU_GetMCU3Data()->mcuCurrent);
-        Serial.print(" | ");
-        Serial.print("P Curr: ");
-        Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
-        Serial.print(" | ");
-        Serial.print("MCU Warn Levl: ");
-        Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
-        Serial.print(" | ");
-        Serial.print("MCU Temp: ");
-        Serial.print(MCU_GetMCU2Data()->mcuTemp);
-        Serial.print(" | ");
-        Serial.print("Mtr Temp: ");
-        Serial.print(MCU_GetMCU2Data()->motorTemp);
+        // // Telemetry: Read battery current, phase current, motor speed, temperature(s)
+        // Serial.print(" | ");
+        // Serial.print("Battery Voltage: ");
+        // Serial.print(MCU_GetMCU3Data()->mcuVoltage);
+        // Serial.print(" | ");
+        // Serial.print("B Curr: ");
+        // Serial.print(MCU_GetMCU3Data()->mcuCurrent);
+        // Serial.print(" | ");
+        // Serial.print("P Curr: ");
+        // Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
+        // Serial.print(" | ");
+        // Serial.print("MCU Warn Levl: ");
+        // Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
+        // Serial.print(" | ");
+        // Serial.print("MCU Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->mcuTemp);
+        // Serial.print(" | ");
+        // Serial.print("Mtr Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->motorTemp);
+        // Serial.print("             \r");
 
         // Serial.print("Battery Current: ");
         // Serial.print(MCU_GetMCU3Data().mcuCurrent);
@@ -211,7 +213,6 @@ void threadMain(void *pvParameters) {
         // if (MCU_GetMCU2Data().motorStallFault) Serial.print("Motor Stall Fault, ");
         // if (MCU_GetMCU2Data().motorOpenPhaseFault) Serial.print("Motor Open Phase Fault, ");
 
-        Serial.print("             \r");
         Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun, enableRegen); // Update motor with the current torque demand
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
