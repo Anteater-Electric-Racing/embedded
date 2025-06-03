@@ -166,10 +166,10 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
             // torque is communicated as a percentage
             #if !SPEED_CONTROL_ENABLED
 
-            if (enableRegen && torqueDemand <= 0.0F && MCU_GetMCU1Data()->motorSpeed > 0.0F) {
-                // If regen is enabled and the torque demand is negative, we need to set the torque demand to 0
+            if (enableRegen && torqueDemand <= 0.0F && MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
+                // If regen is enabled and the torque demand is zero, we need to set the torque demand to 0
                 // to prevent the motor from applying torque in the wrong direction
-                motorData.desiredTorque = -6; // -6 is minimum torque demand for regen, TODO: make macro for driver bias
+                motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
             } else {
                 motorData.desiredTorque = torqueDemand;
             }

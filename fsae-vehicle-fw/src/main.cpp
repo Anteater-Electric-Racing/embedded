@@ -147,39 +147,43 @@ void threadMain(void *pvParameters) {
         // Serial.print("      \n");
 
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        // Serial.print("State: ");
-        // Serial.print(MCU_GetMCU1Data()->mcuMainState);
-        // Serial.print(" | ");
-        // Serial.print("Internal State: ");
-        // Serial.print(Motor_GetState());
-        // Serial.print(" | ");
+        Serial.print("C State: ");
+        Serial.print(MCU_GetMCU1Data()->mcuMainState);
+        Serial.print(" | ");
+        Serial.print("T State: ");
+        Serial.print(Motor_GetState());
+        Serial.print(" | ");
 
-        // Serial.print("Torque: ");
-        // Serial.print(torqueDemand);
-        // Serial.print(" | ");
-        // Serial.print("Mtr Speed: ");
-        // Serial.print(MCU_GetMCU1Data()->motorSpeed);
+        Serial.print("Torque: ");
+        Serial.print(torqueDemand);
+        Serial.print(" | ");
+        Serial.print("RPM: ");
+        Serial.print(MCU_GetMCU1Data()->motorSpeed);
 
-        // // Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        // Serial.print(" | ");
-        // Serial.print("Battery Voltage: ");
-        // Serial.print(MCU_GetMCU3Data()->mcuVoltage);
-        // Serial.print(" | ");
-        // Serial.print("B Curr: ");
-        // Serial.print(MCU_GetMCU3Data()->mcuCurrent);
-        // Serial.print(" | ");
-        // Serial.print("P Curr: ");
-        // Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
-        // Serial.print(" | ");
-        // Serial.print("MCU Warn Levl: ");
-        // Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
-        // Serial.print(" | ");
-        // Serial.print("MCU Temp: ");
-        // Serial.print(MCU_GetMCU2Data()->mcuTemp);
-        // Serial.print(" | ");
-        // Serial.print("Mtr Temp: ");
-        // Serial.print(MCU_GetMCU2Data()->motorTemp);
-        // Serial.print("             \r");
+        // Telemetry: Read battery current, phase current, motor speed, temperature(s)
+        Serial.print(" | ");
+        Serial.print("B Volt: ");
+        Serial.print(MCU_GetMCU3Data()->mcuVoltage);
+        Serial.print(" | ");
+        Serial.print("B Curr: ");
+        Serial.print(MCU_GetMCU3Data()->mcuCurrent);
+        Serial.print(" | ");
+        Serial.print("P Curr: ");
+        Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
+        Serial.print(" | ");
+        Serial.print("WarnLvl: ");
+        Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
+        Serial.print(" | ");
+        Serial.print("MCU Temp: ");
+        Serial.print(MCU_GetMCU2Data()->mcuTemp);
+        Serial.print(" | ");
+        Serial.print("Mtr Temp: ");
+        Serial.print(MCU_GetMCU2Data()->motorTemp);
+
+        Serial.print(" | ");
+        Serial.print("Regen: ");
+        Serial.print(enableRegen);
+
 
         // Serial.print("Battery Current: ");
         // Serial.print(MCU_GetMCU3Data().mcuCurrent);
