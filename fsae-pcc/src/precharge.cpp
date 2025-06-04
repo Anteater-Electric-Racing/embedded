@@ -38,22 +38,22 @@ float getFrequency(int pin){
 }
 
 float getVoltage(int pin){
-    float voltage = getFrequency(pin);
-    // float voltage = 0.0F;
+    float rawFreq = getFrequency(pin);
+    float voltage = 0.0F;
 
-    // switch (pin) {
-    //     case ACCUMULATOR_VOLTAGE_PIN:
-    //         LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.alpha);
-    //         voltage = (lpfValues.filtered_ACF / 1000.0F); // Assuming a linear conversion, adjust as needed
-    //         break;
-    //     case TS_VOLTAGE_PIN:
-    //         LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.alpha);
-    //         voltage = (lpfValues.filtered_TSF / 1000.0F); // Assuming a linear conversion, adjust as needed
-    //         break;
-    //     default:
-    //         Serial.println("Error: Invalid pin for voltage measurement.");
-    //         return 0.0F; // Handle error
-    // }
+    switch (pin) {
+        case ACCUMULATOR_VOLTAGE_PIN:
+            LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.alpha);
+            voltage = FREQ_TO_VOLTAGE(lpfValues.filtered_ACF); // Convert frequency to voltage
+            break;
+        case TS_VOLTAGE_PIN:
+            LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.alpha);
+            voltage = FREQ_TO_VOLTAGE(lpfValues.filtered_TSF); // Convert frequency to voltage
+            break;
+        default:
+            Serial.println("Error: Invalid pin for voltage measurement.");
+            return 0.0F; // Handle error
+    }
 
     return voltage;
 }
@@ -61,7 +61,7 @@ float getVoltage(int pin){
 // Initialize mutex and precharge task
 void prechargeInit(){
 
-    lpfValues.alpha = COMPUTE_ALPHA(10000.0F); // 10Hz cutoff frequency for lowpass filter
+    lpfValues.alpha = COMPUTE_ALPHA(10.0F); // 10Hz cutoff frequency for lowpass filter
 
     // Create precharge task
     xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL, PRECHARGE_PRIORITY, NULL);

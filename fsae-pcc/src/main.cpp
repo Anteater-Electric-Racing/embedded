@@ -37,9 +37,10 @@ void threadMain(void *pvParameters) {
         accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
         ts_voltage = getVoltage(TS_VOLTAGE_PIN);
         Serial.print("Accumulator Voltage: " + String(accumulator_voltage) + "V");
-        Serial.print(" | TS Voltage: " + String(ts_voltage) + "V | ");
-        Serial.print(FREQ_TO_VOLTAGE(ts_voltage));
-        Serial.print("\r");
+        Serial.print(" | TS Voltage: ");
+        Serial.print(ts_voltage, 4);
+        Serial.print("V");
+        Serial.print("\n");
         vTaskDelay(100);
     }
 }
