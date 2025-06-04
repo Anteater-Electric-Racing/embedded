@@ -61,7 +61,7 @@ float getVoltage(int pin){
 // Initialize mutex and precharge task
 void prechargeInit(){
 
-    lpfValues.alpha = COMPUTE_ALPHA(10.0F); // 10Hz cutoff frequency for lowpass filter
+    lpfValues.alpha = COMPUTE_ALPHA(50.0F); // 10Hz cutoff frequency for lowpass filter
 
     // Create precharge task
     xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL, PRECHARGE_PRIORITY, NULL);
@@ -75,7 +75,7 @@ void prechargeTask(void *pvParameters){
     // Stores the last time the last time task was ran
     TickType_t xLastWakeTime;
     // 10ms task freq
-    const TickType_t xFrequency = pdMS_TO_TICKS(10);
+    const TickType_t xFrequency = pdMS_TO_TICKS(1);
     // Get current time
     xLastWakeTime = xTaskGetTickCount();
 
