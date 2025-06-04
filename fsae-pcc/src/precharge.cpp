@@ -21,6 +21,13 @@ PrechargeState state = STATE_STANDBY;
 PrechargeState lastState = STATE_UNDEFINED;
 int errorCode = ERR_NONE;
 
+// Low pass filter
+struct LowPassFilter {
+    static float alpha;
+    static float filtered_TSF;   // filtered Transmission Side Frequency
+    static float filtered_ACF;   // filtered Accumulator Frequency
+} lpfValues;
+
 float getFrequency(int pin){
     const unsigned int TIMEOUT = 10000;
     unsigned int tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
@@ -33,31 +40,31 @@ float getFrequency(int pin){
 
 float getVoltage(int pin){
     float rawFreq = getFrequency(pin);
+    float voltage = 0.0F;
 
-    LOWPASS_FILTER(rawFreq, filteredFreq, alpha);
-    
-    // still need to convert freq to voltage here
-    float voltage = (rawFreq / 1000.0F); // Assuming a linear conversion, adjust as needed
+    switch (pin) {
+        case ACCUMULATOR_VOLTAGE_PIN:
+            LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.alpha);
+            voltage = (lpfValues.filtered_ACF / 1000.0F); // Assuming a linear conversion, adjust as needed
+            break;
+        case TS_VOLTAGE_PIN:
+            LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.alpha);
+            voltage = (lpfValues.filtered_TSF / 1000.0F); // Assuming a linear conversion, adjust as needed
+            break;
+        default:
+            Serial.println("Error: Invalid pin for voltage measurement.");
+            return 0.0F; // Handle error
+    }
 
     return voltage;
 }
-
-// Low pass filter
-struct LowPassFilter {
-    static float alpha;
-    static float filteredFreq;
-    static float filtered_TSV;   // filtered Transmission Side Voltage
-    static float filtered_ACV;   // filtered Accumulator Voltage
-    static float filtered_SDC;   // filtered Shutdown Circuit Voltage
-};
-
 
 // Initialize mutex and precharge task
 void prechargeInit(){
     // Create mutex for PCC state
     stateMutex = xSemaphoreCreateMutex();
 
-    alpha = COMPUTE_ALPHA(1.0F); // 10Hz cutoff frequency for lowpass filter
+    lpfValues.alpha = COMPUTE_ALPHA(1.0F); // 10Hz cutoff frequency for lowpass filter
 
     // Create precharge task
     xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL, PRECHARGE_PRIORITY, NULL);
@@ -104,8 +111,6 @@ void prechargeTask(void *pvParameters){
                     errorCode |= ERR_STATE_UNDEFINED;
                     errorState();
             }
-            // Update status
-            updateStatusLeds();
 
             // Give mutex after critical section
             xSemaphoreGive(stateMutex);
@@ -119,11 +124,10 @@ void prechargeTask(void *pvParameters){
 PrechargeState getPrechargeState(){
     PrechargeState currentPrechargeState;
 
-    if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE){
-        currentPrechargeState = state;
-        xSemaphoreGive(stateMutex);
-    }
-
+    taskENTER_CRITICAL(); // Ensure atomic access to state
+    currentPrechargeState = state;
+    taskEXIT_CRITICAL(); // Exit critical section
+    
     return currentPrechargeState;
 }
 
@@ -131,10 +135,9 @@ PrechargeState getPrechargeState(){
 int getPrechargeError(){
     int currentPrechargeError;
 
-    if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE){
-        currentPrechargeError = errorCode;
-        xSemaphoreGive(stateMutex);
-    }
+    taskENTER_CRITICAL(); // Ensure atomic access to error code
+    currentPrechargeError = errorCode;
+    taskEXIT_CRITICAL(); // Exit critical section
 
     return currentPrechargeError;
 }
@@ -148,22 +151,18 @@ static unsigned long epoch;
         Serial.println("* Waiting for stable shutdown circuit");
         epoch = millis(); // make sure to reset if we've circled back to standby
 
-        // Reset moving averages
-        filtered_TSV = 0.0F;
-        filtered_ACV = 0.0F;
-        filtered_SDC = 0.0F;
+        // Reset filtered values
+        lpfValues.filtered_TSF = 0.0F;
+        lpfValues.filtered_ACF = 0.0F;
     }
 
     // Disable AIR, Disable Precharge
-    digitalWrite(PRECHARGE_CTRL_PIN, LOW);
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
-    // Sample the raw SDC voltage each cycle
-    float rawSDC = getSDCvoltage(); // TODO: replace with function that returns raw SDC value
-    LOWPASS_FILTER(rawSDC, filtered_SDC, alpha);
+    float accVoltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
 
     // Check for stable shutdown circuit
-    if (filtered_SDC >= PCC_MIN_SDC_VOLTAGE){
+    if (accVoltage >= PCC_MIN_ACC_VOLTAGE) {
         if (millis() > epoch + PCC_WAIT_TIME){
         state = STATE_PRECHARGE;
         }
@@ -177,9 +176,9 @@ void precharge(){
     unsigned long now = millis();
     static unsigned long epoch;
     static unsigned long timePrechargeStart;
+    float accVoltage, tsVoltage;
 
-    if (lastState != STATE_PRECHARGE){
-        digitalWrite(PRECHARGE_CTRL_PIN, HIGH);
+    if (lastState != STATE_PRECHARGE) {
         lastState = STATE_PRECHARGE;
         sprintf(lineBuffer, " === PRECHARGE   Target precharge %4.1f%%\n", PCC_TARGET_PERCENT);
         Serial.print(lineBuffer);
@@ -192,33 +191,32 @@ void precharge(){
     static uint32_t lastSample = 0U;
     if (now > lastSample + samplePeriod){  // samplePeriod and movingAverage alpha value will affect moving average response.
         lastSample = now;
-        // TODO: Fix this below to use the voltage-freq converter
-        float rawACV = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
-        LOWPASS_FILTER(rawACV, filtered_ACV, alpha);
+
+        accVoltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
+
+        tsVoltage = getVoltage(TS_VOLTAGE_PIN); // Get raw transmission side voltage
     }
-    double acv = filtered_ACV;
-    double tsv = filtered_TSV;
 
     // The precharge progress is a function of the accumulator voltage
-    double prechargeProgress = 100.0 * tsv / acv; // [%]
+    double prechargeProgress = 100.0 * tsVoltage / accVoltage; // [%]
 
     // Print Precharging progress
     static uint32_t lastPrint = 0U;
     if (now >= lastPrint + 100) {
         lastPrint = now;
-        sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, filtered_TSV);
+        sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, tsVoltage);
         Serial.print(lineBuffer);
     }
 
     // Check if precharge complete
     if ( prechargeProgress >= PCC_TARGET_PERCENT ) {
         // Precharge complete
-        if (now > epoch + PCC_SETTLING_TIME){
+        if (now > epoch + PCC_SETTLING_TIME) {
             state = STATE_ONLINE;
-            sprintf(lineBuffer, "* Precharge complete at: %2.0f%%   %5.1fV\n", prechargeProgress, filtered_TSV);
+            sprintf(lineBuffer, "* Precharge complete at: %2.0f%%   %5.1fV\n", prechargeProgress, tsVoltage);
             Serial.print(lineBuffer);
         }
-        else if (now < timePrechargeStart + PCC_MIN_TIME_MS && now > epoch + PCC_MAX_TIME_MS) {    // Precharge too fast - something's wrong!
+        else if (now < timePrechargeStart + PCC_MIN_TIME_MS) {    // Precharge too fast - something's wrong!
             state = STATE_ERROR;
             errorCode |= ERR_PRECHARGE_TOO_FAST;
         }
@@ -236,30 +234,18 @@ void precharge(){
 
 // ONLINE STATE: Close AIR+ to connect ACC to TS, Open Precharge relay, indicate status
 void running(){
-    const uint32_t T_OVERLAP = 500U; // [ms] Time to overlap the switching of AIR and Precharge
-    static uint32_t epoch;
-    uint32_t now = millis();
-
     if (lastState != STATE_ONLINE) {
         lastState = STATE_ONLINE;
         Serial.println(" === ONLINE");
         Serial.println("* Precharge complete, closing AIR+");
-        epoch = now;
     }
 
     // Close AIR+
     digitalWrite(SHUTDOWN_CTRL_PIN, HIGH);
-    if (now > epoch + T_OVERLAP) digitalWrite(PRECHARGE_CTRL_PIN, LOW);
-
-    // Check for errors
-    if (errorCode != ERR_NONE){
-        state = STATE_ERROR;
-    }
 }
 
 // ERROR STATE: Indicate error, open AIRs and precharge relay
 void errorState(){
-    digitalWrite(PRECHARGE_CTRL_PIN, LOW);
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
     if (lastState != STATE_ERROR){

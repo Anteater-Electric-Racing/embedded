@@ -1,3 +1,5 @@
+// Anteater Electric Racing, 2025
+
 #include <Arduino.h>
 #include "gpio.h"
 #include "utils.h"

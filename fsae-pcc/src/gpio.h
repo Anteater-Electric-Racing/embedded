@@ -1,6 +1,5 @@
-#ifndef GPIO_INIT
-#define GPIO_INIT
+// Anteater Electric Racing, 2025
+
+#pragma once
 
 void gpioInit(void);
-
-#endif

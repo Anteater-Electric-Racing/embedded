@@ -12,6 +12,7 @@
 #include <Arduino.h>
 #include <arduino_freertos.h>
 #include "precharge.h"
+#include "gpio.h"
 
 void threadMain(void *pvParameters);
 void prechargeTask(void *pvParameters);
@@ -21,8 +22,9 @@ void monitorShutdownCircuitTask(void *pvParamters){
     while (true) {
         accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
         ts_voltage = getVoltage(TS_VOLTAGE_PIN);
-        Serial.println("Accumulator Voltage: " + String(accumulator_voltage) + "V");
-        Serial.println("TS Voltage: " + String(ts_voltage) + "V");
+        Serial.print("Accumulator Voltage: " + String(accumulator_voltage) + "V");
+        Serial.print(" | TS Voltage: " + String(ts_voltage) + "V");
+        Serial.print("\r");
         vTaskDelay(pdMS_TO_TICKS(1)); // Delay for 100ms before next reading
     }
 }
@@ -32,6 +34,8 @@ void setup() {
     delay(2000);
 
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+
+    gpioInit(); // Initialize GPIO pins
 
     prechargeInit(); // Initialize precharge system
 
