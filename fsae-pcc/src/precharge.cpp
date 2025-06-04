@@ -8,13 +8,10 @@
 #include "utils.h"
 
 #define PRECHARGE_STACK_SIZE 512
-#define PRECHARGE_PRIORITY 3
+#define PRECHARGE_PRIORITY 1
 
 // Buffer for serial output
 char lineBuffer[50]; 
-
-// Mutex to protect shared resource
-SemaphoreHandle_t stateMutex;
 
 // States (Global Variables)
 PrechargeState state = STATE_STANDBY;
@@ -22,11 +19,13 @@ PrechargeState lastState = STATE_UNDEFINED;
 int errorCode = ERR_NONE;
 
 // Low pass filter
-struct LowPassFilter {
-    static float alpha;
-    static float filtered_TSF;   // filtered Transmission Side Frequency
-    static float filtered_ACF;   // filtered Accumulator Frequency
-} lpfValues;
+typedef struct {
+    float alpha;
+    float filtered_TSF;   // filtered Transmission Side Frequency
+    float filtered_ACF;   // filtered Accumulator Frequency
+} LowPassFilter;
+
+static LowPassFilter lpfValues = {0.0F, 0.0F, 0.0F};
 
 float getFrequency(int pin){
     const unsigned int TIMEOUT = 10000;
@@ -39,32 +38,30 @@ float getFrequency(int pin){
 }
 
 float getVoltage(int pin){
-    float rawFreq = getFrequency(pin);
-    float voltage = 0.0F;
+    float voltage = getFrequency(pin);
+    // float voltage = 0.0F;
 
-    switch (pin) {
-        case ACCUMULATOR_VOLTAGE_PIN:
-            LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.alpha);
-            voltage = (lpfValues.filtered_ACF / 1000.0F); // Assuming a linear conversion, adjust as needed
-            break;
-        case TS_VOLTAGE_PIN:
-            LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.alpha);
-            voltage = (lpfValues.filtered_TSF / 1000.0F); // Assuming a linear conversion, adjust as needed
-            break;
-        default:
-            Serial.println("Error: Invalid pin for voltage measurement.");
-            return 0.0F; // Handle error
-    }
+    // switch (pin) {
+    //     case ACCUMULATOR_VOLTAGE_PIN:
+    //         LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.alpha);
+    //         voltage = (lpfValues.filtered_ACF / 1000.0F); // Assuming a linear conversion, adjust as needed
+    //         break;
+    //     case TS_VOLTAGE_PIN:
+    //         LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.alpha);
+    //         voltage = (lpfValues.filtered_TSF / 1000.0F); // Assuming a linear conversion, adjust as needed
+    //         break;
+    //     default:
+    //         Serial.println("Error: Invalid pin for voltage measurement.");
+    //         return 0.0F; // Handle error
+    // }
 
     return voltage;
 }
 
 // Initialize mutex and precharge task
 void prechargeInit(){
-    // Create mutex for PCC state
-    stateMutex = xSemaphoreCreateMutex();
 
-    lpfValues.alpha = COMPUTE_ALPHA(1.0F); // 10Hz cutoff frequency for lowpass filter
+    lpfValues.alpha = COMPUTE_ALPHA(10000.0F); // 10Hz cutoff frequency for lowpass filter
 
     // Create precharge task
     xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL, PRECHARGE_PRIORITY, NULL);
@@ -83,38 +80,36 @@ void prechargeTask(void *pvParameters){
     xLastWakeTime = xTaskGetTickCount();
 
     while (true){
-        Serial.println("In precharge task");
-        if (xSemaphoreTake(stateMutex, portMAX_DELAY) == pdTRUE){
-            switch(state){
-                case STATE_STANDBY:
-                    Serial.println("In standby state");
-                    standby();
-                    break;
+        // taskENTER_CRITICAL(); // Ensure atomic access to state
+        switch(state){
+            case STATE_STANDBY:
+                // Serial.println("In standby state");
+                standby();
+                break;
 
-                case STATE_PRECHARGE:
-                    Serial.println("In precharge state");
-                    precharge();
-                    break;
+            case STATE_PRECHARGE:
+                Serial.println("In precharge state");
+                precharge();
+                break;
 
-                case STATE_ONLINE:
-                    Serial.println("In online state");
-                    running();
-                    break;
+            case STATE_ONLINE:
+                Serial.println("In online state");
+                running();
+                break;
 
-                case STATE_ERROR:
-                    Serial.println("In error state");
-                    errorState();
-                    break;
+            case STATE_ERROR:
+                Serial.println("In error state");
+                errorState();
+                break;
 
-                default: // Undefined state
-                    state = STATE_ERROR;
-                    errorCode |= ERR_STATE_UNDEFINED;
-                    errorState();
-            }
+            default: // Undefined state
+                state = STATE_ERROR;
+                errorCode |= ERR_STATE_UNDEFINED;
+                errorState();
 
-            // Give mutex after critical section
-            xSemaphoreGive(stateMutex);
         }
+        // taskEXIT_CRITICAL(); // Exit critical section
+
         // Wait for next cycle
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
@@ -176,12 +171,12 @@ void precharge(){
     unsigned long now = millis();
     static unsigned long epoch;
     static unsigned long timePrechargeStart;
-    float accVoltage, tsVoltage;
+    float accVoltage = 0.0F;
+    float tsVoltage = 0.0F;
 
     if (lastState != STATE_PRECHARGE) {
         lastState = STATE_PRECHARGE;
-        sprintf(lineBuffer, " === PRECHARGE   Target precharge %4.1f%%\n", PCC_TARGET_PERCENT);
-        Serial.print(lineBuffer);
+        Serial.printf(" === PRECHARGE   Target precharge %4.1f%%\n", PCC_TARGET_PERCENT);
         epoch = now;
         timePrechargeStart = now;
     }

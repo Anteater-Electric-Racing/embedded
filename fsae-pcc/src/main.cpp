@@ -13,25 +13,13 @@
 #include <arduino_freertos.h>
 #include "precharge.h"
 #include "gpio.h"
+#include "utils.h"
 
-void threadMain(void *pvParameters);
-void prechargeTask(void *pvParameters);
-
-void monitorShutdownCircuitTask(void *pvParamters){
-    float accumulator_voltage, ts_voltage;
-    while (true) {
-        accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
-        ts_voltage = getVoltage(TS_VOLTAGE_PIN);
-        Serial.print("Accumulator Voltage: " + String(accumulator_voltage) + "V");
-        Serial.print(" | TS Voltage: " + String(ts_voltage) + "V");
-        Serial.print("\r");
-        vTaskDelay(pdMS_TO_TICKS(1)); // Delay for 100ms before next reading
-    }
-}
+static void threadMain(void *pvParameters);
+static void prechargeTask(void *pvParameters);
 
 void setup() {
     Serial.begin(9600);
-    delay(2000);
 
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
 
@@ -39,15 +27,20 @@ void setup() {
 
     prechargeInit(); // Initialize precharge system
 
-    xTaskCreate(monitorShutdownCircuitTask, "MonitorShutdownCircuitTask", SHUTDOWN_CIRCUIT_STACK_SIZE, NULL, SHUTDOWN_CIRCUIT_PRIORITY, NULL);
-
     vTaskStartScheduler();
 }
 
 void threadMain(void *pvParameters) {
+    float accumulator_voltage = 0.0F;
+    float ts_voltage = 0.0F;
     while (true) {
-        // Serial.println("Thead main running");
-        // delay(1000); // Simulate some work
+        accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
+        ts_voltage = getVoltage(TS_VOLTAGE_PIN);
+        Serial.print("Accumulator Voltage: " + String(accumulator_voltage) + "V");
+        Serial.print(" | TS Voltage: " + String(ts_voltage) + "V | ");
+        Serial.print(FREQ_TO_VOLTAGE(ts_voltage));
+        Serial.print("\r");
+        vTaskDelay(100);
     }
 }
 
