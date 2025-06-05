@@ -6,6 +6,7 @@
 #include "semphr.h"
 #include "precharge.h"
 #include "utils.h"
+#include "can.h"
 
 #define PRECHARGE_STACK_SIZE 512
 #define PRECHARGE_PRIORITY 1
@@ -18,10 +19,15 @@ PrechargeState state = STATE_STANDBY;
 PrechargeState lastState = STATE_UNDEFINED;
 int errorCode = ERR_NONE;
 
+// Voltage measurements
+static float accVoltage = 0.0F;
+static float tsVoltage = 0.0F;
+static double prechargeProgress = 0.0F;
+
 // Low pass filter
 typedef struct {
     float alpha;
-    float filtered_TSF;   // filtered Transmission Side Frequency
+    float filtered_TSF;   // filtered tractive system Frequency
     float filtered_ACF;   // filtered Accumulator Frequency
 } LowPassFilter;
 
@@ -110,31 +116,12 @@ void prechargeTask(void *pvParameters){
         }
         // taskEXIT_CRITICAL(); // Exit critical section
 
+        // Send CAN message of current PCC state
+        CAN_SendPCCMessage(millis(), state, errorCode, accVoltage, tsVoltage, prechargeProgress);
+
         // Wait for next cycle
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
-}
-
-// Return current precharge state
-PrechargeState getPrechargeState(){
-    PrechargeState currentPrechargeState;
-
-    taskENTER_CRITICAL(); // Ensure atomic access to state
-    currentPrechargeState = state;
-    taskEXIT_CRITICAL(); // Exit critical section
-    
-    return currentPrechargeState;
-}
-
-// Obtain current error information
-int getPrechargeError(){
-    int currentPrechargeError;
-
-    taskENTER_CRITICAL(); // Ensure atomic access to error code
-    currentPrechargeError = errorCode;
-    taskEXIT_CRITICAL(); // Exit critical section
-
-    return currentPrechargeError;
 }
 
 // STANDBY STATE: Open AIRs, Open Precharge, indicate status, wait for stable SDC
@@ -171,8 +158,6 @@ void precharge(){
     unsigned long now = millis();
     static unsigned long epoch;
     static unsigned long timePrechargeStart;
-    float accVoltage = 0.0F;
-    float tsVoltage = 0.0F;
 
     if (lastState != STATE_PRECHARGE) {
         lastState = STATE_PRECHARGE;
@@ -189,11 +174,11 @@ void precharge(){
 
         accVoltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
 
-        tsVoltage = getVoltage(TS_VOLTAGE_PIN); // Get raw transmission side voltage
+        tsVoltage = getVoltage(TS_VOLTAGE_PIN); // Get raw tractive system voltage
     }
 
     // The precharge progress is a function of the accumulator voltage
-    double prechargeProgress = 100.0 * tsVoltage / accVoltage; // [%]
+    prechargeProgress = 100.0 * tsVoltage / accVoltage; // [%]
 
     // Print Precharging progress
     static uint32_t lastPrint = 0U;
@@ -261,4 +246,36 @@ void errorState(){
         Serial.println("   *State not defined in The State Machine.");
         }
     }
+}
+
+float getTSVoltage(){
+    // Get the tractive system voltage
+    return tsVoltage;
+}
+
+float getAccumulatorVoltage(){
+    // Get the accumulator voltage
+    return accVoltage;
+}
+
+// Return current precharge state
+PrechargeState getPrechargeState(){
+    PrechargeState currentPrechargeState;
+
+    taskENTER_CRITICAL(); // Ensure atomic access to state
+    currentPrechargeState = state;
+    taskEXIT_CRITICAL(); // Exit critical section
+    
+    return currentPrechargeState;
+}
+
+// Obtain current error information
+int getPrechargeError(){
+    int currentPrechargeError;
+
+    taskENTER_CRITICAL(); // Ensure atomic access to error code
+    currentPrechargeError = errorCode;
+    taskEXIT_CRITICAL(); // Exit critical section
+
+    return currentPrechargeError;
 }

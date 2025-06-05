@@ -14,9 +14,9 @@
 #include "precharge.h"
 #include "gpio.h"
 #include "utils.h"
+#include "can.h"
 
 static void threadMain(void *pvParameters);
-static void prechargeTask(void *pvParameters);
 
 void setup() {
     Serial.begin(9600);
@@ -24,6 +24,8 @@ void setup() {
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
 
     gpioInit(); // Initialize GPIO pins
+
+    CAN_Init(); // Initialize CAN bus
 
     prechargeInit(); // Initialize precharge system
 
@@ -34,8 +36,8 @@ void threadMain(void *pvParameters) {
     float accumulator_voltage = 0.0F;
     float ts_voltage = 0.0F;
     while (true) {
-        accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
-        ts_voltage = getVoltage(TS_VOLTAGE_PIN);
+        accumulator_voltage = getAccumulatorVoltage();
+        ts_voltage = getTSVoltage();
         Serial.print("Accumulator Voltage: " + String(accumulator_voltage) + "V");
         Serial.print(" | TS Voltage: ");
         Serial.print(ts_voltage, 4);
