@@ -11,9 +11,6 @@
 #define PRECHARGE_STACK_SIZE 512
 #define PRECHARGE_PRIORITY 1
 
-// Buffer for serial output
-char lineBuffer[50]; 
-
 // States (Global Variables)
 PrechargeState state = STATE_STANDBY;
 PrechargeState lastState = STATE_UNDEFINED;
@@ -32,6 +29,8 @@ typedef struct {
 } LowPassFilter;
 
 static LowPassFilter lpfValues = {0.0F, 0.0F, 0.0F};
+
+static void prechargeTask(void *pvParameters);
 
 float getFrequency(int pin){
     const unsigned int TIMEOUT = 10000;
@@ -184,8 +183,13 @@ void precharge(){
     static uint32_t lastPrint = 0U;
     if (now >= lastPrint + 100) {
         lastPrint = now;
-        sprintf(lineBuffer, "%5lums %4.1f%%   %5.1fV\n", now-timePrechargeStart, prechargeProgress, tsVoltage);
-        Serial.print(lineBuffer);
+        Serial.print("Precharging: ");
+        Serial.print(now - timePrechargeStart);
+        Serial.print("ms, ");
+        Serial.print(prechargeProgress, 1);
+        Serial.print("%, ");
+        Serial.print(tsVoltage, 1);
+        Serial.print("V\n");
     }
 
     // Check if precharge complete
@@ -193,8 +197,11 @@ void precharge(){
         // Precharge complete
         if (now > epoch + PCC_SETTLING_TIME) {
             state = STATE_ONLINE;
-            sprintf(lineBuffer, "* Precharge complete at: %2.0f%%   %5.1fV\n", prechargeProgress, tsVoltage);
-            Serial.print(lineBuffer);
+            Serial.print(" * Precharge complete at: ");
+            Serial.print(prechargeProgress, 1);
+            Serial.print("%   ");
+            Serial.print(tsVoltage, 1);
+            Serial.print("V\n");
         }
         else if (now < timePrechargeStart + PCC_MIN_TIME_MS) {    // Precharge too fast - something's wrong!
             state = STATE_ERROR;

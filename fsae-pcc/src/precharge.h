@@ -32,8 +32,6 @@ enum {
     ERR_STATE_UNDEFINED = 0b10000000,
 };
 
-static void prechargeTask(void *pvParameters);
-
 float getFrequency(int pin);
 float getVoltage(int pin);
 
@@ -44,7 +42,6 @@ void running();
 void errorState();
 void updateStatusLeds();
 void statusLEDsOff();
-void prechargeTask(void *pvParameters);
 
 float getTSVoltage();
 float getAccumulatorVoltage();
