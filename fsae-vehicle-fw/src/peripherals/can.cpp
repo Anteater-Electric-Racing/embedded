@@ -7,6 +7,7 @@
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
+#include "peripherals/bms.h"
 #include "utils/utils.h"
 
 #include "vehicle/motor.h"
@@ -15,6 +16,8 @@
 #define CAN_BAUD_RATE 500000
 #define VCU1_ID 0x101
 #define VCU1_LEN 8 // bytes
+#define BMS_ID 0x6B0
+
 
 typedef struct __attribute__((packed)) {
     uint64_t TorqueReq : 8;
@@ -54,6 +57,24 @@ void CAN_Init() {
     can3.enableFIFOInterrupt();
     can3.enableMBInterrupts();
     can3.setMaxMB(16);
+}
+
+void CAN_ReceiveMessage() {
+    if (can3.read(rx_msg)) {
+        switch (rx_msg.id) {
+            case 0x6B0:
+                BMS_UpdateData1(rx_msg.buf);
+                break;
+            case 0x6B1:
+                BMS_UpdateData2(rx_msg.buf);
+                break;
+            case 0x6B2:
+                BMS_UpdateData3(rx_msg.buf);
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 void CAN_SendVCU1Message(float torqueValue)
