@@ -44,6 +44,20 @@ void CAN_SendPCCMessage(uint32_t timestamp, uint8_t state, uint8_t errorCode, fl
         .prechargeProgress = prechargeProgress
     };
 
+    // Serial.print("PCC Message: ");
+    // Serial.print("Timestamp: ");
+    // Serial.print(pccData.timestamp);
+    // Serial.print(", State: ");
+    // Serial.print(pccData.state);
+    // Serial.print(", Error Code: ");
+    // Serial.print(pccData.errorCode);
+    // Serial.print(" | ACCV: ");
+    // Serial.print(pccData.accumulatorVoltage);
+    // Serial.print(" | TSV: ");
+    // Serial.print(pccData.tsVoltage);
+    // Serial.print(" | Progress: ");
+    // Serial.println(pccData.prechargeProgress);
+
     memcpy(pccMsg.buf, &pccData, sizeof(PCC));
     can1.write(pccMsg);
 }

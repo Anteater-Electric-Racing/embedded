@@ -140,8 +140,10 @@ static unsigned long epoch;
     // Disable AIR, Disable Precharge
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
-    float accVoltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
-
+    float acv = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
+    Serial.print("Accumulator Voltage: ");
+    Serial.print(acv);
+    Serial.println(" V");
     // Check for stable shutdown circuit
     if (accVoltage >= PCC_MIN_ACC_VOLTAGE) {
         if (millis() > epoch + PCC_WAIT_TIME){

@@ -25,7 +25,7 @@ void setup() {
 
     gpioInit(); // Initialize GPIO pins
 
-    CAN_Init(); // Initialize CAN bus
+    // CAN_Init(); // Initialize CAN bus
 
     prechargeInit(); // Initialize precharge system
 
@@ -35,14 +35,38 @@ void setup() {
 void threadMain(void *pvParameters) {
     float accumulator_voltage = 0.0F;
     float ts_voltage = 0.0F;
+    PrechargeState state = STATE_UNDEFINED;
     while (true) {
-        accumulator_voltage = getAccumulatorVoltage();
-        ts_voltage = getTSVoltage();
-        Serial.print("Accumulator Voltage: " + String(accumulator_voltage) + "V");
+        // accumulator_voltage = getAccumulatorVoltage();
+        // ts_voltage = getTSVoltage();
+        accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
+        ts_voltage = getVoltage(TS_VOLTAGE_PIN);
+        state = getPrechargeState();
+
+        Serial.print("State: ");
+        switch (state) {
+            case STATE_STANDBY:
+                Serial.print("STANDBY");
+                break;
+            case STATE_PRECHARGE:
+                Serial.print("PRECHARGE");
+                break;
+            case STATE_ONLINE:
+                Serial.print("ONLINE");
+                break;
+            case STATE_ERROR:
+                Serial.print("ERROR");
+                break;
+            default:
+                Serial.print("UNDEFINED");
+                break;
+        }
+        
+        Serial.print(" | Accumulator Voltage: " + String(accumulator_voltage) + "V");
         Serial.print(" | TS Voltage: ");
         Serial.print(ts_voltage, 4);
         Serial.print("V");
-        Serial.print("\n");
+        Serial.print("\r");
         vTaskDelay(100);
     }
 }
