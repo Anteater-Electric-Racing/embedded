@@ -1,6 +1,6 @@
 // Anteater Electric Racing, 2025
 
-#define THREAD_MAIN_STACK_SIZE 128
+#define THREAD_MAIN_STACK_SIZE 512
 #define THREAD_MAIN_PRIORITY 1
 
 #define PRECHARGE_PRIORITY 3
@@ -36,11 +36,14 @@ void threadMain(void *pvParameters) {
     float accumulator_voltage = 0.0F;
     float ts_voltage = 0.0F;
     PrechargeState state = STATE_UNDEFINED;
+    int i = 0;
     while (true) {
+        i++;
+        digitalWrite(13, HIGH); // Blink the built-in LED
         // accumulator_voltage = getAccumulatorVoltage();
         // ts_voltage = getTSVoltage();
-        accumulator_voltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN);
-        ts_voltage = getVoltage(TS_VOLTAGE_PIN);
+        accumulator_voltage = getAccumulatorVoltage();
+        ts_voltage = getTSVoltage();
         state = getPrechargeState();
 
         Serial.print("State: ");
@@ -61,11 +64,13 @@ void threadMain(void *pvParameters) {
                 Serial.print("UNDEFINED");
                 break;
         }
-        
-        Serial.print(" | Accumulator Voltage: " + String(accumulator_voltage) + "V");
+        Serial.print(" | Accumulator Voltage: ");
+        Serial.print(accumulator_voltage, 4);
+        Serial.print("V");
         Serial.print(" | TS Voltage: ");
         Serial.print(ts_voltage, 4);
         Serial.print("V");
+        Serial.print(i);
         Serial.print("\r");
         vTaskDelay(100);
     }

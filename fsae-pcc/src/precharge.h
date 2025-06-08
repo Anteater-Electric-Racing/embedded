@@ -12,7 +12,7 @@
 #define PCC_MAX_TIME_MS 3000U // [ms] Maximum time to wait for precharge to complete
 #define PCC_TARGET_PERCENT 90U // Target precharge percent
 #define PCC_SETTLING_TIME 200U // [ms] Time to wait for precharge to settle
-#define PCC_MIN_ACC_VOLTAGE 100U // [V] Minimum voltage for shutdown circuit
+#define PCC_MIN_ACC_VOLTAGE 1U // [V] Minimum voltage for shutdown circuit
 #define PCC_WAIT_TIME 200U // [ms] Time to wait for stable voltage
 
 enum PrechargeState {

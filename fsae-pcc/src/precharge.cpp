@@ -33,7 +33,7 @@ static LowPassFilter lpfValues = {0.0F, 0.0F, 0.0F};
 static void prechargeTask(void *pvParameters);
 
 float getFrequency(int pin){
-    const unsigned int TIMEOUT = 10000;
+    const unsigned int TIMEOUT = 1000;
     unsigned int tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
     unsigned int tLow = pulseIn(pin, 0, TIMEOUT);
     if (tHigh == 0 || tLow == 0){
@@ -48,10 +48,12 @@ float getVoltage(int pin){
 
     switch (pin) {
         case ACCUMULATOR_VOLTAGE_PIN:
+            if(rawFreq == 0.0F) rawFreq = lpfValues.filtered_ACF;
             LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.alpha);
             voltage = FREQ_TO_VOLTAGE(lpfValues.filtered_ACF); // Convert frequency to voltage
             break;
         case TS_VOLTAGE_PIN:
+            if(rawFreq == 0.0F) rawFreq = lpfValues.filtered_TSF;
             LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.alpha);
             voltage = FREQ_TO_VOLTAGE(lpfValues.filtered_TSF); // Convert frequency to voltage
             break;
@@ -84,26 +86,26 @@ void prechargeTask(void *pvParameters){
     // Get current time
     xLastWakeTime = xTaskGetTickCount();
 
+
     while (true){
+        accVoltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
+        tsVoltage = getVoltage(TS_VOLTAGE_PIN); // Get raw tractive system voltage
+
         // taskENTER_CRITICAL(); // Ensure atomic access to state
         switch(state){
             case STATE_STANDBY:
-                // Serial.println("In standby state");
                 standby();
                 break;
 
             case STATE_PRECHARGE:
-                Serial.println("In precharge state");
                 precharge();
                 break;
 
             case STATE_ONLINE:
-                Serial.println("In online state");
                 running();
                 break;
 
             case STATE_ERROR:
-                Serial.println("In error state");
                 errorState();
                 break;
 
@@ -116,7 +118,7 @@ void prechargeTask(void *pvParameters){
         // taskEXIT_CRITICAL(); // Exit critical section
 
         // Send CAN message of current PCC state
-        CAN_SendPCCMessage(millis(), state, errorCode, accVoltage, tsVoltage, prechargeProgress);
+        // CAN_SendPCCMessage(millis(), state, errorCode, accVoltage, tsVoltage, prechargeProgress);
 
         // Wait for next cycle
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
@@ -140,10 +142,11 @@ static unsigned long epoch;
     // Disable AIR, Disable Precharge
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
-    float acv = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
-    Serial.print("Accumulator Voltage: ");
-    Serial.print(acv);
-    Serial.println(" V");
+    // accVoltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
+    // tsVoltage = getVoltage(TS_VOLTAGE_PIN); // Get raw tractive system voltage
+    // Serial.print("Accumulator Voltage: ");
+    // Serial.print(acv);
+    // Serial.println(" V");
     // Check for stable shutdown circuit
     if (accVoltage >= PCC_MIN_ACC_VOLTAGE) {
         if (millis() > epoch + PCC_WAIT_TIME){
@@ -274,7 +277,7 @@ PrechargeState getPrechargeState(){
     taskENTER_CRITICAL(); // Ensure atomic access to state
     currentPrechargeState = state;
     taskEXIT_CRITICAL(); // Exit critical section
-    
+
     return currentPrechargeState;
 }
 
