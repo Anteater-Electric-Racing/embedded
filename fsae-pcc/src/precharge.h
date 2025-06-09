@@ -32,16 +32,7 @@ enum {
     ERR_STATE_UNDEFINED = 0b10000000,
 };
 
-float getFrequency(int pin);
-float getVoltage(int pin);
-
 void prechargeInit();
-void standby();
-void precharge();
-void running();
-void errorState();
-void updateStatusLeds();
-void statusLEDsOff();
 
 float getTSVoltage();
 float getAccumulatorVoltage();
