@@ -98,10 +98,11 @@ void prechargeTask(void *pvParameters){
 }
 
 float getFrequency(int pin){
-    const unsigned int TIMEOUT = 700;
+    const unsigned int TIMEOUT = 7000;
     unsigned int tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
     unsigned int tLow = pulseIn(pin, 0, TIMEOUT);
     if (tHigh == 0 || tLow == 0){
+        Serial.println("PulseIn timed out ");
         return 0; // timed out
     }
     return ( 1000000.0 / (float)(tHigh + tLow) );    // f = 1/T
@@ -118,13 +119,13 @@ void updateVoltage(int pin){
                 pcData.accVoltage = rawVoltage;
                 break;
             }
-            if(rawVoltage == 0.0F) rawVoltage = pcData.accVoltage;
+            // if(rawVoltage == 0.0F) rawVoltage = pcData.accVoltage;
             LOWPASS_FILTER(rawVoltage, pcData.accVoltage, pcData.accAlpha);
             break;
         }
         case TS_VOLTAGE_PIN:
         {
-            if(rawVoltage == 0.0F) rawVoltage = pcData.tsVoltage;
+            // if(rawVoltage == 0.0F) rawVoltage = pcData.tsVoltage;
             LOWPASS_FILTER(rawVoltage, pcData.tsVoltage, pcData.tsAlpha);
             break;
         }
@@ -169,25 +170,27 @@ void precharge(){
         Serial.print(pcData.prechargeProgress, 1);
         Serial.print("%, ");
         Serial.print(pcData.tsVoltage, 1);
-        Serial.print("V\n");
+        Serial.print("V\r");
     }
 
     // Check if precharge complete
-    if ( (pcData.prechargeProgress >= PCC_TARGET_PERCENT ) && ((now - lastTimeBelowThreshold) > TIME_HYSTERESIS_MS)) {
-        if (now < timePrechargeStart + PCC_MIN_TIME_MS) { // Precharge too fast - something's wrong!
-            state = STATE_ERROR;
-            errorCode |= ERR_PRECHARGE_TOO_FAST;
-        }
-        // Precharge complete
-        else {
-            state = STATE_ONLINE;
-            Serial.print(" * Precharge complete at: ");
-            Serial.print(now - timePrechargeStart);
-            Serial.print("ms, ");
-            Serial.print(pcData.prechargeProgress, 1);
-            Serial.print("%   ");
-            Serial.print(pcData.tsVoltage, 1);
-            Serial.print("V\n");
+    if ( ( pcData.prechargeProgress >= PCC_TARGET_PERCENT ) ) {
+        if( now - lastTimeBelowThreshold > TIME_HYSTERESIS_MS ) {
+            if (now < timePrechargeStart + PCC_MIN_TIME_MS) { // Precharge too fast - something's wrong!
+                state = STATE_ERROR;
+                errorCode |= ERR_PRECHARGE_TOO_FAST;
+            }
+            // Precharge complete
+            else {
+                state = STATE_ONLINE;
+                Serial.print(" * Precharge complete at: ");
+                Serial.print(now - timePrechargeStart);
+                Serial.print("ms, ");
+                Serial.print(pcData.prechargeProgress, 1);
+                Serial.print("%   ");
+                Serial.print(pcData.tsVoltage, 1);
+                Serial.print("V\n");
+            }
         }
     } else {
         if (now > timePrechargeStart + PCC_MAX_TIME_MS) {       // Precharge too slow - something's wrong!
@@ -197,10 +200,10 @@ void precharge(){
             state = STATE_ERROR;
             errorCode |= ERR_PRECHARGE_TOO_SLOW;
         }
-        else {
+        // else {
             // Precharging
             lastTimeBelowThreshold = now;
-        }
+        // }
     }
 }
 
