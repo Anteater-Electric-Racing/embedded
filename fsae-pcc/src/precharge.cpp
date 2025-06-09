@@ -23,7 +23,8 @@ static double prechargeProgress = 0.0F;
 
 // Low pass filter
 typedef struct {
-    float alpha;
+    float tsAlpha;
+    float accumAlpha;
     float filtered_TSF;   // filtered tractive system Frequency
     float filtered_ACF;   // filtered Accumulator Frequency
 } LowPassFilter;
@@ -33,7 +34,7 @@ static LowPassFilter lpfValues = {0.0F, 0.0F, 0.0F};
 static void prechargeTask(void *pvParameters);
 
 float getFrequency(int pin){
-    const unsigned int TIMEOUT = 1000;
+    const unsigned int TIMEOUT = 700;
     unsigned int tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
     unsigned int tLow = pulseIn(pin, 0, TIMEOUT);
     if (tHigh == 0 || tLow == 0){
@@ -48,13 +49,17 @@ float getVoltage(int pin){
 
     switch (pin) {
         case ACCUMULATOR_VOLTAGE_PIN:
+            if (lpfValues.filtered_ACF == 0.0 && rawFreq != 0.0){
+                lpfValues.filtered_ACF = FREQ_TO_VOLTAGE(rawFreq);
+                break;
+            }
             if(rawFreq == 0.0F) rawFreq = lpfValues.filtered_ACF;
-            LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.alpha);
+            LOWPASS_FILTER(rawFreq, lpfValues.filtered_ACF, lpfValues.accumAlpha);
             voltage = FREQ_TO_VOLTAGE(lpfValues.filtered_ACF); // Convert frequency to voltage
             break;
         case TS_VOLTAGE_PIN:
             if(rawFreq == 0.0F) rawFreq = lpfValues.filtered_TSF;
-            LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.alpha);
+            LOWPASS_FILTER(rawFreq, lpfValues.filtered_TSF, lpfValues.tsAlpha);
             voltage = FREQ_TO_VOLTAGE(lpfValues.filtered_TSF); // Convert frequency to voltage
             break;
         default:
@@ -68,7 +73,8 @@ float getVoltage(int pin){
 // Initialize mutex and precharge task
 void prechargeInit(){
 
-    lpfValues.alpha = COMPUTE_ALPHA(50.0F); // 10Hz cutoff frequency for lowpass filter
+    lpfValues.tsAlpha = COMPUTE_ALPHA(100.0F); // 100Hz cutoff frequency for lowpass filter
+    lpfValues.accumAlpha = COMPUTE_ALPHA(1.0F); // 1Hz cutoff frequency for lowpass filter
 
     // Create precharge task
     xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL, PRECHARGE_PRIORITY, NULL);
@@ -161,6 +167,8 @@ static unsigned long epoch;
 void precharge(){
     unsigned long now = millis();
     static unsigned long epoch;
+    static unsigned long lastTimeBelowThreshold;
+    int hyst = 20;
     static unsigned long timePrechargeStart;
 
     if (lastState != STATE_PRECHARGE) {
@@ -170,23 +178,12 @@ void precharge(){
         timePrechargeStart = now;
     }
 
-    // Sample the voltages and update moving averages
-    const uint32_t samplePeriod = 10U; // [ms] Period to measure voltages
-    static uint32_t lastSample = 0U;
-    if (now > lastSample + samplePeriod){  // samplePeriod and movingAverage alpha value will affect moving average response.
-        lastSample = now;
-
-        accVoltage = getVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
-
-        tsVoltage = getVoltage(TS_VOLTAGE_PIN); // Get raw tractive system voltage
-    }
-
     // The precharge progress is a function of the accumulator voltage
     prechargeProgress = 100.0 * tsVoltage / accVoltage; // [%]
 
     // Print Precharging progress
     static uint32_t lastPrint = 0U;
-    if (now >= lastPrint + 100) {
+    if (now >= lastPrint + 10) {
         lastPrint = now;
         Serial.print("Precharging: ");
         Serial.print(now - timePrechargeStart);
@@ -199,28 +196,36 @@ void precharge(){
 
     // Check if precharge complete
     if ( prechargeProgress >= PCC_TARGET_PERCENT ) {
-        // Precharge complete
-        if (now > epoch + PCC_SETTLING_TIME) {
-            state = STATE_ONLINE;
-            Serial.print(" * Precharge complete at: ");
-            Serial.print(prechargeProgress, 1);
-            Serial.print("%   ");
-            Serial.print(tsVoltage, 1);
-            Serial.print("V\n");
+        if ((now - lastTimeBelowThreshold) > hyst){
+            if (now < timePrechargeStart + PCC_MIN_TIME_MS) {    // Precharge too fast - something's wrong!
+                state = STATE_ERROR;
+                errorCode |= ERR_PRECHARGE_TOO_FAST;
+            }
+            // Precharge complete
+            else {
+                state = STATE_ONLINE;
+                Serial.print(" * Precharge complete at: ");
+                Serial.print(now - timePrechargeStart);
+                Serial.print("ms, ");
+                Serial.print(prechargeProgress, 1);
+                Serial.print("%   ");
+                Serial.print(tsVoltage, 1);
+                Serial.print("V\n");
         }
-        else if (now < timePrechargeStart + PCC_MIN_TIME_MS) {    // Precharge too fast - something's wrong!
-            state = STATE_ERROR;
-            errorCode |= ERR_PRECHARGE_TOO_FAST;
+   
+
         }
 
     } else {
-        // Precharging
-        epoch = now;
-
         if (now > timePrechargeStart + PCC_MAX_TIME_MS) {       // Precharge too slow - something's wrong!
+            Serial.print(" * Precharge time: ");
+            Serial.print(now - timePrechargeStart);
+            Serial.print("\n");
             state = STATE_ERROR;
             errorCode |= ERR_PRECHARGE_TOO_SLOW;
         }
+        // Precharging
+        lastTimeBelowThreshold = now;
     }
 }
 
