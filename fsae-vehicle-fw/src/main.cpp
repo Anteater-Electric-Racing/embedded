@@ -43,13 +43,16 @@ void threadMain(void *pvParameters) {
     Motor_Init();
     Telemetry_Init();
 
-    float torqueDemand = 0;
+
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
+    # if DEBUG_FLAG
+    float torqueDemand = 0;
     bool enablePrecharge = false;
     bool enablePower = false;
     bool enableRun = false;
     bool enableRegen = false;
+    # endif
 
     while (true) {
         /*
@@ -63,6 +66,8 @@ void threadMain(void *pvParameters) {
             *
             * Telemetry: battery current, phase current, motor speed, temperature(s)
         */
+
+       # if DEBUG_FLAG
         if (Serial.available()) {
             char input = Serial.read();
 
@@ -218,7 +223,7 @@ void threadMain(void *pvParameters) {
         // if (MCU_GetMCU2Data().motorOpenPhaseFault) Serial.print("Motor Open Phase Fault, ");
 
         Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun, enableRegen); // Update motor with the current torque demand
-
+        # endif
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
 }

@@ -130,7 +130,9 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
         // LV on, HV off
         case MOTOR_STATE_OFF:{
             if (enablePrecharge){
-                Serial.println("Precharging...");
+                # if DEBUG_FLAG
+                    Serial.println("Precharging...");
+                #endif
                 motorData.state = MOTOR_STATE_PRECHARGING;
             }
             motorData.desiredTorque = 0.0F;
@@ -140,7 +142,9 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
         case MOTOR_STATE_PRECHARGING:
         {
             if(enablePower){
-                Serial.println("Precharge finished");
+                # if DEBUG_FLAG
+                    Serial.println("Precharge finished");
+                # endif
                 motorData.state = MOTOR_STATE_IDLE;
             }
             motorData.desiredTorque = 0.0F;
