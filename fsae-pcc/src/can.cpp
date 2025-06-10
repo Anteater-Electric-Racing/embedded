@@ -20,20 +20,20 @@ typedef struct __attribute__((packed)) {
 
 static PCC pccData;
 
-FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 static CAN_message_t pccMsg;
 
 void CAN_Init() {
-    can1.begin();
-    can1.setBaudRate(CAN_BAUDRATE); // Set CAN baud rate
-    can1.setTX(DEF);
-    can1.setRX(DEF);
-    can1.enableFIFO();
+    can2.begin();
+    can2.setBaudRate(CAN_BAUDRATE); // Set CAN baud rate
+    can2.setTX(DEF);
+    can2.setRX(DEF);
+    can2.enableFIFO();
 
     pccMsg.id = PCC_CAN_ID; // can change ID
 }
 
-void CAN_SendPCCMessage(uint32_t timestamp, uint8_t state, uint8_t errorCode, float accumulatorVoltage, float tsVoltage, float prechargeProgress) {
+void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode, float accumulatorVoltage, float tsVoltage, float prechargeProgress) {
     pccData = {
         .state = state,
         .errorCode = errorCode,
@@ -42,24 +42,6 @@ void CAN_SendPCCMessage(uint32_t timestamp, uint8_t state, uint8_t errorCode, fl
         .prechargeProgress = uint16_t(prechargeProgress * 100),
     };
 
-    // Serial.print("PCC Message: ");
-    // Serial.print("Timestamp: ");
-    // Serial.print(pccData.timestamp);
-    // Serial.print(", State: ");
-    // Serial.print(pccData.state);
-    // Serial.print(", Error Code: ");
-    // Serial.print(pccData.errorCode);
-    // Serial.print(" | ACCV: ");
-    // Serial.print(pccData.accumulatorVoltage);
-    // Serial.print(" | TSV: ");
-    // Serial.print(pccData.tsVoltage);
-    // Serial.print(" | Progress: ");
-    // Serial.println(pccData.prechargeProgress);
-
     memcpy(pccMsg.buf, &pccData, sizeof(PCC));
-    if (can1.write(pccMsg)) {
-        Serial.println("PCC message sent successfully.");
-    } else {
-        Serial.println("Failed to send PCC message.");
-    }
+    can2.write(pccMsg);
 }
