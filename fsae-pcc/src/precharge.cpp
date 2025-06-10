@@ -66,20 +66,41 @@ void prechargeTask(void *pvParameters){
         // taskENTER_CRITICAL(); // Ensure atomic access to state
         switch(state){
             case STATE_STANDBY:
+            {
                 standby();
                 break;
-
+            }
             case STATE_PRECHARGE:
+            {
+                if (pcData.accVoltage < ACCUM_MIN_VOLTAGE){
+                    state = STATE_DISCHARGE;
+                }
                 precharge();
                 break;
-
+            }
+            case STATE_DISCHARGE:
+            {
+                if (pcData.tsVoltage == 0.0F){
+                    state = STATE_STANDBY;
+                }
+                break;
+            }
             case STATE_ONLINE:
+            {
+                if (pcData.accVoltage < ACCUM_MIN_VOLTAGE){
+                    state = STATE_DISCHARGE;
+                }
                 running();
                 break;
-
+            }
             case STATE_ERROR:
+            {
+                if (pcData.accVoltage < ACCUM_MIN_VOLTAGE){
+                    state = STATE_DISCHARGE;
+                }
                 errorState();
                 break;
+            }
 
             default: // Undefined state
                 state = STATE_ERROR;
@@ -140,6 +161,7 @@ void standby(){
     // Disable AIR, Disable Precharge
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
     if (pcData.accVoltage >= PCC_MIN_ACC_VOLTAGE) {
+        lastState = STATE_STANDBY;
         state = STATE_PRECHARGE;
     }
 }

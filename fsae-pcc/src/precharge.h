@@ -15,9 +15,12 @@
 #define PCC_MIN_ACC_VOLTAGE 1U // [V] Minimum voltage for shutdown circuit
 #define PCC_WAIT_TIME 200U // [ms] Time to wait for stable voltage
 
+#define ACCUM_MIN_VOLTAGE 9
+
 enum PrechargeState {
     STATE_STANDBY,
     STATE_PRECHARGE,
+    STATE_DISCHARGE,
     STATE_ONLINE,
     STATE_ERROR,
     STATE_UNDEFINED

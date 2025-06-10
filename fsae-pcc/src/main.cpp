@@ -52,6 +52,9 @@ void threadMain(void *pvParameters) {
             case STATE_PRECHARGE:
                 Serial.print("PRECHARGE");
                 break;
+            case STATE_DISCHARGE:
+                Serial.print("DISCHARGE");
+                break;
             case STATE_ONLINE:
                 Serial.print("ONLINE");
                 break;
