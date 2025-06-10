@@ -17,6 +17,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
 
 float Motor_GetTorqueDemand();
 MotorState Motor_GetState();
+void threadMotor(void *pvParameters);
 
 void Motor_SetFaultState();
 void Motor_ClearFaultState();
