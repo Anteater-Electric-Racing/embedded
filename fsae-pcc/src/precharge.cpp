@@ -72,7 +72,7 @@ void prechargeTask(void *pvParameters){
             }
             case STATE_PRECHARGE:
             {
-                if (pcData.accVoltage < ACCUM_MIN_VOLTAGE){
+                if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE){
                     state = STATE_DISCHARGE;
                 }
                 precharge();
@@ -87,7 +87,7 @@ void prechargeTask(void *pvParameters){
             }
             case STATE_ONLINE:
             {
-                if (pcData.accVoltage < ACCUM_MIN_VOLTAGE){
+                if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE){
                     state = STATE_DISCHARGE;
                 }
                 running();
@@ -95,7 +95,7 @@ void prechargeTask(void *pvParameters){
             }
             case STATE_ERROR:
             {
-                if (pcData.accVoltage < ACCUM_MIN_VOLTAGE){
+                if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE){
                     state = STATE_DISCHARGE;
                 }
                 errorState();

@@ -2,21 +2,6 @@
 
 #pragma once
 
-// monitorShutdownCircuitTask defines
-#define ACCUMULATOR_VOLTAGE_PIN 14
-#define TS_VOLTAGE_PIN 15
-#define PCC_RATIO .9
-
-
-#define PCC_MIN_TIME_MS 8200U // [ms] Minimum time to wait for precharge to complete
-#define PCC_MAX_TIME_MS 9200U // [ms] Maximum time to wait for precharge to complete
-#define PCC_TARGET_PERCENT 90U // Target precharge percent
-#define PCC_SETTLING_TIME 200U // [ms] Time to wait for precharge to settle
-#define PCC_MIN_ACC_VOLTAGE 1U // [V] Minimum voltage for shutdown circuit
-#define PCC_WAIT_TIME 200U // [ms] Time to wait for stable voltage
-
-#define ACCUM_MIN_VOLTAGE 9
-
 enum PrechargeState {
     STATE_STANDBY,
     STATE_PRECHARGE,
