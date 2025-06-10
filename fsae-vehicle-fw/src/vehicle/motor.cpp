@@ -1,7 +1,5 @@
 // Anteater Electric Racing, 2025
 
-#define THREAD_MOTOR_STACK_SIZE 128
-#define THREAD_MOTOR_PRIORITY 1
 
 #include <arduino_freertos.h>
 
@@ -20,11 +18,9 @@ typedef struct{
 } MotorData;
 
 static MotorData motorData;
-void threadMotor(void *pvParameters);
 
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
-    xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
 }
 
 void threadMotor(void *pvParameters){
