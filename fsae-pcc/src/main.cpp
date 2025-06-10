@@ -36,9 +36,7 @@ void threadMain(void *pvParameters) {
     float accumulator_voltage = 0.0F;
     float ts_voltage = 0.0F;
     PrechargeState state = STATE_UNDEFINED;
-    int i = 0;
     while (true) {
-        i++;
         digitalWrite(13, HIGH); // Blink the built-in LED
         // accumulator_voltage = getAccumulatorVoltage();
         // ts_voltage = getTSVoltage();
@@ -70,7 +68,6 @@ void threadMain(void *pvParameters) {
         Serial.print(" | TS Voltage: ");
         Serial.print(ts_voltage, 4);
         Serial.print("V");
-        Serial.print(i);
         Serial.print("\r");
         vTaskDelay(100);
     }

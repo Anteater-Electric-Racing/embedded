@@ -9,7 +9,7 @@
 #include "can.h"
 
 #define PRECHARGE_STACK_SIZE 512U
-#define PRECHARGE_PRIORITY 1U
+#define PRECHARGE_PRIORITY 8
 
 #define TIME_HYSTERESIS_MS 20U
 
@@ -42,7 +42,7 @@ static void errorState();
 // Initialize mutex and precharge task
 void prechargeInit(){
     pcData.tsAlpha = COMPUTE_ALPHA(100.0F); // 100Hz cutoff frequency for lowpass filter
-    pcData.accAlpha = COMPUTE_ALPHA(1.0F); // 1Hz cutoff frequency for lowpass filter
+    pcData.accAlpha = COMPUTE_ALPHA(100.0F); // 1Hz cutoff frequency for lowpass filter
     pcData.accVoltage = 0.0F; // Initialize filtered tractive system frequency
     pcData.tsVoltage = 0.0F; // Initialize filtered accumulator frequency
     pcData.prechargeProgress = 0.0F; // Initialize accumulator voltage
@@ -98,11 +98,10 @@ void prechargeTask(void *pvParameters){
 }
 
 float getFrequency(int pin){
-    const unsigned int TIMEOUT = 7000;
-    unsigned int tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
-    unsigned int tLow = pulseIn(pin, 0, TIMEOUT);
-    if (tHigh == 0 || tLow == 0){
-        Serial.println("PulseIn timed out ");
+    uint32_t TIMEOUT = 2000;
+    uint32_t tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
+    uint32_t tLow = pulseIn(pin, 0, TIMEOUT);
+    if (tHigh == 0 || tLow == 3){
         return 0; // timed out
     }
     return ( 1000000.0 / (float)(tHigh + tLow) );    // f = 1/T
