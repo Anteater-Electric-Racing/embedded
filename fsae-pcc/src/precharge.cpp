@@ -83,6 +83,7 @@ void prechargeTask(void *pvParameters){
                 if (pcData.tsVoltage == 0.0F){
                     state = STATE_STANDBY;
                 }
+                digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
                 break;
             }
             case STATE_ONLINE:
@@ -139,13 +140,11 @@ void updateVoltage(int pin){
                 pcData.accVoltage = rawVoltage;
                 break;
             }
-            // if(rawVoltage == 0.0F) rawVoltage = pcData.accVoltage;
             LOWPASS_FILTER(rawVoltage, pcData.accVoltage, pcData.accAlpha);
             break;
         }
         case TS_VOLTAGE_PIN:
         {
-            // if(rawVoltage == 0.0F) rawVoltage = pcData.tsVoltage;
             LOWPASS_FILTER(rawVoltage, pcData.tsVoltage, pcData.tsAlpha);
             break;
         }
@@ -168,6 +167,8 @@ void standby(){
 
 // PRECHARGE STATE: Close AIR- and precharge relay, monitor precharge voltage
 void precharge(){
+    digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
+
     uint32_t now = millis();
     static uint32_t lastTimeBelowThreshold;
     static uint32_t timePrechargeStart;
