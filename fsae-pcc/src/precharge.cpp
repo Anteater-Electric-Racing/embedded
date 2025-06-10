@@ -111,7 +111,7 @@ void prechargeTask(void *pvParameters){
         // taskEXIT_CRITICAL(); // Exit critical section
 
         // Send CAN message of current PCC state
-        // CAN_SendPCCMessage(millis(), state, errorCode, accVoltage, tsVoltage, prechargeProgress);
+        CAN_SendPCCMessage(millis(), state, errorCode, pcData.accVoltage, pcData.tsVoltage, pcData.prechargeProgress);
 
         // Wait for next cycle
         vTaskDelayUntil(&xLastWakeTime, xFrequency);

@@ -25,7 +25,7 @@ void setup() {
 
     gpioInit(); // Initialize GPIO pins
 
-    // CAN_Init(); // Initialize CAN bus
+    CAN_Init(); // Initialize CAN bus
 
     prechargeInit(); // Initialize precharge system
 
