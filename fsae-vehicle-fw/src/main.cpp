@@ -16,12 +16,12 @@
 
 #include <iostream>
 #include <unistd.h>
+#include "utils/utils.h"
 
 #define TORQUE_STEP 1
 #define TORQUE_MAX_NM 20 // Maximum torque demand in Nm
 
 static TickType_t xLastWakeTime;
-#include "utils/utils.h"
 
 void threadMain(void *pvParameters);
 
@@ -33,6 +33,7 @@ void setup() { // runs once on bootup
     Faults_Init();
     Telemetry_Init();
     Motor_Init();
+    MCU_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
@@ -43,16 +44,6 @@ void setup() { // runs once on bootup
 
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
-
-    Peripherals_Init();
-    APPS_Init();
-    BSE_Init();
-    Faults_Init();
-    MCU_Init();
-    Motor_Init();
-    Telemetry_Init();
-
-
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
     # if DEBUG_FLAG
@@ -62,7 +53,6 @@ void threadMain(void *pvParameters) {
     bool enableRun = false;
     bool enableRegen = false;
     # endif
-
     while (true) {
         /*
             * Read user input from Serial to control torque demand.

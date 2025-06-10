@@ -60,5 +60,3 @@ typedef struct __attribute__((packed)){
 void Telemetry_Init();
 void threadTelemetryCAN(void *pvParameters);
 TelemetryData const* Telemetry_GetData();
-
-

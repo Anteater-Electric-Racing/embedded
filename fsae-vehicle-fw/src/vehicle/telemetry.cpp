@@ -1,8 +1,4 @@
 // Anteater Electric Racing, 2025
-
-#define THREAD_CAN_TELEMETRY_STACK_SIZE 512
-#define THREAD_CAN_TELEMETRY_PRIORITY 2
-
 #define TELEMETRY_CAN_ID 0x666 // Example CAN ID for telemetry messages
 #define TELEMETRY_PERIOD_MS 10 // Telemetry update period in milliseconds
 
@@ -64,7 +60,6 @@ void Telemetry_Init() {
 
 void threadTelemetry(void *pvParameters){
     static TickType_t lastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
-
     while(true){
         taskENTER_CRITICAL(); // Enter critical section
         telemetryData = {

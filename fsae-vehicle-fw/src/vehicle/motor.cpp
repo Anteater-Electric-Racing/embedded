@@ -1,7 +1,5 @@
 // Anteater Electric Racing, 2025
 
-#define THREAD_MOTOR_STACK_SIZE 128
-#define THREAD_MOTOR_PRIORITY 1
 
 #define SPEED_CONTROL_ENABLED 0
 #define SPEED_P_GAIN 0.01F // Proportional gain for speed control
