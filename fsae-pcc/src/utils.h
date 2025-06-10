@@ -14,15 +14,14 @@
 // Frequency measurements (from Voltage-to-Frequency converters)
 #define FREQ_ACCU_PIN 14U
 #define FREQ_TS_PIN 15U
+#define PCC_RATIO .9F
+#define PULSE_IN_TIMEOUT 2000U // [us] Timeout for pulseIn() in microseconds
 
 // Lowpass filter
 #define TIME_STEP_S 0.01F // 10ms time step
 #define COMPUTE_ALPHA(CUTOFF_HZ) (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP_S))
 #define LOWPASS_FILTER(NEW, OLD, ALPHA) OLD = ALPHA * NEW + (1.0F - ALPHA) * OLD
 
-#define ACCUMULATOR_VOLTAGE_PIN 14U
-#define TS_VOLTAGE_PIN 15U
-#define PCC_RATIO .9F
 
 #define PCC_MIN_TIME_MS 6500U // [ms] Minimum time to wait for precharge to complete
 #define PCC_MAX_TIME_MS 9000U // [ms] Maximum time to wait for precharge to complete

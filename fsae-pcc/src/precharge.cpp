@@ -60,8 +60,8 @@ void prechargeTask(void *pvParameters){
     xLastWakeTime = xTaskGetTickCount();
 
     while (true){
-        updateVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
-        updateVoltage(TS_VOLTAGE_PIN); // Get raw tractive system voltage
+        updateVoltage(FREQ_ACCU_PIN); // Get raw accumulator voltage
+        updateVoltage(FREQ_TS_PIN); // Get raw tractive system voltage
 
         // taskENTER_CRITICAL(); // Ensure atomic access to state
         switch(state){
@@ -120,10 +120,9 @@ void prechargeTask(void *pvParameters){
 }
 
 float getFrequency(int pin){
-    uint32_t TIMEOUT = 2000;
-    uint32_t tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
-    uint32_t tLow = pulseIn(pin, 0, TIMEOUT);
-    if (tHigh == 0 || tLow == 3){
+    uint32_t tHigh = pulseIn(pin, 1, PULSE_IN_TIMEOUT);  // microseconds
+    uint32_t tLow = pulseIn(pin, 0, PULSE_IN_TIMEOUT);
+    if (tHigh == 0 || tLow == 0){
         return 0; // timed out
     }
     return ( 1000000.0 / (float)(tHigh + tLow) );    // f = 1/T
@@ -134,16 +133,16 @@ void updateVoltage(int pin){
     float rawVoltage = FREQ_TO_VOLTAGE(rawFreq); // Convert frequency to voltage
 
     switch (pin) {
-        case ACCUMULATOR_VOLTAGE_PIN:
+        case FREQ_ACCU_PIN:
         {
-            if (pcData.accVoltage == 0.0 && rawVoltage != 0.0){
+            if (pcData.accVoltage == 0.0 && rawVoltage != 0.0){ // First measurement, set voltage directly to bypass filter
                 pcData.accVoltage = rawVoltage;
                 break;
             }
             LOWPASS_FILTER(rawVoltage, pcData.accVoltage, pcData.accAlpha);
             break;
         }
-        case TS_VOLTAGE_PIN:
+        case FREQ_TS_PIN:
         {
             LOWPASS_FILTER(rawVoltage, pcData.tsVoltage, pcData.tsAlpha);
             break;
@@ -222,10 +221,7 @@ void precharge(){
             state = STATE_ERROR;
             errorCode |= ERR_PRECHARGE_TOO_SLOW;
         }
-        // else {
-            // Precharging
-            lastTimeBelowThreshold = now;
-        // }
+        lastTimeBelowThreshold = now;
     }
 }
 
