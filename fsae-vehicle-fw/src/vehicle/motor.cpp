@@ -154,7 +154,9 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
         case MOTOR_STATE_IDLE:
         {
             if(enableRun){
-                Serial.println("Ready to drive...");
+                # if DEBUG_FLAG
+                    Serial.println("Ready to drive...");
+                # endif
                 motorData.state = MOTOR_STATE_DRIVING;
             }
             motorData.desiredTorque = 0.0F;
