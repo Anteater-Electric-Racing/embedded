@@ -89,6 +89,6 @@ void threadADC( void *pvParameters ){
 
         // Handle any faults that were raised
         // Faults_HandleFaults();
-        // Motor_UpdateMotor();
+        Motor_UpdateMotor();
     }
 }

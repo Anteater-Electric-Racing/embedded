@@ -10,7 +10,7 @@
 
 #include "utils/utils.h"
 
-#include "peripherals/can.h"
+#include "vehicle/can.h"
 
 TelemetryData telemetryData;
 

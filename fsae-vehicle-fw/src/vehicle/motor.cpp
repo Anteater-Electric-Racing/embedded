@@ -9,7 +9,7 @@
 
 #include "utils/utils.h"
 
-#include "peripherals/can.h"
+#include "vehicle/can.h"
 
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
@@ -19,6 +19,7 @@
 
 typedef struct{
     MotorState state;
+    PrechargeState prechargeState; // Precharge state
     float desiredTorque; // Torque demand in Nm;
 } MotorData;
 
@@ -118,7 +119,7 @@ void threadMotor(void *pvParameters){
     }
 }
 
-void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun, bool enableRegen){
+void Motor_UpdateMotor(){
     // Update the motor state based on the RTM button state
 
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
@@ -212,5 +213,9 @@ void Motor_ClearFaultState(){
 
 MotorState Motor_GetState(){
     return motorData.state;
+}
+
+void Motor_UpdatePrechargeState(uint64_t* rx_data){
+    motorData.prechargeState = PCC_STATE_PRECHARGE;
 }
 

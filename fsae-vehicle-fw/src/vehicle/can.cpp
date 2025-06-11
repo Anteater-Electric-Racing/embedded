@@ -8,7 +8,7 @@
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
-#include "peripherals/can.h"
+#include "vehicle/can.h"
 #include "utils/utils.h"
 #include "vehicle/motor.h"
 #include "vehicle/ifl100-36.h"
@@ -22,6 +22,48 @@ isotp<RX_BANKS_16, 512> tp;
 
 CAN_message_t motorMsg;
 CAN_message_t rx_msg;
+
+void threadCAN(void *pvParameters) {
+    static TickType_t xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
+
+    while (true) {
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(THREAD_CAN_PERIOD_MS)); // Wait for 10 ms
+        if(!can2.read(rx_msg)) continue;
+
+        uint64_t rx_data = 0;
+        uint32_t rx_id = rx_msg.id;
+        memcpy(&rx_data, rx_msg.buf, sizeof(rx_data));
+
+        switch(rx_id) {
+            case mMCU1_ID:
+            {
+                MCU_UpdateMCU1(&rx_data);
+                break;
+            }
+            case mMCU2_ID:
+            {
+                MCU_UpdateMCU2(&rx_data);
+                break;
+            }
+            case mMCU3_ID:
+            {
+                MCU_UpdateMCU3(&rx_data);
+                break;
+            }
+            case PCC_CAN_ID:
+            {
+                // Update the motor state based on the received CAN message
+                Motor_UpdatePrechargeState(&rx_data);
+                break;
+            }
+            default:
+            {
+                break;
+            }
+        }
+    }
+}
+
 
 void CAN_Init() {
     // Initialize CAN bus

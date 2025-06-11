@@ -4,8 +4,8 @@
 #include <arduino_freertos.h>
 
 #include "peripherals/adc.h"
-#include "peripherals/can.h"
 
+#include "vehicle/can.h"
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
 #include "vehicle/faults.h"
@@ -35,6 +35,7 @@ void setup() { // runs once on bootup
     MCU_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
+    xTaskCreate(threadCAN, "threadMCU", THREAD_CAN_STACK_SIZE, NULL, THREAD_CAN_PRIORITY, NULL);
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
     xTaskCreate(threadTelemetry, "threadTelemetryCAN", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);

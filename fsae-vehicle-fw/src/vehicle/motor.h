@@ -15,7 +15,7 @@ typedef enum {
 void threadMotor(void *pvParameters);
 
 void Motor_Init();
-void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun, bool enableRegen);
+void Motor_UpdateMotor();
 
 float Motor_GetTorqueDemand();
 MotorState Motor_GetState();
@@ -23,3 +23,5 @@ void threadMotor(void *pvParameters);
 
 void Motor_SetFaultState();
 void Motor_ClearFaultState();
+
+void Motor_UpdatePrechargeState(uint64_t* rx_data);
