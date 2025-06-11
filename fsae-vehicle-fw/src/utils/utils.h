@@ -101,3 +101,12 @@ enum PrechargeState {
     PCC_STATE_ERROR,
     PCC_STATE_UNDEFINED
 };
+
+typedef struct __attribute__((packed)) {
+    uint8_t state;      // Precharge state
+    uint8_t errorCode; // Error code
+    uint16_t accumulatorVoltage; // Accumulator voltage in volts
+    uint16_t tsVoltage; // Transmission side voltage in volts
+    uint16_t prechargeProgress; // Precharge progress in percent
+} PCC_CANData;
+

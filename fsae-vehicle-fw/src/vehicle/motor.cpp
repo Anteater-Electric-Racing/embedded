@@ -216,6 +216,8 @@ MotorState Motor_GetState(){
 }
 
 void Motor_UpdatePrechargeState(uint64_t* rx_data){
-    motorData.prechargeState = PCC_STATE_PRECHARGE;
+    PCC_CANData pccData;
+    memcpy(&pccData, rx_data, sizeof(PCC_CANData));
+    motorData.prechargeState = (PrechargeState) pccData.state;
 }
 
