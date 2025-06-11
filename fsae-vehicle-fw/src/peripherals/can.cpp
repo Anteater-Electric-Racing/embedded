@@ -8,8 +8,8 @@
 #include <arduino_freertos.h>
 
 #include "utils/utils.h"
-
 #include "vehicle/motor.h"
+#include "vehicle/telemetry.h"
 
 #define CAN_INSTANCE CAN1
 #define CAN_BAUD_RATE 500000
@@ -73,8 +73,13 @@ void CAN_ReceivePCCMessage(){
         }
         memcpy(&pccData, rx_msg.buf, sizeof(PCC));
         Serial.println(pccData.tsVoltage);
-    } else { // No message received, assign default values
-        Serial.print("No message recieved\r");
+        Telemetry_UpdatePCCData(
+            pccData.errorCode,
+            pccData.state,
+            pccData.accumulatorVoltage / 100.0F,
+            pccData.tsVoltage / 100.0F,
+            pccData.prechargeProgress / 100.0F
+        );
     }
 }
 
