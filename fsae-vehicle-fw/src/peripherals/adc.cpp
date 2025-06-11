@@ -2,15 +2,18 @@
 
 #include <ADC.h>
 #include <stdint.h>
-#include "adc.h"
-#include "./vehicle/telemetry.h"
-#include <chrono>
 #include <arduino_freertos.h>
+
+#include "peripherals/adc.h"
+
 #include "utils/utils.h"
+
+#include "vehicle/telemetry.h"
 #include "vehicle/bse.h"
 #include "vehicle/apps.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
+#include "vehicle/rtm_button.h"
 #include "vehicle/motor.h"
 
 enum SensorIndexesADC0 { // TODO: Update with real values
@@ -83,9 +86,13 @@ void threadADC( void *pvParameters ){
             adc1Reads[currentIndexADC1] = adcRead;
         }
 
+        bool rtmButtonReading = digitalRead(RTM_BUTTON_PIN); // Read the RTM button state
+
         // Update each sensors data
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
+
+        RTMButton_Update(rtmButtonReading); // Update the RTM button state
 
         // Handle any faults that were raised
         // Faults_HandleFaults();

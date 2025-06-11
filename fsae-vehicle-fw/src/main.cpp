@@ -12,9 +12,8 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/ifl100-36.h"
+#include "vehicle/rtm_button.h"
 
-#include <iostream>
-#include <unistd.h>
 #include "utils/utils.h"
 
 #define TORQUE_STEP 1
@@ -46,7 +45,7 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
-    # if DEBUG_FLAG
+    # if !DEBUG_FLAG
     float torqueDemand = 0;
     bool enablePrecharge = false;
     bool enablePower = false;
@@ -66,7 +65,7 @@ void threadMain(void *pvParameters) {
             * Telemetry: battery current, phase current, motor speed, temperature(s)
         */
 
-       # if DEBUG_FLAG
+       # if !DEBUG_FLAG
         if (Serial.available()) {
             char input = Serial.read();
 
@@ -151,10 +150,10 @@ void threadMain(void *pvParameters) {
         // Serial.print("      \n");
 
         // Telemetry: Read battery current, phase current, motor speed, temperature(s)
-        Serial.print("C State: ");
+        Serial.print("MCU State: ");
         Serial.print(MCU_GetMCU1Data()->mcuMainState);
         Serial.print(" | ");
-        Serial.print("T State: ");
+        Serial.print("CCM State: ");
         Serial.print(Motor_GetState());
         Serial.print(" | ");
 
@@ -187,6 +186,8 @@ void threadMain(void *pvParameters) {
         Serial.print(" | ");
         Serial.print("Regen: ");
         Serial.print(enableRegen);
+
+        Serial.print("\r");
 
 
         // Serial.print("Battery Current: ");
@@ -221,7 +222,7 @@ void threadMain(void *pvParameters) {
         // if (MCU_GetMCU2Data().motorStallFault) Serial.print("Motor Stall Fault, ");
         // if (MCU_GetMCU2Data().motorOpenPhaseFault) Serial.print("Motor Open Phase Fault, ");
 
-        Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun, enableRegen); // Update motor with the current torque demand
+        // Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun, enableRegen); // Update motor with the current torque demand
         # endif
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
