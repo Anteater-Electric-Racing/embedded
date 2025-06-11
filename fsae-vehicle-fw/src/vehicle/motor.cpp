@@ -19,11 +19,11 @@
 
 typedef struct{
     MotorState state;
-    PrechargeState prechargeState; // Precharge state
     float desiredTorque; // Torque demand in Nm;
 } MotorData;
 
 static MotorData motorData;
+static PCCData pccData;
 static TickType_t xLastWakeTime;
 static VCU1 vcu1 = {0};
 static BMS1 bms1 = {0};
@@ -32,6 +32,7 @@ static BMS2 bms2 = {0};
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
     motorData.desiredTorque = 0.0F; // No torque demand at start
+    pccData = {0}; // Clear PCC data
 }
 
 void threadMotor(void *pvParameters){
@@ -216,8 +217,6 @@ MotorState Motor_GetState(){
 }
 
 void Motor_UpdatePrechargeState(uint64_t* rx_data){
-    PCC_CANData pccData;
-    memcpy(&pccData, rx_data, sizeof(PCC_CANData));
-    motorData.prechargeState = (PrechargeState) pccData.state;
+    memcpy(&pccData, rx_data, sizeof(PCCData));
 }
 
