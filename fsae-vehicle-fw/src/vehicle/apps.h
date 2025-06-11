@@ -2,22 +2,8 @@
 
 #include "bse.h"
 
-typedef struct {
-    float appsReading1;
-    float appsReading2;
-} APPSData;
-
-class APPS {
-  private:
-    APPSData _APPSdata;
-
-    void checkAndHandleAPPSFault();
-    void checkAndHandlePlausibilityFault(BSE *bse);
-
-  public:
-    APPS();
-    ~APPS();
-
-    void APPS_UpdateData(APPSData *data);
-    float APPS_GetAPPSReading();
-};
+void APPS_Init();
+void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2);
+float APPS_GetAPPSReading();
+float APPS_GetAPPSReading1();
+float APPS_GetAPPSReading2();

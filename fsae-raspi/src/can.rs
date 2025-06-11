@@ -1,285 +1,80 @@
-use crate::send::{Reading, send_message};
+use crate::send::{send_message, Reading};
 use chrono::{DateTime, Utc};
-use futures_util::StreamExt;
 use influxdb::InfluxDbWriteable;
 use serde::Serialize;
-use socketcan::{tokio::CanSocket, EmbeddedFrame, ExtendedId, Id, StandardId};
-use std::any::type_name;
+use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
-// constants
 const CAN_INTERFACE: &str = "can0";
 
-// this sets up a trait that contains necessary information for all CAN messages that follow
-pub trait CanReading: Reading + InfluxDbWriteable + Serialize {
-    // a function to get the expected ID of a CAN message
-    fn id() -> Id;
-    // a function to construct a CAN reading from the raw data
-    fn construct(data: &[u8]) -> Self;
-    // the expected size of the raw data
-    const SIZE: usize;
-}
-
-// Now we list out all possible CAN messages
-#[derive(InfluxDbWriteable, Serialize)]
-struct BMSReading1 {
+#[derive(Serialize, InfluxDbWriteable)]
+struct CANMessage {
     time: DateTime<Utc>,
-    current: i16,
-    inst_voltage: i16,
+    accumulator_voltage: f32,
+    accumulator_temp: f32,
+    tractive_system_voltage: f32,
+    adc_0_read_0: u16,
+    adc_0_read_1: u16,
+    adc_0_read_2: u16,
+    adc_0_read_3: u16,
+    adc_0_read_4: u16,
+    adc_0_read_5: u16,
+    adc_0_read_6: u16,
+    adc_0_read_7: u16,
+    adc_1_read_0: u16,
+    adc_1_read_1: u16,
+    adc_1_read_2: u16,
+    adc_1_read_3: u16,
+    adc_1_read_4: u16,
+    adc_1_read_5: u16,
+    adc_1_read_6: u16,
+    adc_1_read_7: u16,
 }
 
-impl CanReading for BMSReading1 {
-    fn id() -> Id {
-        Id::Standard(StandardId::new(0x03B).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        BMSReading1 {
-            time: Utc::now(),
-            current: i16::from_be_bytes([data[0], data[1]]),
-            inst_voltage: i16::from_be_bytes([data[2], data[3]]),
-        }
-    }
-    const SIZE: usize = 4;
-}
-
-impl Reading for BMSReading1 {
+impl Reading for CANMessage {
     fn topic() -> &'static str {
-        "bms_reading1"
+        "can"
     }
 }
 
-#[derive(InfluxDbWriteable, Serialize)]
-struct BMSReading2 {
-    time: DateTime<Utc>,
-    dlc: u8,
-    ccl: u8,
-    simulated_soc: u8,
-    high_temp: u8,
-    low_temp: u8,
-}
-
-impl CanReading for BMSReading2 {
-    fn id() -> Id {
-        Id::Standard(StandardId::new(0x3CB).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        BMSReading2 {
-            time: Utc::now(),
-            dlc: data[0],
-            ccl: data[1],
-            simulated_soc: data[2],
-            high_temp: data[3],
-            low_temp: data[4],
-        }
-    }
-    const SIZE: usize = 5;
-}
-
-impl Reading for BMSReading2 {
-    fn topic() -> &'static str {
-        "bms_reading2"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct BMSReading3 {
-    time: DateTime<Utc>,
-    relay_state: u8,
-    soc: u8,
-    resistance: i16,
-    open_voltage: i16,
-    amphours: u8,
-    pack_health: u8,
-}
-
-impl CanReading for BMSReading3 {
-    fn id() -> Id {
-        Id::Standard(StandardId::new(0x6B2).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        BMSReading3 {
-            time: Utc::now(),
-            relay_state: data[0],
-            soc: data[1],
-            resistance: i16::from_be_bytes([data[2], data[3]]),
-            open_voltage: i16::from_be_bytes([data[4], data[5]]),
-            amphours: data[6],
-            pack_health: data[7],
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for BMSReading3 {
-    fn topic() -> &'static str {
-        "bms_reading3"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct LeftESCReading1 {
-    time: DateTime<Utc>,
-    speed_rpm: u16,
-    motor_current: u16,
-    battery_voltage: u16,
-    error_code: u16,
-}
-
-impl CanReading for LeftESCReading1 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11E06).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        LeftESCReading1 {
-            time: Utc::now(),
-            speed_rpm: u16::from_le_bytes([data[0], data[1]]),
-            motor_current: u16::from_le_bytes([data[2], data[3]]),
-            battery_voltage: u16::from_le_bytes([data[4], data[5]]),
-            error_code: u16::from_be_bytes([data[6], data[7]]),
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for LeftESCReading1 {
-    fn topic() -> &'static str {
-        "left_esc_reading1"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct LeftESCReading2 {
-    time: DateTime<Utc>,
-    throttle_signal: u8,
-    controller_temp: i8,
-    motor_temp: i8,
-    controller_status: u8,
-    switch_status: u8,
-}
-
-impl CanReading for LeftESCReading2 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11F06).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        LeftESCReading2 {
-            time: Utc::now(),
-            throttle_signal: data[0],
-            controller_temp: data[1] as i8 - 40,
-            motor_temp: data[2] as i8 - 30,
-            controller_status: data[5],
-            switch_status: data[6],
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for LeftESCReading2 {
-    fn topic() -> &'static str {
-        "left_esc_reading2"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct RightESCReading1 {
-    time: DateTime<Utc>,
-    speed_rpm: u16,
-    motor_current: u16,
-    battery_voltage: u16,
-    error_code: u16,
-}
-
-impl CanReading for RightESCReading1 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11E05).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        RightESCReading1 {
-            time: Utc::now(),
-            speed_rpm: u16::from_le_bytes([data[0], data[1]]),
-            motor_current: u16::from_le_bytes([data[2], data[3]]),
-            battery_voltage: u16::from_le_bytes([data[4], data[5]]),
-            error_code: u16::from_be_bytes([data[6], data[7]]),
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for RightESCReading1 {
-    fn topic() -> &'static str {
-        "right_esc_reading1"
-    }
-}
-
-#[derive(InfluxDbWriteable, Serialize)]
-struct RightESCReading2 {
-    time: DateTime<Utc>,
-    throttle_signal: u8,
-    controller_temp: i8,
-    motor_temp: i8,
-    controller_status: u8,
-    switch_status: u8,
-}
-
-impl CanReading for RightESCReading2 {
-    fn id() -> Id {
-        Id::Extended(ExtendedId::new(0x0CF11F05).unwrap())
-    }
-    fn construct(data: &[u8]) -> Self {
-        RightESCReading2 {
-            time: Utc::now(),
-            throttle_signal: data[0],
-            controller_temp: data[1] as i8 - 40,
-            motor_temp: data[2] as i8 - 30,
-            controller_status: data[5],
-            switch_status: data[6],
-        }
-    }
-    const SIZE: usize = 8;
-}
-
-impl Reading for RightESCReading2 {
-    fn topic() -> &'static str {
-        "right_esc_reading2"
-    }
-}
-
-// this checks a reading against a specific CAN message, and sends to influx and MQTT if it matches
-async fn check_message<T: CanReading + Send + 'static>(id: Id, data: &[u8]) {
-    if T::id() == id {
-        if data.len() != T::SIZE {
-            eprintln!(
-                "Invalid data length for {}: {}",
-                type_name::<T>(),
-                data.len()
-            );
-            return;
-        }
-
-        let reading = T::construct(data);
-
-        send_message(reading).await;
-    }
-}
-
-// finds all new CAN messages and sends to a check_message function for every possible CAN message
 pub async fn read_can() {
     loop {
-        let Ok(mut sock) = CanSocket::open(CAN_INTERFACE) else {
-            eprintln!("Failed to open CAN socket, retrying...");
-            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        let Ok(socket) = IsoTpSocket::open(
+            CAN_INTERFACE,
+            StandardId::new(0x666).expect("Invalid src id"),
+            StandardId::new(0x777).expect("Invalid src id"),
+        ) else {
+            println!("Failed to open socket");
             continue;
         };
-        while let Some(Ok(frame)) = sock.next().await {
-            let data = frame.data();
-            let id = frame.id();
 
-            check_message::<BMSReading1>(id, data).await;
-            check_message::<BMSReading2>(id, data).await;
-            check_message::<BMSReading3>(id, data).await;
-            check_message::<LeftESCReading1>(id, data).await;
-            check_message::<LeftESCReading2>(id, data).await;
-            check_message::<RightESCReading1>(id, data).await;
-            check_message::<RightESCReading2>(id, data).await;
+        while let Ok(packet) = socket.read_packet().await {
+            if packet.len() != 44 {
+                println!("Invalid packet length: {}", packet.len());
+                continue;
+            }
+            send_message(CANMessage {
+                time: Utc::now(),
+                accumulator_voltage: f32::from_le_bytes(packet[0..4].try_into().unwrap()),
+                accumulator_temp: f32::from_le_bytes(packet[4..8].try_into().unwrap()),
+                tractive_system_voltage: f32::from_le_bytes(packet[8..12].try_into().unwrap()),
+                adc_0_read_0: u16::from_le_bytes(packet[12..14].try_into().unwrap()),
+                adc_0_read_1: u16::from_le_bytes(packet[14..16].try_into().unwrap()),
+                adc_0_read_2: u16::from_le_bytes(packet[16..18].try_into().unwrap()),
+                adc_0_read_3: u16::from_le_bytes(packet[18..20].try_into().unwrap()),
+                adc_0_read_4: u16::from_le_bytes(packet[20..22].try_into().unwrap()),
+                adc_0_read_5: u16::from_le_bytes(packet[22..24].try_into().unwrap()),
+                adc_0_read_6: u16::from_le_bytes(packet[24..26].try_into().unwrap()),
+                adc_0_read_7: u16::from_le_bytes(packet[26..28].try_into().unwrap()),
+                adc_1_read_0: u16::from_le_bytes(packet[28..30].try_into().unwrap()),
+                adc_1_read_1: u16::from_le_bytes(packet[30..32].try_into().unwrap()),
+                adc_1_read_2: u16::from_le_bytes(packet[32..34].try_into().unwrap()),
+                adc_1_read_3: u16::from_le_bytes(packet[34..36].try_into().unwrap()),
+                adc_1_read_4: u16::from_le_bytes(packet[36..38].try_into().unwrap()),
+                adc_1_read_5: u16::from_le_bytes(packet[38..40].try_into().unwrap()),
+                adc_1_read_6: u16::from_le_bytes(packet[40..42].try_into().unwrap()),
+                adc_1_read_7: u16::from_le_bytes(packet[42..44].try_into().unwrap()),
+            })
+            .await;
         }
     }
 }
