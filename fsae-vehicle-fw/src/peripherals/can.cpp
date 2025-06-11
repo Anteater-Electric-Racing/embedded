@@ -50,7 +50,7 @@ static PCC pccData;
 
 static uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
 
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can3;
+FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
 
 CAN_message_t motorMsg;
 CAN_message_t rx_msg;
@@ -61,17 +61,15 @@ void CAN_Init() {
     can3.setBaudRate(CAN_BAUD_RATE);
     can3.setTX(DEF);
     can3.setRX(DEF);
+    can3.setMaxMB(16);
     can3.enableFIFO();
-    // can3.enableFIFOInterrupt();
-    // can3.enableMBInterrupts();
-    // can3.setMaxMB(16);
 }
 
 void CAN_ReceivePCCMessage(){
-    // Serial.println(can3.error());
+    can3.mailboxStatus();
     if (can3.read(rx_msg)) {
         if (rx_msg.id == 0x123){
-            Serial.print("Getting PCC message");
+            Serial.println("Getting PCC message");
         }
         memcpy(&pccData, rx_msg.buf, sizeof(PCC));
         Serial.println(pccData.tsVoltage);
@@ -79,7 +77,6 @@ void CAN_ReceivePCCMessage(){
         Serial.print("No message recieved\r");
     }
 }
-
 
 void CAN_SendVCU1Message(float torqueValue)
 {
