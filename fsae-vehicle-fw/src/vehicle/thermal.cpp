@@ -10,7 +10,7 @@
 
 #define TEMP_THRESHOLD 30 // Temperature threshold in degrees Celsius
 
-void setup() {
+void thermal_Init() {
   pinMode(PUMP_PIN, OUTPUT);
   analogWriteFrequency(PUMP_PIN, ANALOG_WRITE_FREQUENCY); // 25 kHz for Koolance
   analogWriteResolution(ANALOG_WRITE_RESOLUTION); // 0-255
