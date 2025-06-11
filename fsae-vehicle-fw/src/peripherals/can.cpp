@@ -38,9 +38,20 @@ typedef struct __attribute__((packed)) {
     uint64_t Checksum : 8;
 } VCU1;
 
+typedef struct __attribute__((packed)) {
+    uint8_t state;      // Precharge state
+    uint8_t errorCode; // Error code
+    uint16_t accumulatorVoltage; // Accumulator voltage in volts
+    uint16_t tsVoltage; // Transmission side voltage in volts
+    uint16_t prechargeProgress; // Precharge progress in percent
+} PCC;
+
+static PCC pccData;
+
 static uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
 
-FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can3;
+
 CAN_message_t motorMsg;
 CAN_message_t rx_msg;
 
@@ -51,10 +62,24 @@ void CAN_Init() {
     can3.setTX(DEF);
     can3.setRX(DEF);
     can3.enableFIFO();
-    can3.enableFIFOInterrupt();
-    can3.enableMBInterrupts();
-    can3.setMaxMB(16);
+    // can3.enableFIFOInterrupt();
+    // can3.enableMBInterrupts();
+    // can3.setMaxMB(16);
 }
+
+void CAN_ReceivePCCMessage(){
+    // Serial.println(can3.error());
+    if (can3.read(rx_msg)) {
+        if (rx_msg.id == 0x123){
+            Serial.print("Getting PCC message");
+        }
+        memcpy(&pccData, rx_msg.buf, sizeof(PCC));
+        Serial.println(pccData.tsVoltage);
+    } else { // No message received, assign default values
+        Serial.print("No message recieved\r");
+    }
+}
+
 
 void CAN_SendVCU1Message(float torqueValue)
 {

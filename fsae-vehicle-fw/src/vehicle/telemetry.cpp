@@ -43,7 +43,7 @@ void threadTelemetryCAN(void *pvParameters){
     const TickType_t xFrequency = 1;
     while(true){
         vTaskDelayUntil(&lastWakeTime, xFrequency);
-        Serial.print("Semaphor take successful");
+        // Serial.print("Semaphor take successful");
         xSemaphoreTake(xSemaphore, (TickType_t) 1000);
         Telemetry_SerializeData(telemetryDataCAN, serializedTelemetryBuf);
         xSemaphoreGive(xSemaphore);
