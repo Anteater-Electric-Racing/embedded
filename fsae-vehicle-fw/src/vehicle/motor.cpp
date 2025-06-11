@@ -139,12 +139,12 @@ void Motor_UpdateMotor(){
                     Serial.println("Precharging...");
                 #endif
                 motorData.state = MOTOR_STATE_PRECHARGING;
-            } if (pccData.state == PCC_STATE_ERROR){
+            } else if (pccData.state == PCC_STATE_ERROR){
                 motorData.state = MOTOR_STATE_FAULT;
                 motorData.desiredTorque = 0.0F;
-                break;
+            } else {
+                motorData.desiredTorque = 0.0F;
             }
-            motorData.desiredTorque = 0.0F;
             break;
         }
         // HV switch on (PCC CAN message)
@@ -158,13 +158,12 @@ void Motor_UpdateMotor(){
             } else if (pccData.state == PCC_STATE_DISCHARGE){
                 motorData.state = MOTOR_STATE_OFF;
                 motorData.desiredTorque = 0.0F;
-                break;
             } else if (pccData.state == PCC_STATE_ERROR){
                 motorData.state = MOTOR_STATE_FAULT;
                 motorData.desiredTorque = 0.0F;
-                break;
+            } else {
+                motorData.desiredTorque = 0.0F;
             }
-            motorData.desiredTorque = 0.0F;
             break;
         }
         // PCC CAN message finished
@@ -173,20 +172,17 @@ void Motor_UpdateMotor(){
             if (pccData.state == PCC_STATE_DISCHARGE){
                 motorData.state = MOTOR_STATE_OFF;
                 motorData.desiredTorque = 0.0F;
-                break;
             } else if (pccData.state == PCC_STATE_ERROR){
                 motorData.state = MOTOR_STATE_FAULT;
                 motorData.desiredTorque = 0.0F;
-                break;
-            }
-
-            if(RTMButton_GetState()){
+            } else if(RTMButton_GetState()){
                 # if DEBUG_FLAG
                     Serial.println("Ready to drive...");
                 # endif
                 motorData.state = MOTOR_STATE_DRIVING;
+            } else {
+                motorData.desiredTorque = 0.0F;
             }
-            motorData.desiredTorque = 0.0F;
             break;
         }
         // Ready to drive button pressed
@@ -195,34 +191,29 @@ void Motor_UpdateMotor(){
             if (pccData.state == PCC_STATE_DISCHARGE){
                 motorData.state = MOTOR_STATE_OFF;
                 motorData.desiredTorque = 0.0F;
-                break;
             } else if (pccData.state == PCC_STATE_ERROR){
                 motorData.state = MOTOR_STATE_FAULT;
                 motorData.desiredTorque = 0.0F;
-                break;
-            }
-            if (!RTMButton_GetState()){
+            } else if (!RTMButton_GetState()){
                 motorData.state = MOTOR_STATE_IDLE;
                 motorData.desiredTorque = 0.0F;
-                break;
-            }
-
-            #if !SPEED_CONTROL_ENABLED
-            float torqueDemand = APPS_GetAPPSReading() * MAX_TORQUE_CONFIG;
-            // TODO: Add regen check for BSE
-            if (torqueDemand <= 0.0F
-                && MCU_GetMCU1Data()->motorDirection == DIRECTION_FORWARD) {
-                // If regen is enabled and the torque demand is zero, we need to set the torque demand to 0
-                // to prevent the motor from applying torque in the wrong direction
-                motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
             } else {
-                motorData.desiredTorque = torqueDemand;
+                #if !SPEED_CONTROL_ENABLED
+                float torqueDemand = APPS_GetAPPSReading() * MAX_TORQUE_CONFIG;
+                // TODO: Add regen check for BSE
+                if (torqueDemand <= 0.0F
+                    && MCU_GetMCU1Data()->motorDirection == DIRECTION_FORWARD) {
+                    // If regen is enabled and the torque demand is zero, we need to set the torque demand to 0
+                    // to prevent the motor from applying torque in the wrong direction
+                    motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
+                } else {
+                    motorData.desiredTorque = torqueDemand;
+                }
+                #else
+                // Speed control is enabled, we need to set the torque demand to 0
+                vcu1.VCU_TorqueReq = 0; // 0 = No torque
+                #endif
             }
-            #else
-            // Speed control is enabled, we need to set the torque demand to 0
-            vcu1.VCU_TorqueReq = 0; // 0 = No torque
-            #endif
-
             break;
         }
         case MOTOR_STATE_FAULT:
@@ -230,9 +221,9 @@ void Motor_UpdateMotor(){
             if (pccData.state == PCC_STATE_DISCHARGE){
                 motorData.state = MOTOR_STATE_OFF;
                 motorData.desiredTorque = 0.0F;
-                break;
+            } else {
+                motorData.desiredTorque = 0.0F;
             }
-            motorData.desiredTorque = 0.0F;
             break;
         }
         default:
