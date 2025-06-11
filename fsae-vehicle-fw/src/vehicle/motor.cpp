@@ -22,6 +22,14 @@ typedef struct{
     float desiredTorque; // Torque demand in Nm;
 } MotorData;
 
+typedef struct __attribute__((packed)) {
+    uint8_t state;      // Precharge state
+    uint8_t errorCode; // Error code
+    uint16_t accumulatorVoltage; // Accumulator voltage in volts
+    uint16_t tsVoltage; // Transmission side voltage in volts
+    uint16_t prechargeProgress; // Precharge progress in percent
+} PCCData;
+
 static MotorData motorData;
 static PCCData pccData;
 static TickType_t xLastWakeTime;
@@ -122,16 +130,19 @@ void threadMotor(void *pvParameters){
 
 void Motor_UpdateMotor(){
     // Update the motor state based on the RTM button state
-
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
     switch(motorData.state){
         // LV on, HV off
         case MOTOR_STATE_OFF:{
-            if (enablePrecharge){
+            if ( pccData.state == PCC_STATE_PRECHARGE ){
                 # if DEBUG_FLAG
                     Serial.println("Precharging...");
                 #endif
                 motorData.state = MOTOR_STATE_PRECHARGING;
+            } if (pccData.state == PCC_STATE_ERROR){
+                motorData.state = MOTOR_STATE_FAULT;
+                motorData.desiredTorque = 0.0F;
+                break;
             }
             motorData.desiredTorque = 0.0F;
             break;
@@ -139,11 +150,19 @@ void Motor_UpdateMotor(){
         // HV switch on (PCC CAN message)
         case MOTOR_STATE_PRECHARGING:
         {
-            if(enablePower){
+            if(pccData.state == PCC_STATE_ONLINE){
                 # if DEBUG_FLAG
                     Serial.println("Precharge finished");
                 # endif
                 motorData.state = MOTOR_STATE_IDLE;
+            } else if (pccData.state == PCC_STATE_DISCHARGE){
+                motorData.state = MOTOR_STATE_OFF;
+                motorData.desiredTorque = 0.0F;
+                break;
+            } else if (pccData.state == PCC_STATE_ERROR){
+                motorData.state = MOTOR_STATE_FAULT;
+                motorData.desiredTorque = 0.0F;
+                break;
             }
             motorData.desiredTorque = 0.0F;
             break;
@@ -151,7 +170,17 @@ void Motor_UpdateMotor(){
         // PCC CAN message finished
         case MOTOR_STATE_IDLE:
         {
-            if(enableRun){
+            if (pccData.state == PCC_STATE_DISCHARGE){
+                motorData.state = MOTOR_STATE_OFF;
+                motorData.desiredTorque = 0.0F;
+                break;
+            } else if (pccData.state == PCC_STATE_ERROR){
+                motorData.state = MOTOR_STATE_FAULT;
+                motorData.desiredTorque = 0.0F;
+                break;
+            }
+
+            if(RTMButton_GetState()){
                 # if DEBUG_FLAG
                     Serial.println("Ready to drive...");
                 # endif
@@ -163,14 +192,26 @@ void Motor_UpdateMotor(){
         // Ready to drive button pressed
         case MOTOR_STATE_DRIVING:
         {
-            // if(!enableRun){
-            //     motorData.state = MOTOR_STATE_IDLE;
-            // }
+            if (pccData.state == PCC_STATE_DISCHARGE){
+                motorData.state = MOTOR_STATE_OFF;
+                motorData.desiredTorque = 0.0F;
+                break;
+            } else if (pccData.state == PCC_STATE_ERROR){
+                motorData.state = MOTOR_STATE_FAULT;
+                motorData.desiredTorque = 0.0F;
+                break;
+            }
+            if (!RTMButton_GetState()){
+                motorData.state = MOTOR_STATE_IDLE;
+                motorData.desiredTorque = 0.0F;
+                break;
+            }
 
-            // torque is communicated as a percentage
             #if !SPEED_CONTROL_ENABLED
-
-            if (enableRegen && torqueDemand <= 0.0F && MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
+            float torqueDemand = APPS_GetAPPSReading() * MAX_TORQUE_CONFIG;
+            // TODO: Add regen check for BSE
+            if (torqueDemand <= 0.0F
+                && MCU_GetMCU1Data()->motorDirection == DIRECTION_FORWARD) {
                 // If regen is enabled and the torque demand is zero, we need to set the torque demand to 0
                 // to prevent the motor from applying torque in the wrong direction
                 motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
@@ -186,9 +227,10 @@ void Motor_UpdateMotor(){
         }
         case MOTOR_STATE_FAULT:
         {
-            // TODO Implement RTM Button
-            if(RTMButton_GetState() == false){
-                motorData.state = MOTOR_STATE_IDLE;
+            if (pccData.state == PCC_STATE_DISCHARGE){
+                motorData.state = MOTOR_STATE_OFF;
+                motorData.desiredTorque = 0.0F;
+                break;
             }
             motorData.desiredTorque = 0.0F;
             break;

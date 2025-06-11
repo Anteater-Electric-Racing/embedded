@@ -91,6 +91,7 @@
 
 #define MAX_REGEN_TORQUE -9.0F // TODO: test with higher value regen
 #define REGEN_BIAS 1 // Scale 0-1 of max regen torque
+#define MAX_TORQUE_CONFIG 10
 
 #define PCC_CAN_ID 0x123 // Example CAN ID for PCC messages
 
@@ -99,14 +100,6 @@ enum PrechargeState {
     PCC_STATE_PRECHARGE,
     PCC_STATE_ONLINE,
     PCC_STATE_ERROR,
-    PCC_STATE_UNDEFINED
+    PCC_STATE_UNDEFINED,
+    PCC_STATE_DISCHARGE
 };
-
-typedef struct __attribute__((packed)) {
-    uint8_t state;      // Precharge state
-    uint8_t errorCode; // Error code
-    uint16_t accumulatorVoltage; // Accumulator voltage in volts
-    uint16_t tsVoltage; // Transmission side voltage in volts
-    uint16_t prechargeProgress; // Precharge progress in percent
-} PCCData;
-
