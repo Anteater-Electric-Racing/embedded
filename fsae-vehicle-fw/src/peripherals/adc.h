@@ -2,8 +2,8 @@
 #pragma once
 
 #include <ADC.h>
-#define SENSOR_PIN_AMT_ADC0 8
-#define SENSOR_PIN_AMT_ADC1 8
+#define SENSOR_PIN_AMT_ADC0 11
+#define SENSOR_PIN_AMT_ADC1 11
 
 extern uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0];
 extern uint16_t adc0Index;

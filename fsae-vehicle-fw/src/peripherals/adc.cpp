@@ -12,16 +12,21 @@
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
+#include "vehicle/thermal.h"
 
 enum SensorIndexesADC0 { // TODO: Update with real values
-    APPS_1_INDEX,
-    APPS_2_INDEX,
-    BSE_1_INDEX,
-    BSE_2_INDEX,
+    THERMISTOR_1_INDEX = 0, // A0
+    APPS_1_INDEX = 5,
+    APPS_2_INDEX = 4,
+    BSE_1_INDEX = 3,
+    BSE_2_INDEX = 2,
     SUSP_TRAV_LINPOT1,
     SUSP_TRAV_LINPOT2,
     SUSP_TRAV_LINPOT3,
-    SUSP_TRAV_LINPOT4
+    SUSP_TRAV_LINPOT4,
+    THERMISTOR_2_INDEX = 10, // A1
+    THERMISTOR_3_INDEX = 9, // A2
+    THERMISTOR_4_INDEX = 8// A3
 };
 
 enum SensorIndexesADC1 { // TODO: Update with real values
@@ -35,10 +40,11 @@ enum SensorIndexesADC1 { // TODO: Update with real values
     SUSP_TRAV_LINPOT42
 };
 
-uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {A0, A1, A2, A3, A4, A5, A6, A7}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
+uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {A0, A1, A2, A3, A4, A5, A6, A7, A15, A16, A17}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
 uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 
-uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {A7, A6, A5, A4, A3, A2, A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
+
+uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {A17, A16, A15, A7, A6, A5, A4, A3, A2, A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
 uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
 static TickType_t lastWakeTime;
@@ -86,6 +92,8 @@ void threadADC( void *pvParameters ){
         // Update each sensors data
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
+
+        thermal_Update(adc0Reads[THERMISTOR_1_INDEX], adc0Reads[THERMISTOR_2_INDEX], adc0Reads[THERMISTOR_3_INDEX], adc0Reads[THERMISTOR_4_INDEX]);
 
         // Handle any faults that were raised
         // Faults_HandleFaults();
