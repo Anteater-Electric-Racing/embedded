@@ -58,5 +58,5 @@ typedef struct __attribute__((packed)){
 } TelemetryData;
 
 void Telemetry_Init();
-void threadTelemetryCAN(void *pvParameters);
+void threadTelemetry(void *pvParameters);
 TelemetryData const* Telemetry_GetData();

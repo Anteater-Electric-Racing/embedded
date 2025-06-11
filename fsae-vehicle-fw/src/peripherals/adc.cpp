@@ -13,7 +13,6 @@
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
 
-
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
     APPS_2_INDEX,

@@ -8,11 +8,11 @@
 #include "vehicle/bse.h"
 #include "vehicle/telemetry.h"
 
+#include "utils/utils.h"
+
 #include "peripherals/can.h"
 
 TelemetryData telemetryData;
-
-static void threadTelemetry(void *pvParameters);
 
 void Telemetry_Init() {
     // TODO: Update initialization
@@ -54,8 +54,6 @@ void Telemetry_Init() {
         .mcuCurrent = 0.0F,
         .motorPhaseCurr = 0.0F,
     };
-
-    xTaskCreate(threadTelemetry, "threadTelemetry", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
 }
 
 void threadTelemetry(void *pvParameters){

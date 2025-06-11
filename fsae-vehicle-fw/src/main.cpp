@@ -1,6 +1,5 @@
 // Anteater Electric Racing, 2025
 
-
 #include <Arduino.h>
 #include <arduino_freertos.h>
 
@@ -37,7 +36,7 @@ void setup() { // runs once on bootup
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
-    xTaskCreate(threadTelemetryCAN, "threadTelemetryCAN", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
+    xTaskCreate(threadTelemetry, "threadTelemetryCAN", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
     vTaskStartScheduler();
 }

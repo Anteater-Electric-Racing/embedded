@@ -27,15 +27,13 @@ static TickType_t xLastWakeTime;
 static VCU1 vcu1 = {0};
 static BMS1 bms1 = {0};
 static BMS2 bms2 = {0};
-static void threadMotor(void *pvParameters);
 
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
     motorData.desiredTorque = 0.0F; // No torque demand at start
-    xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
 }
 
-static void threadMotor(void *pvParameters){
+void threadMotor(void *pvParameters){
     while(true){
         // Clear packet contents
         vcu1 = {0};
