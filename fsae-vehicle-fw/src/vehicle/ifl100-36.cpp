@@ -10,7 +10,6 @@
 
 #include "utils/utils.h"
 
-static void threadMCU(void *pvParameters);
 static uint32_t rx_id;
 static uint64_t rx_data;
 

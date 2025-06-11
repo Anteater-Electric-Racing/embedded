@@ -1,8 +1,5 @@
 // Anteater Electric Racing, 2025
 
-#define THREAD_CAN_STACK_SIZE 128
-#define THREAD_CAN_PRIORITY 1
-
 #include <stdint.h>
 #include <isotp.h>
 #include <FlexCAN_T4.h>
