@@ -22,6 +22,13 @@ struct TelemetryData{
     uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
     uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
+    uint8_t pccState;      // Precharge state
+    uint8_t pccErrorCode; // Error code
+    float pccAccumulatorVoltage; // Accumulator voltage in volts
+    float pccTsVoltage; // Transmission side voltage in volts
+    float pccPrechargeProgress; // Precharge progress in percent
+
+
 } __attribute__((packed)); // need this to ensure data is packed without gaps in between;
 
 void Telemetry_Init();
@@ -30,5 +37,11 @@ TelemetryData const* Telemetry_GetData();
 void Telemetry_SerializeData(TelemetryData data, uint8_t* serializedTelemetryBuf);
 void Telemetry_UpdateData(TelemetryData* data);
 void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads);
-
+void Telemetry_UpdatePCCData(
+    uint8_t state,
+    uint8_t errorCode,
+    float accumulatorVoltage,
+    float tsVoltage,
+    float prechargeProgress
+);
 

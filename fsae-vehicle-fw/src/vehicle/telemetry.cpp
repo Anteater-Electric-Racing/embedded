@@ -74,3 +74,22 @@ void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* ad
     memcpy(telemetryDataCAN.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryDataCAN.adc1Reads));
     xSemaphoreGive(xSemaphore);
 }
+
+void Telemetry_UpdatePCCData(
+    uint8_t state,
+    uint8_t errorCode,
+    float accumulatorVoltage,
+    float tsVoltage,
+    float prechargeProgress
+){
+    xSemaphoreTake(xSemaphore, (TickType_t) 1000);
+    telemetryDataCAN.pccErrorCode = errorCode;
+    telemetryDataCAN.pccState = state;
+    telemetryDataCAN.pccAccumulatorVoltage = accumulatorVoltage;
+    telemetryDataCAN.pccTsVoltage = tsVoltage;
+    telemetryDataCAN.pccPrechargeProgress = prechargeProgress;
+    xSemaphoreGive(xSemaphore);
+}
+
+
+

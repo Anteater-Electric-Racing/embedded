@@ -2,11 +2,8 @@
 
 
 #include <arduino_freertos.h>
-
 #include "utils/utils.h"
-
 #include "peripherals/can.h"
-
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/rtm_button.h"
