@@ -49,3 +49,4 @@ flowchart TD
 - Now run `cargo run --bin fsae-dashboard` to start the dashboard
 
 ## User: Max Truong
+
