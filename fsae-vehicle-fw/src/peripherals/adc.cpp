@@ -13,7 +13,6 @@
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
 
-
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
     APPS_2_INDEX,
@@ -89,7 +88,7 @@ void threadADC( void *pvParameters ){
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
 
         // Handle any faults that were raised
-        Faults_HandleFaults();
-        Motor_UpdateMotor();
+        // Faults_HandleFaults();
+        // Motor_UpdateMotor();
     }
 }
