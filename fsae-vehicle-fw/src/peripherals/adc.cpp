@@ -73,7 +73,7 @@ void threadADC( void *pvParameters ){
         vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
         for(uint16_t currentIndexADC0 = 0; currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0){
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
-            uint16_t adcRead = adc->adc1->analogRead(currentPinADC0);
+            uint16_t adcRead = adc->adc0->analogRead(currentPinADC0);
             adc0Reads[currentIndexADC0] = adcRead;
         }
 
