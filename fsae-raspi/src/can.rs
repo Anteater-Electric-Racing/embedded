@@ -1,8 +1,6 @@
 use std::time::Duration;
-
 use crate::send::{send_message, Reading};
 use chrono::{DateTime, Utc};
-use influxdb::InfluxDbWriteable;
 use serde::Serialize;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
@@ -11,17 +9,8 @@ const CAN_INTERFACE: &str = "can0";
 
 macro_rules! define_enum {
     ($name:ident, $($variant:ident = $value:expr => $text:expr),*) => {
-        #[derive(Serialize)]
-        enum $name {
+                enum $name {
             $($variant = $value),*
-        }
-
-        impl Into<influxdb::Type> for $name {
-            fn into(self) -> influxdb::Type {
-                influxdb::Type::Text(match self {
-                    $(Self::$variant => $text.to_string()),*
-                })
-            }
         }
 
         impl $name {
@@ -30,6 +19,20 @@ macro_rules! define_enum {
                     $($value => Self::$variant),*,
                     _ => panic!("Invalid value for {}", stringify!($name)),
                 }
+            }
+            fn as_str(&self) -> &'static str {
+                match self {
+                    $(Self::$variant => $text),*
+                }
+            }
+        }
+
+        impl serde::Serialize for $name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                serializer.serialize_str(self.as_str())
             }
         }
     };
@@ -71,7 +74,7 @@ define_enum!(MCUWarningLevel,
     ErrorHigh = 3 => "High"
 );
 
-#[derive(Serialize, InfluxDbWriteable)]
+#[derive(Serialize)]
 struct TelemetryData {
     time: DateTime<Utc>,
     apps_travel: f32,
