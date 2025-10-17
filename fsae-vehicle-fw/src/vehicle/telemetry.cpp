@@ -15,7 +15,6 @@
 TelemetryData telemetryData;
 
 void Telemetry_Init() {
-    // TODO: Update initialization
     telemetryData = { // Fill with reasonable dummy values
         .APPS_Travel = 0.0F,
 
@@ -52,11 +51,6 @@ void threadTelemetry(void *pvParameters){
         taskENTER_CRITICAL(); // Enter critical section
         telemetryData = {
             .APPS_Travel = APPS_GetAPPSReading(),
-           // .BSEFront_PSI = BSE_GetBSEReading()->bseFront_PSI,
-           // .BSERear_PSI = BSE_GetBSEReading()->bseFront_PSI,
-           // .accumulatorVoltage = 0.0F, // TODO: Replace with actual accumulator voltage reading
-           // .accumulatorTemp_F = 0.0F, // TODO: Replace with actual accumulator temperature reading
-
 
             .motorSpeed = MCU_GetMCU1Data()->motorSpeed,
             .motorTorque = MCU_GetMCU1Data()->motorTorque,
