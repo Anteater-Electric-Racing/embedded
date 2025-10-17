@@ -18,16 +18,12 @@ void Telemetry_Init() {
     // TODO: Update initialization
     telemetryData = { // Fill with reasonable dummy values
         .APPS_Travel = 0.0F,
-        // .BSEFront_PSI = 0.0F,
-        // .BSERear_PSI = 0.0F,
-        // .accumulatorVoltage = 0.0F,
-        // .accumulatorTemp_F = 25.0F,
-        //.motorState = MOTOR_STATE_OFF,
+
 
         .motorSpeed = 0.0F,
         .motorTorque = 0.0F,
         .maxMotorTorque = 0.0F,
-        //.maxMotorBrakeTorque = 0.0F,
+
         .motorDirection = DIRECTION_STANDBY,
         .motorState = MOTOR_STATE_OFF,
 
@@ -46,27 +42,7 @@ void Telemetry_Init() {
         .motorStallFault = false,
 
         .mcuWarningLevel = ERROR_NONE,
-        //.mcuOverHotFault = false,
-        // .resolverFault = false,
-        // .phaseCurrSensorFault = false,
 
-
-
-        // .drvMotorOverHotFault = false,
-        // .dcMainWireOverCurrFault = false,
-        // .drvMotorOverCoolFault = false,
-        // .mcuMotorSystemState = false,
-        // .mcuTempSensorState = false,
-        // .motorTempSensorState = false,
-        // .dcVoltSensorState = false,
-        // .dcLowVoltWarning = false,
-        // .mcu12VLowVoltWarning = false,
-
-        // .motorOpenPhaseFault = false,
-
-        // .mcuVoltage = 0.0F,
-        // .mcuCurrent = 0.0F,
-        // .motorPhaseCurr = 0.0F,
     };
 }
 
@@ -102,23 +78,9 @@ void threadTelemetry(void *pvParameters){
             .motorOverSpdFault = MCU_GetMCU2Data()->motorOverSpdFault,
             .motorPhaseCurrFault = MCU_GetMCU2Data()->motorPhaseCurrFault,
 
-//            .mcuOverHotFault = MCU_GetMCU2Data()->mcuOverHotFault,
-//            .resolverFault = MCU_GetMCU2Data()->resolverFault,
- //           .phaseCurrSensorFault = MCU_GetMCU2Data()->phaseCurrSensorFault,
-            // .drvMotorOverHotFault = MCU_GetMCU2Data()->drvMotorOverHotFault,
-            // .drvMotorOverCoolFault = MCU_GetMCU2Data()->drvMotorOverCoolFault,
-            // .mcuMotorSystemState = MCU_GetMCU2Data()->mcuMotorSystemState,
-            // .mcuTempSensorState = MCU_GetMCU2Data()->mcuTempSensorState,
-            // .motorTempSensorState = MCU_GetMCU2Data()->motorTempSensorState,
-            // .dcVoltSensorState = MCU_GetMCU2Data()->dcVoltSensorState,
-            // .dcLowVoltWarning = MCU_GetMCU2Data()->dcLowVoltWarning,
-            // .mcu12VLowVoltWarning = MCU_GetMCU2Data()->mcu12VLowVoltWarning,
             .motorStallFault = MCU_GetMCU2Data()->motorStallFault,
-           // .motorOpenPhaseFault = MCU_GetMCU2Data()->motorOpenPhaseFault,
             .mcuWarningLevel = MCU_GetMCU2Data()->mcuWarningLevel,
 
-
-           // .motorPhaseCurr = MCU_GetMCU3Data()->motorPhaseCurr,
         };
         taskEXIT_CRITICAL();
 
