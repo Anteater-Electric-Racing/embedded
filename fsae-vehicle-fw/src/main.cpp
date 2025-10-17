@@ -65,7 +65,7 @@ void threadMain(void *pvParameters) {
             * Telemetry: battery current, phase current, motor speed, temperature(s)
         */
 
-       # if DEBUG_FLAG
+       # if HIMAC_FLAG
         if (Serial.available()) {
             char input = Serial.read();
 
