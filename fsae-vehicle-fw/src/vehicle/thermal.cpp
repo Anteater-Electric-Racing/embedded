@@ -25,8 +25,8 @@ void thermal_Update(uint32_t rawReading1, uint32_t rawReading2, uint32_t rawRead
   // Convert raw readings to temperature in degrees Celsius
     int32_t temp1 = (rawReading1);
     int32_t temp2 = (rawReading2);
-    int32_t temp3 = (rawReading1);
-    int32_t temp4 = (rawReading2);
+    // int32_t temp3 = (rawReading3);
+    // int32_t temp4 = (rawReading4);
     // Check if the MCU temperature exceeds the threshold
     if (temp1 > TEMP_THRESHOLD || temp2 > TEMP_THRESHOLD) {
         // If the MCU temperature exceeds the threshold, turn on the pump and fan

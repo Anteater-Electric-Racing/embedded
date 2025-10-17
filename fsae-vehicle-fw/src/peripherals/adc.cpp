@@ -93,7 +93,8 @@ void threadADC( void *pvParameters ){
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
 
-        thermal_Update(adc0Reads[THERMISTOR_1_INDEX], adc0Reads[THERMISTOR_2_INDEX], adc0Reads[THERMISTOR_3_INDEX], adc0Reads[THERMISTOR_4_INDEX]);
+        thermal_Update(adc0Reads[THERMISTOR_1_INDEX], adc0Reads[THERMISTOR_2_INDEX],
+            adc0Reads[THERMISTOR_3_INDEX], adc0Reads[THERMISTOR_4_INDEX]);
 
         // Handle any faults that were raised
         // Faults_HandleFaults();
