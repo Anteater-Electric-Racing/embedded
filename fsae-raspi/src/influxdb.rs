@@ -1,7 +1,7 @@
 use crate::send::Reading;
 
 pub fn to_line_protocol<T: Reading>(message: &T) -> String {
-    let mut line_protocol = format!("{}", T::topic());
+    let mut line_protocol = T::topic().to_string();
 
     if let Ok(serde_json::Value::Object(obj)) = serde_json::to_value(message) {
         line_protocol.push(' ');
