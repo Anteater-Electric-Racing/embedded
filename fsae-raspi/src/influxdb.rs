@@ -16,7 +16,7 @@ pub fn to_line_protocol<T: Reading>(message: &T) -> String {
                         n.to_string()
                     }
                 }
-                serde_json::Value::String(s) => s,
+                serde_json::Value::String(s) => format!("\"{}\"", s),
                 serde_json::Value::Bool(b) => if b { "true" } else { "false" }.to_string(),
                 _ => continue,
             };
