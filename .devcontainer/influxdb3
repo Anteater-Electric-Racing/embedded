@@ -9,7 +9,7 @@
 ### END INIT INFO
 
 DAEMON="/home/vscode/.influxdb/influxdb3"
-DAEMON_ARGS="serve --object-store file --data-dir ~/.influxdb3 --node-id my-host-01"
+DAEMON_ARGS="serve --object-store file --data-dir ~/.influxdb3 --node-id my-host-01 --admin-token-file /workspaces/embedded/.devcontainer/admin-token.json"
 PIDFILE="/var/run/influxdb3.pid"
 LOGFILE="/var/log/influxdb3.log"
 LOCKFILE="/var/lock/influxdb3"
