@@ -23,6 +23,15 @@ isotp<RX_BANKS_16, 512> tp;
 CAN_message_t motorMsg;
 CAN_message_t rx_msg;
 
+// CAN loss detection
+static uint32_t lastCAN2MsgTime = 0;
+static uint32_t lastCAN3MsgTime = 0;
+static bool can2Healthy = false;
+static bool can3Healthy = false;
+
+#define CAN_TIMEOUT_MS 100
+
+
 void CAN_Init() {
     // Initialize CAN bus
     can2.begin();
@@ -55,11 +64,26 @@ void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
     if (can2.read(rx_msg)) {
         *rx_id = rx_msg.id;
         memcpy(rx_data, rx_msg.buf, sizeof(*rx_data));
+
+        lastCAN2MsgTime = millis();
+        can2Healthy = true;
     } else { // No message received, assign default values
         *rx_id = 0;
         *rx_data = 0;
     }
 }
+
+void CAN_CheckHealth() {
+    uint32_t now = millis();
+    if (now - lastCAN2MsgTime > CAN_TIMEOUT_MS) {
+        can2Healthy = false;
+    }
+
+    if (now - lastCAN3MsgTime > CAN_TIMEOUT_MS) {
+        can3Healthy = false;
+    }
+}
+
 
 void CAN_ISOTP_Send(uint32_t id, uint8_t* msg, uint16_t size) {
     ISOTP_data config;
@@ -67,4 +91,11 @@ void CAN_ISOTP_Send(uint32_t id, uint8_t* msg, uint16_t size) {
     config.flags.extended = 0; // Standard frame
     config.separation_time = 1; // Time between back-to-back frames in milliseconds
     tp.write(config, msg, size);
+}
+
+
+bool CAN_IsBusHealthy(uint8_t bus) {
+    if (bus == 2) return can2Healthy;
+    if (bus == 3) return can3Healthy;
+    return false;
 }

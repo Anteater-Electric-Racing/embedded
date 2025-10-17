@@ -39,6 +39,18 @@ void threadMotor(void *pvParameters){
         vcu1 = {0};
         bms1 = {0};
         bms2 = {0};
+
+        /*
+        if (!CAN_IsBusHealthy(2) || !CAN_IsBusHealthy(3)) {
+            // CAN is lost, enter fault mode immediately
+            motorData.state = MOTOR_STATE_FAULT;
+            motorData.desiredTorque = 0.0F;
+
+            #if DEBUG_FLAG
+                Serial.println("CAN fault detected — entering FAULT state");
+            #endif
+        }*/
+
         switch (motorData.state){
             case MOTOR_STATE_OFF:
             {
