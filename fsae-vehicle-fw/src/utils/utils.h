@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define DEBUG_FLAG 0
+#define DEBUG_FLAG 1
 
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
