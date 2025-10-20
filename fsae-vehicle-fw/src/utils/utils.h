@@ -93,3 +93,6 @@
 
 #define MAX_REGEN_TORQUE -9.0F // TODO: test with higher value regen
 #define REGEN_BIAS 1 // Scale 0-1 of max regen torque
+
+#define TORQUE_THRESHOLD 90
+#define SOC_THRESHOLD 20
