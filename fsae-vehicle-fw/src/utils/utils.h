@@ -96,3 +96,8 @@
 
 #define TORQUE_THRESHOLD 90
 #define SOC_THRESHOLD 20
+
+#define SOC_START 0.2
+#define SOC_END 0.05
+#define MAX_POWER 80
+
