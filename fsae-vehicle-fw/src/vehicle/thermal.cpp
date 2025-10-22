@@ -38,11 +38,11 @@ void thermal_Update(uint32_t rawReading1, uint32_t rawReading2, uint32_t rawRead
         analogWrite(FAN_PIN, 0); // Set fan to 0 duty cycle
     }
     // Debugging output
-    Serial.print("Temp1: ");
-    Serial.print(temp1);
-    Serial.print(" C | Temp2: ");
-    Serial.print(temp2);
-    Serial.println(" C");
+    // Serial.print("Temp1: ");
+    // Serial.print(temp1);
+    // Serial.print(" C | Temp2: ");
+    // Serial.print(temp2);
+    // Serial.println(" C");
 
 }
 
