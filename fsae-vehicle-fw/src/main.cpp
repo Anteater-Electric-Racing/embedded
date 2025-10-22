@@ -45,7 +45,7 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
-    # if DEBUG_FLAG
+    # if HIMAC_FLAG
     float torqueDemand = 0;
     bool enablePrecharge = false;
     bool enablePower = false;
@@ -60,12 +60,13 @@ void threadMain(void *pvParameters) {
             * 'p' or 'P' to enter precharging state from standby,
             * 'o' or 'O' to enter run state,
             * ' ' (space) to stop all torque.
+            * R to toggle regen
             * The torque demand is limited between 0 and TORQUE_MAX_NM.
             *
             * Telemetry: battery current, phase current, motor speed, temperature(s)
         */
 
-       # if DEBUG_FLAG
+       # if HIMAC_FLAG
         if (Serial.available()) {
             char input = Serial.read();
 
@@ -186,6 +187,7 @@ void threadMain(void *pvParameters) {
         Serial.print(" | ");
         Serial.print("Regen: ");
         Serial.print(enableRegen);
+        Serial.print("      \r");
 
 
         // Serial.print("Battery Current: ");
@@ -204,22 +206,21 @@ void threadMain(void *pvParameters) {
         // Serial.print(MCU_GetMCU2Data().motorTemp);
         // Serial.print("      \n");
 
-        // print all errors if they are true in one line
-        // Serial.print("  |  ");
-        // if (MCU_GetMCU2Data().dcMainWireOverVoltFault) Serial.print("DC Over Volt Fault, ");
-        // if (MCU_GetMCU2Data().motorPhaseCurrFault) Serial.print("Motor Phase Curr Fault, ");
-        // if (MCU_GetMCU2Data().mcuOverHotFault) Serial.print("MCU Over Hot Fault, ");
-        // if (MCU_GetMCU2Data().resolverFault) Serial.print("Resolver Fault, ");
-        // if (MCU_GetMCU2Data().phaseCurrSensorFault) Serial.print("Phase Curr Sensor Fault, ");
-        // if (MCU_GetMCU2Data().motorOverSpdFault) Serial.print("Motor Over Spd Fault, ");
-        // if (MCU_GetMCU2Data().drvMotorOverHotFault) Serial.print("Driver Motor Over Hot Fault, ");
-        // if (MCU_GetMCU2Data().dcMainWireOverCurrFault) Serial.print("DC Main Wire Over Curr Fault, ");
-        // if (MCU_GetMCU2Data().drvMotorOverCoolFault) Serial.print("Driver Motor Over Cool Fault, ");
-        // if (MCU_GetMCU2Data().dcLowVoltWarning) Serial.print("DC Low Volt Warning, ");
-        // if (MCU_GetMCU2Data().mcu12VLowVoltWarning) Serial.print("MCU 12V Low Volt Warning, ");
-        // if (MCU_GetMCU2Data().motorStallFault) Serial.print("Motor Stall Fault, ");
-        // if (MCU_GetMCU2Data().motorOpenPhaseFault) Serial.print("Motor Open Phase Fault, ");
-
+        //print all errors if they are true in one line
+        Serial.print("  |  ");
+        if (MCU_GetMCU2Data()->dcMainWireOverVoltFault) Serial.print("DC Over Volt Fault, ");
+        if (MCU_GetMCU2Data()->motorPhaseCurrFault) Serial.print("Motor Phase Curr Fault, ");
+        if (MCU_GetMCU2Data()->mcuOverHotFault) Serial.print("MCU Over Hot Fault, ");
+        if (MCU_GetMCU2Data()->resolverFault) Serial.print("Resolver Fault, ");
+        if (MCU_GetMCU2Data()->phaseCurrSensorFault) Serial.print("Phase Curr Sensor Fault, ");
+        if (MCU_GetMCU2Data()->motorOverSpdFault) Serial.print("Motor Over Spd Fault, ");
+        if (MCU_GetMCU2Data()->drvMotorOverHotFault) Serial.print("Driver Motor Over Hot Fault, ");
+        if (MCU_GetMCU2Data()->dcMainWireOverCurrFault) Serial.print("DC Main Wire Over Curr Fault, ");
+        if (MCU_GetMCU2Data()->drvMotorOverCoolFault) Serial.print("Driver Motor Over Cool Fault, ");
+        if (MCU_GetMCU2Data()->dcLowVoltWarning) Serial.print("DC Low Volt Warning, ");
+        if (MCU_GetMCU2Data()->mcu12VLowVoltWarning) Serial.print("MCU 12V Low Volt Warning, ");
+        if (MCU_GetMCU2Data()->motorStallFault) Serial.print("Motor Stall Fault, ");
+        if (MCU_GetMCU2Data()->motorOpenPhaseFault) Serial.print("Motor Open Phase Fault, ");
         Motor_UpdateMotor(torqueDemand, enablePrecharge, enablePower, enableRun, enableRegen); // Update motor with the current torque demand
         # endif
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms

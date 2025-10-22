@@ -55,9 +55,13 @@ void CAN_Init() {
 void CAN_Send(uint32_t id, uint64_t msg)
 {
     motorMsg.id = id;
+   // msg.id = 0x100;
     memcpy(motorMsg.buf, &msg, sizeof(msg));
 
     can2.write(motorMsg);
+
+    Serial.println("| Sending CAN... ");
+    Serial.print("");
 }
 
 void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
@@ -65,8 +69,9 @@ void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
         *rx_id = rx_msg.id;
         memcpy(rx_data, rx_msg.buf, sizeof(*rx_data));
 
-        lastCAN2MsgTime = millis();
-        can2Healthy = true;
+        Serial.println("--> CAN Message recieved");
+        // lastCAN2MsgTime = millis();
+        // can2Healthy = true;
     } else { // No message received, assign default values
         *rx_id = 0;
         *rx_data = 0;
@@ -74,14 +79,14 @@ void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
 }
 
 void CAN_CheckHealth() {
-    uint32_t now = millis();
-    if (now - lastCAN2MsgTime > CAN_TIMEOUT_MS) {
-        can2Healthy = false;
-    }
+    // uint32_t now = millis();
+    // if (now - lastCAN2MsgTime > CAN_TIMEOUT_MS) {
+    //     can2Healthy = false;
+    // }
 
-    if (now - lastCAN3MsgTime > CAN_TIMEOUT_MS) {
-        can3Healthy = false;
-    }
+    // if (now - lastCAN3MsgTime > CAN_TIMEOUT_MS) {
+    //     can3Healthy = false;
+    // }
 }
 
 

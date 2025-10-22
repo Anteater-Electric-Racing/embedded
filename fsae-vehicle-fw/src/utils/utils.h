@@ -2,7 +2,8 @@
 
 #pragma once
 
-#define DEBUG_FLAG 1
+#define DEBUG_FLAG 0
+#define HIMAC_FLAG 1
 
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
