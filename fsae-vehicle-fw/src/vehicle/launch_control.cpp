@@ -1,5 +1,3 @@
-Initial design block plan for Launch Control System
- Designed with accountability of wheel speed sensors to obtain slip ratio and use PID to integrate that properly to the optimal range. 
 // Testing Launch Control System by Rishi and Anoop
 
 #include <Arduino.h>
@@ -7,7 +5,7 @@ Initial design block plan for Launch Control System
 #include <arduino_freertos.h>
 #include <launch.h>
 #include <telemetry.h>
-#include <vehicle/motor.h>  //
+#include <vehicle/motor.h>  // Not used but maybe could be usedful ?
 
 #include "../utils/pid.h"
 
@@ -74,4 +72,5 @@ float LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR,
         torqueDemand = minTorque;
     }
     return torqueDemand;
+
 }
