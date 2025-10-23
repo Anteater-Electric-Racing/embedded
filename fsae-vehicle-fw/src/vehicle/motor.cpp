@@ -39,6 +39,18 @@ void threadMotor(void *pvParameters){
         vcu1 = {0};
         bms1 = {0};
         bms2 = {0};
+
+        /*
+        if (!CAN_IsBusHealthy(2) || !CAN_IsBusHealthy(3)) {
+            // CAN is lost, enter fault mode immediately
+            motorData.state = MOTOR_STATE_FAULT;
+            motorData.desiredTorque = 0.0F;
+
+            #if DEBUG_FLAG
+                Serial.println("CAN fault detected — entering FAULT state");
+            #endif
+        }*/
+
         switch (motorData.state){
             case MOTOR_STATE_OFF:
             {
@@ -172,6 +184,10 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
                 // If regen is enabled and the torque demand is zero, we need to set the torque demand to 0
                 // to prevent the motor from applying torque in the wrong direction
                 motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
+            } else if (TractionControl_GetSlip(digitalRead(2), digitalRead(3), MCU_GetMCU1Data()->motorSpeed) > MAX_SLIP_RATIO) { //reads data from pins 2 and 3 (wheel speed 1 and 2)
+                motorData.desiredTorque *= 0.9F; // Reduce torque by 10%
+            } else if (TractionControl_GetSlip(digitalRead(2), digitalRead(3), MCU_GetMCU1Data()->motorSpeed) < MAX_SLIP_RATIO * 0.8F) {
+                motorData.desiredTorque *= 1.05F; // Increase torque by 5%
             } else {
                 motorData.desiredTorque = torqueDemand;
             }
@@ -214,3 +230,8 @@ MotorState Motor_GetState(){
     return motorData.state;
 }
 
+float TractionControl_GetSlip(float FL_speed, float FR_speed, float motorVelocity) {
+    float undrivenWheelAverage = (FL_speed + FR_speed) / 2.0F;
+    float slip = (motorVelocity - undrivenWheelAverage) / (undrivenWheelAverage + 0.01); //avoid dividing by 0
+    return slip;
+}
