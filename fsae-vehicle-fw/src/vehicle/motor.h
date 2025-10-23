@@ -12,6 +12,8 @@ typedef enum {
     MOTOR_STATE_FAULT,
 } MotorState;
 
+const float MAX_SLIP_RATIO = 0.2;
+
 void threadMotor(void *pvParameters);
 
 void Motor_Init();
@@ -23,3 +25,4 @@ void threadMotor(void *pvParameters);
 
 void Motor_SetFaultState();
 void Motor_ClearFaultState();
+float TractionControl_GetSlip(float FL_speed, float FR_speed, float motorVelocity);

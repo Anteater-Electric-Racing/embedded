@@ -5,6 +5,7 @@
 
 #include "peripherals/adc.h"
 #include "peripherals/can.h"
+#include "peripherals/gpio.h"
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -33,6 +34,7 @@ void setup() { // runs once on bootup
     Telemetry_Init();
     Motor_Init();
     MCU_Init();
+    GPIO_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
@@ -45,7 +47,7 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
-    # if DEBUG_FLAG
+    # if HIMAC_FLAG
     float torqueDemand = 0;
     bool enablePrecharge = false;
     bool enablePower = false;
@@ -65,7 +67,7 @@ void threadMain(void *pvParameters) {
             * Telemetry: battery current, phase current, motor speed, temperature(s)
         */
 
-       # if DEBUG_FLAG
+       # if HIMAC_FLAG
         if (Serial.available()) {
             char input = Serial.read();
 
