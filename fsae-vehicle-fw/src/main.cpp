@@ -76,14 +76,9 @@ void threadMain(void *pvParameters) {
          * 'k' or 'K' to go back to idle from run
          *
          * ' ' (space) to stop all torque. (reset w/s to 0)
-         *
-         *
          * R to toggle regen
+         *
          * The torque demand is limited between 0 and TORQUE_MAX_NM.
-         *
-         *
-         *
-         *
          *
          * Telemetry: battery current, phase current, motor speed,
          * temperature(s)

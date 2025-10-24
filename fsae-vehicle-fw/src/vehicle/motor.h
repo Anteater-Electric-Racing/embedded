@@ -10,10 +10,7 @@ typedef enum {
     MOTOR_STATE_PRECHARGING,
     MOTOR_STATE_IDLE,
     MOTOR_STATE_DRIVING,
-    MOTOR_STATE_FAULT,
-    MOTOR_PRECHARGE_TO_STANDBY,
-    MOTOR_RUN_TO_IDLE,
-
+    MOTOR_STATE_FAULT
 } MotorState;
 
 void threadMotor(void *pvParameters);
