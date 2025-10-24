@@ -6,6 +6,7 @@
 #include <launch.h>
 #include <telemetry.h>
 #include <vehicle/motor.h>  // Not used but maybe could be usedful ?
+#include "bse.h"
 
 #include "../utils/pid.h"
 
@@ -14,6 +15,7 @@ static PIDConfig slipPIDConfig;
 static float slipTarget = 0.07f;   // 7% slip
 static float minTorque = 0.0f;
 
+static LaunchState launchControlState = LAUNCH_STATE_OFF;
 
 void LaunchControl_Init()
 {
@@ -33,44 +35,57 @@ void LaunchControl_Init()
 }
 
 float LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR, 
-                          float wheelSpeedRL, float wheelSpeedRR,
-                          float accel)
+                          float wheelSpeedRL, float wheelSpeedRR)
 {
     float torqueDemand = 0.0f;
-    float realTorque = Motor_GetState()->torqueCmd; // Current torque command from motor controller
-    //This is assuming we are obtaining wheel speeds in m/s, otherwise conversion is needed with wheel radius
+    switch (launchControlState) {
+        case LAUNCH_STATE_ON:
+            float realTorque = Motor_GetState()->torqueCmd; // Current torque command from motor controller
+            //This is assuming we are obtaining wheel speeds in m/s, otherwise conversion is needed with wheel radius
 
-    float controlledSpeed = std::max(wheelSpeedRL, wheelSpeedRR); // Obtain the higher speed of the wheels connected to Powertrain for safety precaution
-    float freeSpeed = std::min(wheelSpeedFL, wheelSpeedFR);
-    if(freeSpeed == 0.0f) // Free roaming wheels (front two) and take the lower speed of these for safety precaution
-    {
-        freeSpeed = 0.001f; // To avoid division by zero
+            float controlledSpeed = std::max(wheelSpeedRL, wheelSpeedRR); // Obtain the higher speed of the wheels connected to Powertrain for safety precaution
+            float freeSpeed = std::min(wheelSpeedFL, wheelSpeedFR);
+            if(freeSpeed == 0.0f) // Free roaming wheels (front two) and take the lower speed of these for safety precaution
+            {
+                freeSpeed = 0.001f; // To avoid division by zero
+            }
+            float slipRatio = (controlledSpeed - freeSpeed) / freeSpeed; //Slip Ratio equation provided by Vik
+
+            // if(slipRatio < 0.05f || slipRatio > 0.15f)
+            // {        //Doubt this is needed, as PID should be able to handle this
+            // }
+            
+
+            float maxTorqueNm = Telemetry_GetData()->maxMotorTorque; // Just to understand Max Torque so we don't exceed this
+            float dt = 0.01f; // Time step for PID calculation, adjusted for 100Hz update rate
+            
+            // PID Control for Slip Ratio
+            float correction = PID::PID_Calculate(slipPIDConfig,slipTarget, slipRatio, dt); // Proportional control for slip ratio
+            // Currently unsure how this will be integrated, as the correction should reduce torque when slip is high and increase when low, but unsure what values would come out
+            torqueDemand = realTorque + correction; // Reduce torque based on slip ratio correction
+
+
+            // limit torque demand to be within allowable limits(no less then 0 and no more the nmaxToqrue which I believe is 260 according to Utils.h)
+            if(torqueDemand > maxTorqueNm)
+            {
+                torqueDemand = maxTorqueNm;
+            }
+            else if(torqueDemand < minTorque)
+            {
+                torqueDemand = minTorque;
+            }
+            break;
+
+            if (std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) < 50.0f) {
+                // If brake pressure is below threshold, disable launch control
+                torqueDemand = 0;
+                launchControlState = LAUNCH_STATE_OFF;
+            }
+        case LAUNCH_STATE_OFF:
+            // Implement launch control logic here
+            break;
     }
-    float slipRatio = (controlledSpeed - freeSpeed) / freeSpeed; //Slip Ratio equation provided by Vik
 
-    // if(slipRatio < 0.05f || slipRatio > 0.15f)
-    // {        //Doubt this is needed, as PID should be able to handle this
-    // }
-    
-
-    float maxTorqueNm = Telemetry_GetData()->maxMotorTorque; // Just to understand Max Torque so we don't exceed this
-    float dt = 0.01f; // Time step for PID calculation, adjusted for 100Hz update rate
-    
-    // PID Control for Slip Ratio
-    float correction = PID::PID_Calculate(slipPIDConfig,slipTarget, slipRatio, dt); // Proportional control for slip ratio
-    // Currently unsure how this will be integrated, as the correction should reduce torque when slip is high and increase when low, but unsure what values would come out
-    torqueDemand = realTorque + correction; // Reduce torque based on slip ratio correction
-
-
-    // limit torque demand to be within allowable limits(no less then 0 and no more the nmaxToqrue which I believe is 260 according to Utils.h)
-    if(torqueDemand > maxTorqueNm)
-    {
-        torqueDemand = maxTorqueNm;
-    }
-    else if(torqueDemand < minTorque)
-    {
-        torqueDemand = minTorque;
-    }
     return torqueDemand;
 
 }
