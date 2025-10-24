@@ -24,8 +24,8 @@ CAN_message_t motorMsg;
 CAN_message_t rx_msg;
 
 // CAN loss detection
-static uint32_t lastCAN2MsgTime = 0;
-static uint32_t lastCAN3MsgTime = 0;
+// static uint32_t lastCAN2MsgTime = 0;
+// static uint32_t lastCAN3MsgTime = 0;
 static bool can2Healthy = false;
 static bool can3Healthy = false;
 
