@@ -62,6 +62,8 @@ void threadMotor(void *pvParameters){
             #endif
         }*/
 
+
+        //TODO: Check if keyposition does anything --> if not then manually switch kl15, and provision a gpio pin to control a 3.3v switch or mosfet
         switch (motorData.state){
             case MOTOR_STATE_OFF:{
                 //T8
@@ -76,7 +78,6 @@ void threadMotor(void *pvParameters){
                 vcu1.BMS_Main_Relay_Cmd = 0;
                 bms1.Pre_charge_Relay_FB = 0; // 1 = ON, 0 = OFF NOTE: see if we can omit this bit
                 bms1.Pre_charge_Finish_Sts = 0;
-
                 break;
             }
             case MOTOR_STATE_PRECHARGING:
@@ -161,7 +162,6 @@ void threadMotor(void *pvParameters){
 void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun, bool enableRegen, bool enableStandy){
     // Update the motor state based on the RTM button state
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
-
 
     //off --> standby --> precharge --> run --> fault -->standy
     //no kl15 then off
@@ -248,8 +248,10 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
 
             if (enableStandy){
                 motorData.state = MOTOR_STATE_STANDBY;
+            } else if (enableRun) {
+                Motor_ClearFaultState();
             }
-//GOES BACK TO HV ON
+            //GOES BACK TO HV ON
             // TODO Implement RTM Button
             // if(RTMButton_GetState() == false){
             //     motorData.state = MOTOR_STATE_IDLE;
