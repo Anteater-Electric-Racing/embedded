@@ -32,10 +32,12 @@ static BMS2 bms2 = {0};
  *
  * TODO 10/24/25
  *
- * Match State Machine of Inverter with Program
+ * Match State Machine of Inverter with Program --GOOD
  * Check thread priorities --GOOD
  * Make sure fault state can be read and matched -- GOOD
  * CAN Communication from PCC (like ifl100-36)
+ *
+ * TODO Future: Enums for VCU transitions or abstracted T1-T8 transitions
  *
  */
 
@@ -167,6 +169,8 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
     //no kl15 then off
     switch(motorData.state){
         // LV on, HV off
+
+        //no kl15
         case MOTOR_STATE_OFF:{
             if (enableStandy){
                 // # if HIMAC_FLAG
@@ -177,6 +181,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
             motorData.desiredTorque = 0.0F;
             break;
         }
+        //kl15 on and ready to go into precharge
         case MOTOR_STATE_STANDBY:{
             if (enablePrecharge){
                 // # if HIMAC_FLAG
@@ -243,6 +248,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
 
             break;
         }
+        //Any fault error occurs
         case MOTOR_STATE_FAULT:
         {
 

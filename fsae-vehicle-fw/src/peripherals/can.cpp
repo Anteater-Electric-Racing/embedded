@@ -32,6 +32,14 @@ static bool can3Healthy = false;
 #define CAN_TIMEOUT_MS 100
 
 
+//CAN SETUP
+/**
+ * CAN2 (CAN2 on diagram) --> ORION, CCM, RASPI, PCC
+ * CAN3 (CAN1 on diagram) --> CCM, OMNI, RASPI
+ *
+ */
+
+
 void CAN_Init() {
     // Initialize CAN bus
     can2.begin();
@@ -52,6 +60,8 @@ void CAN_Init() {
     tp.setWriteBus(&can3); // Set the bus to write to can3
 }
 
+//TODO @ksthakkar: make can_send general function to select both CANbuses or make seperate CAN_send functions
+//can2
 void CAN_Send(uint32_t id, uint64_t msg)
 {
     motorMsg.id = id;
