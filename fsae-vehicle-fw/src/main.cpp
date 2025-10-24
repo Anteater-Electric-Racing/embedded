@@ -56,12 +56,9 @@ void threadMain(void *pvParameters) {
     bool enablePrecharge = false;
     bool enablePower = false;
     bool enableRun = false;
-    bool enableFault = false;
 
     bool enableRegen = false;
 
-
-    bool enablebackToRun = false;
 #endif
     while (true) {
         /*

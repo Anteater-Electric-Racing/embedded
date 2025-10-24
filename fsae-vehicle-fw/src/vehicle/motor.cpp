@@ -161,7 +161,7 @@ void threadMotor(void *pvParameters){
     }
 }
 
-void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun, bool enableRegen, bool enableStandy){
+void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePower, bool enableRun, bool enableRegen, bool enableStandby){
     // Update the motor state based on the RTM button state
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get APPS_travel
 
@@ -172,7 +172,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
 
         //no kl15
         case MOTOR_STATE_OFF:{
-            if (enableStandy){
+            if (enableStandby){
                 // # if HIMAC_FLAG
                 //     Serial.println("Standby Mode");
                 // #endif
@@ -200,7 +200,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
                 //     Serial.println("Precharge finished");
                 // # endif
                 motorData.state = MOTOR_STATE_IDLE;
-            } else if (enableStandy){
+            } else if (enableStandby){
                 motorData.state = MOTOR_STATE_STANDBY;
             }
 
@@ -252,7 +252,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
         case MOTOR_STATE_FAULT:
         {
 
-            if (enableStandy){
+            if (enableStandby){
                 motorData.state = MOTOR_STATE_STANDBY;
             } else if (enableRun) {
                 Motor_ClearFaultState();
