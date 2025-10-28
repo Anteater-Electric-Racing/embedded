@@ -12,7 +12,8 @@ typedef enum {
     FAULT_APPS,
     FAULT_BSE,
     FAULT_BPPS,
-    FAULT_APPS_BRAKE_PLAUSIBILITY
+    FAULT_APPS_BRAKE_PLAUSIBILITY,
+    FAULT_LAUNCH_CONTROL
 } FaultType;
 
 void Faults_Init();

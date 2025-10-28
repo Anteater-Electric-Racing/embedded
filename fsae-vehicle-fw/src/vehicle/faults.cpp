@@ -7,6 +7,7 @@
 #define FAULT_BSE_MASK (0x1 << 4)
 #define FAULT_BPPS_MASK (0x1 << 5)
 #define FAULT_APPS_BRAKE_PLAUSIBILITY_MASK (0x1 << 6)
+#define FAULT_LAUNCH_CONTROL_MASK (0x1 << 7)
 
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
@@ -64,6 +65,10 @@ void Faults_SetFault(FaultType fault) {
             faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
             break;
         }
+        case FAULT_LAUNCH_CONTROL: {
+            faultBitMap |= FAULT_LAUNCH_CONTROL_MASK;
+            break;
+        }
         default: {
             break;
         }
@@ -72,46 +77,50 @@ void Faults_SetFault(FaultType fault) {
 
 void Faults_ClearFault(FaultType fault) {
     switch (fault) {
-    case FAULT_NONE: {
-        break;
-    }
-    case FAULT_OVER_CURRENT: {
-        faultBitMap &= ~FAULT_OVER_CURRENT_MASK;
-        break;
-    }
-    case FAULT_UNDER_VOLTAGE: {
-        faultBitMap &= ~FAULT_UNDER_VOLTAGE_MASK;
-        break;
-    }
-    case FAULT_OVER_TEMP: {
-        faultBitMap &= ~FAULT_OVER_TEMP_MASK;
-        break;
-    }
-    case FAULT_APPS: {
-        # if DEBUG_FLAG
-            Serial.println("Clearing APPS fault");
-        # endif
-        faultBitMap &= ~FAULT_APPS_MASK;
-        break;
-    }
-    case FAULT_BSE: {
-        faultBitMap &= ~FAULT_BSE_MASK;
-        break;
-    }
-    case FAULT_BPPS: {
-        faultBitMap &= ~FAULT_BPPS_MASK;
-        break;
-    }
-    case FAULT_APPS_BRAKE_PLAUSIBILITY: {
-        # if DEBUG_FLAG
-            Serial.println("Clearing APPS BSE plausibility fault");
-        # endif
-        faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
-        break;
-    }
-    default: {
-        break;
-    }
+        case FAULT_NONE: {
+            break;
+        }
+        case FAULT_OVER_CURRENT: {
+            faultBitMap &= ~FAULT_OVER_CURRENT_MASK;
+            break;
+        }
+        case FAULT_UNDER_VOLTAGE: {
+            faultBitMap &= ~FAULT_UNDER_VOLTAGE_MASK;
+            break;
+        }
+        case FAULT_OVER_TEMP: {
+            faultBitMap &= ~FAULT_OVER_TEMP_MASK;
+            break;
+        }
+        case FAULT_APPS: {
+            # if DEBUG_FLAG
+                Serial.println("Clearing APPS fault");
+            # endif
+            faultBitMap &= ~FAULT_APPS_MASK;
+            break;
+        }
+        case FAULT_BSE: {
+            faultBitMap &= ~FAULT_BSE_MASK;
+            break;
+        }
+        case FAULT_BPPS: {
+            faultBitMap &= ~FAULT_BPPS_MASK;
+            break;
+        }
+        case FAULT_APPS_BRAKE_PLAUSIBILITY: {
+            # if DEBUG_FLAG
+                Serial.println("Clearing APPS BSE plausibility fault");
+            # endif
+            faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
+            break;
+        }
+        case FAULT_LAUNCH_CONTROL: {
+            faultBitMap &= ~FAULT_LAUNCH_CONTROL_MASK;
+            break;
+        }
+        default: {
+            break;
+        }
     }
 }
 
@@ -150,6 +159,9 @@ void Faults_HandleFaults() {
         Motor_SetFaultState();
     }
     if (faultBitMap & FAULT_APPS_BRAKE_PLAUSIBILITY_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_LAUNCH_CONTROL_MASK) {
         Motor_SetFaultState();
     }
 }

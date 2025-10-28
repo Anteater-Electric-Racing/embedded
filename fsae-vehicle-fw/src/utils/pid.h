@@ -23,6 +23,8 @@ class PID {
 
     static float PID_Calculate(const PIDConfig &config, float &setpoint, float &currentValue, float &dt);
 
+    static void PID_Reset();
+
     void PID_SetConfig(const PIDConfig &config);
 
     ~PID();

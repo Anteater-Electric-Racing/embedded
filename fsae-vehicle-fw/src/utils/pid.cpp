@@ -7,6 +7,10 @@ static float pre_error = 0;
 static float sum = 0;
 static float dt_inverse;
 
+static void PID_Reset(){
+    sum = 0;
+}
+
 static float PID_Calculate(const PIDConfig &config, float &setpoint, float &currentValue, float &dt){
 
     //error calculation
