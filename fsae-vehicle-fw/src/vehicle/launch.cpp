@@ -16,7 +16,7 @@
 static PIDConfig slipPIDConfig;
 static float slipTarget = 0.07f;   // 7% slip
 static float minTorque = 0.0f;
-static float wheelRadius = 0.5f;
+static float wheelRadius = 0.5f; // in meters, adjust based on actual wheel radius
 
 static LaunchState launchControlState = LAUNCH_STATE_OFF;
 
@@ -34,19 +34,21 @@ void LaunchControl_Init()
     slipPIDConfig.integral_min = -20.0f;
     PID::PID_Reset();
 
-    // Initialize PID control parameters and set default state at false for driver choice
-
+    // Initialize PID control parameters and *maybe* set default state at false for driver choice
 }
 
 void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR, 
                           float wheelSpeedRL, float wheelSpeedRR)
 {
+    if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f)) {             
+        launchControlState = LAUNCH_STATE_ON;   //If Car isn't moving and brake is pressed, enable launch control to active
+    }
     float torqueDemand = 0.0f;
 
     switch (launchControlState) {
         case LAUNCH_STATE_ON:
             float realTorque = Motor_GetState()->torqueCmd; // Current torque command from motor controller
-            //This is assuming we are obtaining wheel speeds in m/s, otherwise conversion is needed with wheel radius
+            //This is assuming we are obtaining wheel speeds in rad/s
 
             float controlledSpeed = std::max(wheelSpeedRL * wheelRadius, wheelSpeedRR * wheelRadius); // Obtain the higher speed of the wheels connected to Powertrain for safety precaution
             float freeSpeed = std::min(wheelSpeedFL * wheelRadius, wheelSpeedFR * wheelRadius);
@@ -89,6 +91,8 @@ void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR,
             if (APPS_GetAPPSReading() < 1.0f) {
                 PID::PID_Reset();
                 launchControlState = LAUNCH_STATE_OFF;
+            }
+            
             }
         case LAUNCH_STATE_OFF:
             // Implement launch control logic here
