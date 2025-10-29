@@ -9,6 +9,7 @@
 #include "bse.h"
 #include "apps.h"
 #include "faults.h"
+#include "ifl100-36.h"
 
 #include "../utils/pid.h"
 
@@ -37,8 +38,7 @@ void LaunchControl_Init()
     // Initialize PID control parameters and *maybe* set default state at false for driver choice
 }
 
-void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR, 
-                          float wheelSpeedRL, float wheelSpeedRR)
+void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR)
 {
     if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f)) {             
         launchControlState = LAUNCH_STATE_ON;   //If Car isn't moving and brake is pressed, enable launch control to active
@@ -50,7 +50,7 @@ void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR,
             float realTorque = Motor_GetState()->torqueCmd; // Current torque command from motor controller
             //This is assuming we are obtaining wheel speeds in rad/s
 
-            float controlledSpeed = std::max(wheelSpeedRL * wheelRadius, wheelSpeedRR * wheelRadius); // Obtain the higher speed of the wheels connected to Powertrain for safety precaution
+            float controlledSpeed = MCU_GetMCU1Data()->motorSpeed * wheelRadius; // Obtain the higher speed of the wheels connected to Powertrain for safety precaution
             float freeSpeed = std::min(wheelSpeedFL * wheelRadius, wheelSpeedFR * wheelRadius);
             if(freeSpeed == 0.0f) // Free roaming wheels (front two) and take the lower speed of these for safety precaution
             {
@@ -107,9 +107,7 @@ void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR,
             Faults_SetFault(FAULT_LAUNCH_CONTROL);
             break;
     }
-
     return torqueDemand;
-
 }
 
 LaunchState Launch_getState() {
