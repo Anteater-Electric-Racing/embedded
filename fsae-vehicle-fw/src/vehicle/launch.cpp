@@ -38,7 +38,7 @@ void LaunchControl_Init()
     // Initialize PID control parameters and *maybe* set default state at false for driver choice
 }
 
-void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR)
+float LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR)
 {
     if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f)) {             
         launchControlState = LAUNCH_STATE_ON;   //If Car isn't moving and brake is pressed, enable launch control to active
@@ -81,7 +81,7 @@ void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR)
             {
                 torqueDemand = minTorque;
             }
-            break;
+            
 
             if (std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) {
                 // If brake is pressed, disable launch control
@@ -92,8 +92,8 @@ void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR)
                 PID::PID_Reset();
                 launchControlState = LAUNCH_STATE_OFF;
             }
+            break;
             
-            }
         case LAUNCH_STATE_OFF:
             // Implement launch control logic here
             if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f) && Motor_GetState() == MOTOR_STATE_DRIVING) {     
@@ -107,7 +107,7 @@ void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR)
             launchControlState = LAUNCH_STATE_OFF;
             Faults_SetFault(FAULT_LAUNCH_CONTROL);
             break;
-    }
+        }
     return torqueDemand;
 }
 
