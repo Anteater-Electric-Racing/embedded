@@ -15,3 +15,7 @@ config = "0.15"
 rumqttc = "0.25"
 rumqttd = "0.20"
 tokio-socketcan-isotp = "0.2.0"
+
+[[bin]]
+name = "test"
+path = "src/test.rs"

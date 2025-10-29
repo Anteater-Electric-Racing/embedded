@@ -9,10 +9,10 @@ use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 const CAN_INTERFACE: &str = "can0";
 
 macro_rules! define_enum {
-    ($name:ident, $($variant:ident = $value:expr),*) => {
-        #[derive(Serialize)]
+    (pub $name:ident, $($variant:ident = $value:expr),*) => {
+        #[derive(Serialize, Clone)]
         #[allow(clippy::enum_variant_names)]
-        enum $name {
+        pub enum $name {
             $($variant = $value),*
         }
 
@@ -28,7 +28,7 @@ macro_rules! define_enum {
 }
 
 define_enum!(
-    MotorState,
+    pub MotorState,
     MotorStateOff = 0,
     MotorStatePrecharging = 1,
     MotorStateIdle = 2,
@@ -37,7 +37,7 @@ define_enum!(
 );
 
 define_enum!(
-    MotorRotateDirection,
+    pub MotorRotateDirection,
     DirectionStandby = 0,
     DirectionForward = 1,
     DirectionBackward = 2,
@@ -45,7 +45,7 @@ define_enum!(
 );
 
 define_enum!(
-    MCUMainState,
+    pub MCUMainState,
     StateStandby = 0,
     StatePrecharge = 1,
     StatePowerReady = 2,
@@ -54,44 +54,44 @@ define_enum!(
 );
 
 define_enum!(
-    MCUWorkMode,
+    pub MCUWorkMode,
     WorkModeStandby = 0,
     WorkModeTorque = 1,
     WorkModeSpeed = 2
 );
 
 define_enum!(
-    MCUWarningLevel,
+    pub MCUWarningLevel,
     ErrorNone = 0,
     ErrorLow = 1,
     ErrorMedium = 2,
     ErrorHigh = 3
 );
 
-#[derive(Serialize)]
-struct TelemetryData {
-    apps_travel: f32,
-    motor_speed: f32,
-    motor_torque: f32,
-    max_motor_torque: f32,
-    motor_direction: MotorRotateDirection,
-    motor_state: MotorState,
-    mcu_main_state: MCUMainState,
-    mcu_work_mode: MCUWorkMode,
-    mcu_voltage: f32,
-    mcu_current: f32,
-    motor_temp: i32,
-    mcu_temp: i32,
-    dc_main_wire_over_volt_fault: bool,
-    dc_main_wire_over_curr_fault: bool,
-    motor_over_spd_fault: bool,
-    motor_phase_curr_fault: bool,
-    motor_stall_fault: bool,
-    mcu_warning_level: MCUWarningLevel,
-    debug_0: f32,
-    debug_1: f32,
-    debug_2: f32,
-    debug_3: f32,
+#[derive(Serialize, Clone)]
+pub struct TelemetryData {
+    pub apps_travel: f32,
+    pub motor_speed: f32,
+    pub motor_torque: f32,
+    pub max_motor_torque: f32,
+    pub motor_direction: MotorRotateDirection,
+    pub motor_state: MotorState,
+    pub mcu_main_state: MCUMainState,
+    pub mcu_work_mode: MCUWorkMode,
+    pub mcu_voltage: f32,
+    pub mcu_current: f32,
+    pub motor_temp: i32,
+    pub mcu_temp: i32,
+    pub dc_main_wire_over_volt_fault: bool,
+    pub dc_main_wire_over_curr_fault: bool,
+    pub motor_over_spd_fault: bool,
+    pub motor_phase_curr_fault: bool,
+    pub motor_stall_fault: bool,
+    pub mcu_warning_level: MCUWarningLevel,
+    pub debug_0: f32,
+    pub debug_1: f32,
+    pub debug_2: f32,
+    pub debug_3: f32,
 }
 
 impl Reading for TelemetryData {

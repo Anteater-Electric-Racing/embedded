@@ -6,7 +6,8 @@ use tokio::time::Duration;
 
 use crate::influxdb::to_line_protocol;
 
-pub const INFLUXDB_URL: &str = "http://0.0.0.0:8181";
+pub const INFLUXDB_URL: &str = "http://localhost:8181";
+
 pub const INFLUXDB_DATABASE: &str = "fsae";
 
 pub const MQTT_ID: &str = "fsae";
@@ -17,7 +18,7 @@ pub trait Reading: Serialize {
     fn topic() -> &'static str;
 }
 
-static INFLUX_CLIENT: LazyLock<Client> = LazyLock::new(|| {
+pub static INFLUX_CLIENT: LazyLock<Client> = LazyLock::new(|| {
     reqwest::Client::builder()
         .build()
         .expect("Failed to build InfluxDB client")
