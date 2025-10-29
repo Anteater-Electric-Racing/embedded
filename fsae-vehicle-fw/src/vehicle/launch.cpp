@@ -96,8 +96,9 @@ void LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR)
             }
         case LAUNCH_STATE_OFF:
             // Implement launch control logic here
-            if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f))        
+            if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f) && Motor_GetState() == MOTOR_STATE_DRIVING) {     
                 launchControlState = LAUNCH_STATE_ON;   //If Car isn't moving and brake is pressed, enable launch control to active
+            }
             break;
         case LAUNCH_STATE_FAULT:
             // Handle fault state
