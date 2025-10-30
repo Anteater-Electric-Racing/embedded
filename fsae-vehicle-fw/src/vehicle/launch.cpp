@@ -45,72 +45,78 @@ void threadLaunchControl(void *pvParameters)
     float wheelSpeedFR = 0.0f; // placeholder
     float torqueDemand = 0.0f;
 
-    switch (launchControlState) {
-        case LAUNCH_STATE_ON:
-            float realTorque = Motor_GetState()->torqueCmd; // Current torque command from motor controller
-            //This is assuming we are obtaining wheel speeds in rad/s
+    while (true) {
+        switch (launchControlState) {
+            case LAUNCH_STATE_ON:
+                float realTorque = Motor_GetState()->torqueCmd; // Current torque command from motor controller
+                //This is assuming we are obtaining wheel speeds in rad/s
 
-            float controlledSpeed = MCU_GetMCU1Data()->motorSpeed * wheelRadius; // Obtain the higher speed of the wheels connected to Powertrain for safety precaution
-            float freeSpeed = std::min(wheelSpeedFL * wheelRadius, wheelSpeedFR * wheelRadius);
-            if(freeSpeed == 0.0f) // Free roaming wheels (front two) and take the lower speed of these for safety precaution
-            {
-                freeSpeed = 0.001f; // To avoid division by zero
-            }
-            float slipRatio = (controlledSpeed - freeSpeed) / freeSpeed; //Slip Ratio equation provided by Vik
+                float controlledSpeed = MCU_GetMCU1Data()->motorSpeed * wheelRadius; // Obtain the higher speed of the wheels connected to Powertrain for safety precaution
+                float freeSpeed = std::min(wheelSpeedFL * wheelRadius, wheelSpeedFR * wheelRadius);
+                if(freeSpeed == 0.0f) // Free roaming wheels (front two) and take the lower speed of these for safety precaution
+                {
+                    freeSpeed = 0.001f; // To avoid division by zero
+                }
+                float slipRatio = (controlledSpeed - freeSpeed) / freeSpeed; //Slip Ratio equation provided by Vik
 
-            // if(slipRatio < 0.05f || slipRatio > 0.15f)
-            // {        //Doubt this is needed, as PID should be able to handle this
-            // }
-            
+                // if(slipRatio < 0.05f || slipRatio > 0.15f)
+                // {        //Doubt this is needed, as PID should be able to handle this
+                // }
+                
 
-            float maxTorqueNm = Telemetry_GetData()->maxMotorTorque; // Just to understand Max Torque so we don't exceed this
-            float dt = 0.01f; // Time step for PID calculation, adjusted for 100Hz update rate
-            
-            // PID Control for Slip Ratio
-            float correction = PID::PID_Calculate(slipPIDConfig, slipTarget, slipRatio, dt); // Proportional control for slip ratio
-            // Currently unsure how this will be integrated, as the correction should reduce torque when slip is high and increase when low, but unsure what values would come out
-            torqueDemand = realTorque + correction; // Reduce torque based on slip ratio correction
+                float maxTorqueNm = Telemetry_GetData()->maxMotorTorque; // Just to understand Max Torque so we don't exceed this
+                float dt = 0.01f; // Time step for PID calculation, adjusted for 100Hz update rate
+                
+                // PID Control for Slip Ratio
+                float correction = PID::PID_Calculate(slipPIDConfig, slipTarget, slipRatio, dt); // Proportional control for slip ratio
+                // Currently unsure how this will be integrated, as the correction should reduce torque when slip is high and increase when low, but unsure what values would come out
+                torqueDemand = realTorque + correction; // Reduce torque based on slip ratio correction
 
 
-            // limit torque demand to be within allowable limits(no less then 0 and no more the nmaxToqrue which I believe is 260 according to Utils.h)
-            if(torqueDemand > maxTorqueNm)
-            {
-                torqueDemand = maxTorqueNm;
-            }
-            else if(torqueDemand < minTorque)
-            {
-                torqueDemand = minTorque;
-            }
-            
+                // limit torque demand to be within allowable limits(no less then 0 and no more the nmaxToqrue which I believe is 260 according to Utils.h)
+                if(torqueDemand > maxTorqueNm)
+                {
+                    torqueDemand = maxTorqueNm;
+                }
+                else if(torqueDemand < minTorque)
+                {
+                    torqueDemand = minTorque;
+                }
+                
 
-            if (std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) {
-                // If brake is pressed, disable launch control
+                if (std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) {
+                    // If brake is pressed, disable launch control
+                    PID::PID_Reset();
+                    launchControlState = LAUNCH_STATE_OFF;
+                }
+
+                if (APPS_GetAPPSReading() < 1.0f) {
+                    PID::PID_Reset();
+                    launchControlState = LAUNCH_STATE_OFF;
+                }
+                break;
+                
+            case LAUNCH_STATE_OFF:
+                // Implement launch control logic here
+                if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f) && Motor_GetState() == MOTOR_STATE_DRIVING) {     
+                    launchControlState = LAUNCH_STATE_ON;   //If Car isn't moving and brake is pressed, enable launch control to active
+                }
+                break;
+            case LAUNCH_STATE_FAULT:
+                // Handle fault state
                 PID::PID_Reset();
+                torqueDemand = 0.0f;
                 launchControlState = LAUNCH_STATE_OFF;
+                Faults_SetFault(FAULT_LAUNCH_CONTROL);
+                break;
             }
 
-            if (APPS_GetAPPSReading() < 1.0f) {
-                PID::PID_Reset();
-                launchControlState = LAUNCH_STATE_OFF;
-            }
-            break;
-            
-        case LAUNCH_STATE_OFF:
-            // Implement launch control logic here
-            if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f) && Motor_GetState() == MOTOR_STATE_DRIVING) {     
-                launchControlState = LAUNCH_STATE_ON;   //If Car isn't moving and brake is pressed, enable launch control to active
-            }
-            break;
-        case LAUNCH_STATE_FAULT:
-            // Handle fault state
-            PID::PID_Reset();
-            torqueDemand = 0.0f;
-            launchControlState = LAUNCH_STATE_OFF;
-            Faults_SetFault(FAULT_LAUNCH_CONTROL);
-            break;
+        if (launchControlState != LAUNCH_STATE_OFF) {
+            Motor_UpdateMotor(torqueDemand, false, true, true, false); // Update motor with the current torque demand
         }
-    
-    vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
+        
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
+    }
 }
 
 LaunchState Launch_getState() {
