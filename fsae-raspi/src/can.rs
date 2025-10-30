@@ -9,6 +9,9 @@ use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
 const CAN_INTERFACE: &str = "can0";
 
+// TEST IMPORTS
+use rumqttc::{AsyncClient, Event, MqttOptions, Packet};
+
 macro_rules! define_enum {
     ($name:ident, $($variant:ident = $value:expr => $text:expr),*) => {
         #[derive(Serialize)]
@@ -192,6 +195,60 @@ pub async fn read_can() {
                 debug_3: f32::from_le_bytes(packet[90..94].try_into().unwrap()),
             })
             .await;
+        }
+    }
+}
+
+#[test]
+fn test_send() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    rt.block_on(send_message(TelemetryData {
+        apps_travel: 0.0,
+        motor_speed: 0.0,
+        motor_torque: 0.0,
+        max_motor_torque: 0.0,
+        motor_direction: MotorRotateDirection::DirectionForward,
+        motor_state: MotorState::MotorStateIdle,
+        mcu_main_state: MCUMainState::StatePowerOff,
+        mcu_work_mode: MCUWorkMode::WorkModeStandby,
+        mcu_voltage: 0.0,
+        mcu_current: 0.0,
+        motor_temp: 0,
+        mcu_temp: 0,
+        dc_main_wire_over_volt_fault: false,
+        dc_main_wire_over_curr_fault: false,
+        motor_over_spd_fault: false,
+        motor_phase_curr_fault: false,
+        motor_stall_fault: false,
+        mcu_warning_level: MCUWarningLevel::ErrorNone,
+        debug_0: 0.0,
+        debug_1: 0.0,
+        debug_2: 0.0,
+        debug_3: 0.0,
+    }));
+}
+
+#[tokio::test]
+async fn test_listener() {
+    // Client and event loop setup
+    let mut options = MqttOptions::new("telemetry", "localhost", 1883);
+    options.set_keep_alive(Duration::from_secs(5));
+    let (client, mut event_loop) = AsyncClient::new(options, 10);
+
+    // Subscribe client to topic
+    client
+        .subscribe("telemetry", rumqttc::QoS::AtLeastOnce)
+        .await
+        .expect("[subscribe] | Unable to subscribe to the topic.");
+
+    // Repeat poll check loop while event loop has not returned an Err.
+    while let Ok(notification) = event_loop.poll().await {
+        // Check for Publish messages and extract
+        if let Event::Incoming(Packet::Publish(data)) = notification {
+            let data_string = str::from_utf8(&data.payload)
+                .expect("[string parse] | Failed to convert bytes into data string.");
+            // let data_deserialized = serde_json::from_slice::<TelemetryData>(&data.payload)
+            //     .expect("[poll] | Failed to deserialize incoming data.");
         }
     }
 }
