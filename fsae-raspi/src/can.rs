@@ -10,11 +10,11 @@ use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 const CAN_INTERFACE: &str = "can0";
 
 // TEST IMPORTS
-use rumqttc::{AsyncClient, Event, MqttOptions, Packet};
+use serde::Deserialize;
 
 macro_rules! define_enum {
     ($name:ident, $($variant:ident = $value:expr => $text:expr),*) => {
-        #[derive(Serialize)]
+        #[derive(Serialize, Deserialize, PartialEq)]
         enum $name {
             $($variant = $value),*
         }
@@ -38,7 +38,8 @@ macro_rules! define_enum {
     };
 }
 
-define_enum!(MotorState,
+define_enum!(
+    MotorState,
     MotorStateOff = 0 => "Off",
     MotorStatePrecharging = 1 => "Precharging",
     MotorStateIdle = 2 => "Idle",
@@ -74,7 +75,7 @@ define_enum!(MCUWarningLevel,
     ErrorHigh = 3 => "High"
 );
 
-#[derive(Serialize, InfluxDbWriteable)]
+#[derive(Serialize, Deserialize, InfluxDbWriteable, PartialEq)]
 struct TelemetryData {
     time: DateTime<Utc>,
     apps_travel: f32,
@@ -225,15 +226,79 @@ fn test_send() {
         debug_1: 0.0,
         debug_2: 0.0,
         debug_3: 0.0,
+        time: DateTime::UNIX_EPOCH,
+        bse_front_psi: 0.0,
+        bse_rear_psi: 0.0,
+        accumulator_voltage: 0.0,
+        accumulator_temp_f: 0.0,
+        max_motor_brake_torque: 0.0,
+        mcu_over_hot_fault: false,
+        resolver_fault: false,
+        phase_curr_sensor_fault: false,
+        drv_motor_over_hot_fault: false,
+        drv_motor_over_cool_fault: false,
+        mcu_motor_system_state: false,
+        mcu_temp_sensor_state: false,
+        motor_temp_sensor_state: false,
+        dc_volt_sensor_state: false,
+        dc_low_volt_warning: false,
+        mcu_12v_low_volt_warning: false,
+        motor_open_phase_fault: false,
+        motor_phase_curr: 0.0,
     }));
 }
 
 #[tokio::test]
 async fn test_listener() {
+    // Test Struct (listener end)
+    let listener_data: TelemetryData = TelemetryData {
+        apps_travel: 0.0,
+        motor_speed: 0.0,
+        motor_torque: 0.0,
+        max_motor_torque: 0.0,
+        motor_direction: MotorRotateDirection::DirectionForward,
+        motor_state: MotorState::MotorStateIdle,
+        mcu_main_state: MCUMainState::StatePowerOff,
+        mcu_work_mode: MCUWorkMode::WorkModeStandby,
+        mcu_voltage: 0.0,
+        mcu_current: 0.0,
+        motor_temp: 0,
+        mcu_temp: 0,
+        dc_main_wire_over_volt_fault: false,
+        dc_main_wire_over_curr_fault: false,
+        motor_over_spd_fault: false,
+        motor_phase_curr_fault: false,
+        motor_stall_fault: false,
+        mcu_warning_level: MCUWarningLevel::ErrorNone,
+        debug_0: 0.0,
+        debug_1: 0.0,
+        debug_2: 0.0,
+        debug_3: 0.0,
+        time: DateTime::UNIX_EPOCH,
+        bse_front_psi: 0.0,
+        bse_rear_psi: 0.0,
+        accumulator_voltage: 0.0,
+        accumulator_temp_f: 0.0,
+        max_motor_brake_torque: 0.0,
+        mcu_over_hot_fault: false,
+        resolver_fault: false,
+        phase_curr_sensor_fault: false,
+        drv_motor_over_hot_fault: false,
+        drv_motor_over_cool_fault: false,
+        mcu_motor_system_state: false,
+        mcu_temp_sensor_state: false,
+        motor_temp_sensor_state: false,
+        dc_volt_sensor_state: false,
+        dc_low_volt_warning: false,
+        mcu_12v_low_volt_warning: false,
+        motor_open_phase_fault: false,
+        motor_phase_curr: 0.0,
+    };
+
     // Client and event loop setup
-    let mut options = MqttOptions::new("telemetry", "localhost", 1883);
+    let mut options = rumqttc::MqttOptions::new("telemetry", "localhost", 1883);
     options.set_keep_alive(Duration::from_secs(5));
-    let (client, mut event_loop) = AsyncClient::new(options, 10);
+    let (client, mut event_loop) = rumqttc::AsyncClient::new(options, 10);
 
     // Subscribe client to topic
     client
@@ -244,11 +309,22 @@ async fn test_listener() {
     // Repeat poll check loop while event loop has not returned an Err.
     while let Ok(notification) = event_loop.poll().await {
         // Check for Publish messages and extract
-        if let Event::Incoming(Packet::Publish(data)) = notification {
+        if let rumqttc::Event::Incoming(rumqttc::Packet::Publish(data)) = notification {
             let data_string = str::from_utf8(&data.payload)
                 .expect("[string parse] | Failed to convert bytes into data string.");
-            // let data_deserialized = serde_json::from_slice::<TelemetryData>(&data.payload)
-            //     .expect("[poll] | Failed to deserialize incoming data.");
+            let data_deserialized = serde_json::from_str::<TelemetryData>(data_string)
+                .expect("[poll] | Failed to deserialize incoming data.");
+
+            if data_deserialized == listener_data {
+                client
+                    .publish("telemetry", rumqttc::QoS::AtLeastOnce, false, "true")
+                    .await
+                    .expect("[Result]: Failed to send result to topic.");
+                client
+                    .publish("telemetry", rumqttc::QoS::AtLeastOnce, false, "false")
+                    .await
+                    .expect("[Result]: Failed to send result to topic.");
+            }
         }
     }
 }
