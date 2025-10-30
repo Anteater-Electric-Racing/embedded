@@ -16,6 +16,7 @@
 #include "vehicle/rtm_button.h"
 #include "apps.h"
 #include "vehicle/ifl100-36.h"
+#include "vehicle/launch.h"
 
 typedef struct{
     MotorState state;
@@ -102,9 +103,11 @@ void threadMotor(void *pvParameters){
         bms1.CheckSum = ComputeChecksum((uint8_t*) &bms1);
         bms2.CheckSum = ComputeChecksum((uint8_t*) &bms2);
 
-        uint64_t vcu1_msg;
-        memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));
-        CAN_Send(mVCU1_ID, vcu1_msg);
+        if (Launch_getState() != LAUNCH_STATE_OFF) {
+            uint64_t vcu1_msg;
+            memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));
+            CAN_Send(mVCU1_ID, vcu1_msg);
+        }
 
         uint64_t bms1_msg;
         memcpy(&bms1_msg, &bms1, sizeof(bms1_msg));

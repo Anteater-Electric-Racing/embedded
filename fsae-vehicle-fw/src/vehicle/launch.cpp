@@ -3,6 +3,9 @@
 #include <Arduino.h>
 #include <algorithm>
 #include <arduino_freertos.h>
+
+#include "peripherals/can.h"
+
 #include "launch.h"
 #include <telemetry.h>
 #include <vehicle/motor.h>  // Not used but maybe could be usedful ?
@@ -19,6 +22,8 @@ static float slipTarget = 0.07f;   // 7% slip
 static float minTorque = 0.0f;
 static float wheelRadius = 0.5f; // in meters, adjust based on actual wheel radius
 static TickType_t xLastWakeTime;
+static float torqueDemand = 0.0f;
+static VCU1 vcu1 = {.BMS_Main_Relay_Cmd = 1, .VehicleState = 1, .GearLeverPos_Sts = 3, .AC_Control_Cmd = 1, .BMS_Aux_Relay_Cmd = 1, .KeyPosition = 2};
 
 static LaunchState launchControlState = LAUNCH_STATE_OFF;
 
@@ -41,9 +46,8 @@ void LaunchControl_Init()
 
 void threadLaunchControl(void *pvParameters)
 {
-    float torqueDemand = 0.0f;
-
     while (true) {
+        vcu1 = {0};
         switch (launchControlState) {
             case LAUNCH_STATE_ON:
                 float wheelSpeedFL = 0.0f; // placeholder
@@ -83,20 +87,19 @@ void threadLaunchControl(void *pvParameters)
                 {
                     torqueDemand = minTorque;
                 }
-                
 
-                if (std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) {
+                if (std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f ||
+                    APPS_GetAPPSReading() < 1.0f ||
+                    Motor_GetState() != MOTOR_STATE_DRIVING) {
                     // If brake is pressed, disable launch control
                     PID::PID_Reset();
                     launchControlState = LAUNCH_STATE_OFF;
-                }
-
-                if (APPS_GetAPPSReading() < 1.0f) {
-                    PID::PID_Reset();
-                    launchControlState = LAUNCH_STATE_OFF;
+                } else {
+                    // Continue applying torque demand
+                    Launch_setTorqueDemand();
                 }
                 break;
-                
+
             case LAUNCH_STATE_OFF:
                 // Implement launch control logic here
                 if ((std::max(BSE_GetBSEReading()->bseFront_PSI, BSE_GetBSEReading()->bseRear_PSI) > 50.0f) && (MCU_GetMCU1Data()->motorSpeed == 0.0f) && Motor_GetState() == MOTOR_STATE_DRIVING) {     
@@ -107,17 +110,22 @@ void threadLaunchControl(void *pvParameters)
                 // Handle fault state
                 PID::PID_Reset();
                 torqueDemand = 0.0f;
+                Launch_setTorqueDemand();
                 launchControlState = LAUNCH_STATE_OFF;
                 Faults_SetFault(FAULT_LAUNCH_CONTROL);
                 break;
             }
-
-        if (launchControlState != LAUNCH_STATE_OFF) {
-            Motor_UpdateMotor(torqueDemand, false, true, true, false); // Update motor with the current torque demand
-        }
         
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
     }
+}
+
+void Launch_setTorqueDemand() {
+    vcu1.VCU_TorqueReq = (uint8_t) ((fabsf(torqueDemand) / MOTOR_MAX_TORQUE) * 100); // Torque demand in percentage (0-99.6) 350Nm
+    vcu1.VCU_MotorMode = torqueDemand >= 0 ? 1 : 2; 
+    uint64_t vcu1_msg;
+    memcpy(&vcu1_msg, &vcu1, sizeof(vcu1_msg));
+    CAN_Send(mVCU1_ID, vcu1_msg);
 }
 
 LaunchState Launch_getState() {

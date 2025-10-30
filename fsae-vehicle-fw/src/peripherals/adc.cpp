@@ -12,7 +12,6 @@
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
-#include "vehicle/launch.h"
 
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
@@ -90,6 +89,6 @@ void threadADC( void *pvParameters ){
 
         // Handle any faults that were raised
         // Faults_HandleFaults();
-        //if (Launch_getState() == LAUNCH_STATE_OFF) Motor_UpdateMotor();
+        //Motor_UpdateMotor();
     }
 }
