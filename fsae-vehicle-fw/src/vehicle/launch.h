@@ -7,6 +7,5 @@ typedef enum {
 } LaunchState;
 
 void LaunchControl_Init();
-float LaunchControl_Update(float wheelSpeedFL, float wheelSpeedFR, 
-                          float wheelSpeedRL, float wheelSpeedRR);
+float threadLaunchControl(void *pvParameters);
 LaunchState Launch_getState();

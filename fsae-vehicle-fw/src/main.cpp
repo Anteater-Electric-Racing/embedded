@@ -12,6 +12,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/ifl100-36.h"
+#include "vehicle/launch.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -33,9 +34,11 @@ void setup() { // runs once on bootup
     Telemetry_Init();
     Motor_Init();
     MCU_Init();
+    LaunchControl_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);
+    xTaskCreate(threadLaunchControl, "threadLaunchControl", THREAD_LAUNCH_CONTROL_STACK_SIZE, NULL, THREAD_LAUNCH_CONTROL_PRIORITY, NULL);
     xTaskCreate(threadTelemetry, "threadTelemetryCAN", THREAD_CAN_TELEMETRY_STACK_SIZE, NULL, THREAD_CAN_TELEMETRY_PRIORITY, NULL);
     xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
     vTaskStartScheduler();
