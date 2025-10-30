@@ -41,13 +41,14 @@ void LaunchControl_Init()
 
 void threadLaunchControl(void *pvParameters)
 {
-    float wheelSpeedFL = 0.0f; // placeholder
-    float wheelSpeedFR = 0.0f; // placeholder
     float torqueDemand = 0.0f;
 
     while (true) {
         switch (launchControlState) {
             case LAUNCH_STATE_ON:
+                float wheelSpeedFL = 0.0f; // placeholder
+                float wheelSpeedFR = 0.0f; // placeholder
+
                 float realTorque = Motor_GetState()->torqueCmd; // Current torque command from motor controller
                 //This is assuming we are obtaining wheel speeds in rad/s
 
