@@ -58,8 +58,8 @@ void MCU_Init() {
 
     mcu3Data = {
         .mcuVoltage = 0.0F, // Default voltage in V
-        .mcuCurrent = 0.0F, // Default current in A
-        .motorPhaseCurr = 0.0F // Default phase current in A
+        .mcuCurrent = 16.0F, // Default current in A
+        .motorPhaseCurr = 3.0F // Default phase current in A
     };
 
     // Initialize the motor thread
@@ -130,11 +130,13 @@ static void threadMCU(void *pvParameters) {
                 memcpy(&mcu3, &rx_data, sizeof(mcu3));
 
                 taskENTER_CRITICAL(); // Enter critical section
+
                 mcu3Data = {
-                    .mcuVoltage = CHANGE_ENDIANESS_16(mcu3.MCU_DC_MainWireVolt) * 0.01F, // convert to V
-                    .mcuCurrent = CHANGE_ENDIANESS_16(mcu3.MCU_DC_MainWireCurr) * 0.01F, // convert to A
-                    .motorPhaseCurr = CHANGE_ENDIANESS_16(mcu3.MCU_MotorPhaseCurr) * 0.01F, // convert to A
+                    .mcuVoltage = (((mcu3.MCU_DC_MainWireVolt & 0xFF) << 8) | (mcu3.MCU_DC_MainWireVolt >> 8)) * 0.01F, // convert to V
+                    .mcuCurrent = (((mcu3.MCU_DC_MainWireCurr & 0xFF) << 8) | (mcu3.MCU_DC_MainWireCurr >> 8)) * 0.01F, // convert to A
+                    .motorPhaseCurr = (((mcu3.MCU_MotorPhaseCurr & 0xFF) << 8) | (mcu3.MCU_MotorPhaseCurr >> 8)) * 0.01F, // convert to A
                 };
+
                 taskEXIT_CRITICAL(); // Exit critical section
                 break;
             }

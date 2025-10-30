@@ -138,6 +138,8 @@ void threadMain(void *pvParameters) {
                 torqueDemand = 0;
                 enableRun = false;       // Disable run state
                 enablePrecharge = false; // Disable precharging
+                enablePower = false;
+                enableRun = false;
                 break;
             }
             case 'f': // Fault state
@@ -208,9 +210,15 @@ void threadMain(void *pvParameters) {
         Serial.print(MCU_GetMCU2Data()->motorTemp);
 
         Serial.print(" | ");
+        Serial.print(" ");
+
+        Serial.print(" | ");
         Serial.print("Regen: ");
         Serial.print(enableRegen);
-        Serial.print("      \r");
+        Serial.print("\r");
+
+
+
 
         // Serial.print("Battery Current: ");
         // Serial.print(MCU_GetMCU3Data().mcuCurrent);
@@ -231,34 +239,40 @@ void threadMain(void *pvParameters) {
         // print all errors if they are true in one line
         Serial.print("  |  ");
         if (MCU_GetMCU2Data()->dcMainWireOverVoltFault)
-            Serial.print("DC Over Volt Fault, ");
+            Serial.println("DC Over Volt Fault, ");
         if (MCU_GetMCU2Data()->motorPhaseCurrFault)
-            Serial.print("Motor Phase Curr Fault, ");
+            Serial.println("Motor Phase Curr Fault, ");
         if (MCU_GetMCU2Data()->mcuOverHotFault)
-            Serial.print("MCU Over Hot Fault, ");
+            Serial.println("MCU Over Hot Fault, ");
         if (MCU_GetMCU2Data()->resolverFault)
-            Serial.print("Resolver Fault, ");
+            Serial.println("Resolver Fault, ");
         if (MCU_GetMCU2Data()->phaseCurrSensorFault)
-            Serial.print("Phase Curr Sensor Fault, ");
+            Serial.println("Phase Curr Sensor Fault, ");
         if (MCU_GetMCU2Data()->motorOverSpdFault)
-            Serial.print("Motor Over Spd Fault, ");
+            Serial.println("Motor Over Spd Fault, ");
         if (MCU_GetMCU2Data()->drvMotorOverHotFault)
-            Serial.print("Driver Motor Over Hot Fault, ");
+            Serial.println("Driver Motor Over Hot Fault, ");
         if (MCU_GetMCU2Data()->dcMainWireOverCurrFault)
-            Serial.print("DC Main Wire Over Curr Fault, ");
+            Serial.println("DC Main Wire Over Curr Fault, ");
         if (MCU_GetMCU2Data()->drvMotorOverCoolFault)
-            Serial.print("Driver Motor Over Cool Fault, ");
+            Serial.println("Driver Motor Over Cool Fault, ");
         if (MCU_GetMCU2Data()->dcLowVoltWarning)
-            Serial.print("DC Low Volt Warning, ");
+            Serial.println("DC Low Volt Warning, ");
         if (MCU_GetMCU2Data()->mcu12VLowVoltWarning)
-            Serial.print("MCU 12V Low Volt Warning, ");
+            Serial.println("MCU 12V Low Volt Warning, ");
         if (MCU_GetMCU2Data()->motorStallFault)
-            Serial.print("Motor Stall Fault, ");
+            Serial.println("Motor Stall Fault, ");
         if (MCU_GetMCU2Data()->motorOpenPhaseFault)
-            Serial.print("Motor Open Phase Fault, ");
+            Serial.println("Motor Open Phase Fault, ");
+
+
+
+
         Motor_UpdateMotor(
             torqueDemand, enablePrecharge, enablePower, enableRun,
             enableRegen, enableStandby); // Update motor with the current torque demand
+
+
 #endif
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }

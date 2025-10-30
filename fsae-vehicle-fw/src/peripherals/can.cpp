@@ -68,18 +68,18 @@ void CAN_Send(uint32_t id, uint64_t msg)
    // msg.id = 0x100;
     memcpy(motorMsg.buf, &msg, sizeof(msg));
 
-    can2.write(motorMsg);
+    can3.write(motorMsg);
 
-    Serial.println("| Sending CAN... ");
-    Serial.print("");
+    // Serial.println("| Sending CAN... ");
+    // Serial.print("");
 }
 
 void CAN_Receive(uint32_t* rx_id, uint64_t* rx_data) {
-    if (can2.read(rx_msg)) {
+    if (can3.read(rx_msg)) {
         *rx_id = rx_msg.id;
         memcpy(rx_data, rx_msg.buf, sizeof(*rx_data));
 
-        Serial.println("--> CAN Message recieved");
+        // Serial.println("--> CAN Message recieved");
         // lastCAN2MsgTime = millis();
         // can2Healthy = true;
     } else { // No message received, assign default values

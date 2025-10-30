@@ -120,8 +120,9 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     uint64_t MCU_DC_MainWireVolt : 16; // end of byte 0 and byte 1
-    uint64_t MCU_DC_MainWireCurr: 16; // end of byte 2 and byte 3
-    uint64_t MCU_MotorPhaseCurr : 16; // end of byte 4 and byte 5
+    //uint64_t dummystop : 8;
+    uint64_t MCU_DC_MainWireCurr: 16; // end of byte 2 and byte 3 --> should be byte 3 and 4
+    uint64_t MCU_MotorPhaseCurr : 16; // end of byte 4 and byte 5  ---> 6 and 7? or 5 and 6
     uint64_t Reserved : 16; // end of byte 6 and byte 7
 } MCU3; // bit order verified
 
