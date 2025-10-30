@@ -18,6 +18,7 @@ static PIDConfig slipPIDConfig;
 static float slipTarget = 0.07f;   // 7% slip
 static float minTorque = 0.0f;
 static float wheelRadius = 0.5f; // in meters, adjust based on actual wheel radius
+static TickType_t xLastWakeTime;
 
 static LaunchState launchControlState = LAUNCH_STATE_OFF;
 
@@ -38,7 +39,7 @@ void LaunchControl_Init()
     // Initialize PID control parameters and *maybe* set default state at false for driver choice
 }
 
-float threadLaunchControl(void *pvParameters)
+void threadLaunchControl(void *pvParameters)
 {
     float wheelSpeedFL = 0.0f; // placeholder
     float wheelSpeedFR = 0.0f; // placeholder
@@ -108,7 +109,8 @@ float threadLaunchControl(void *pvParameters)
             Faults_SetFault(FAULT_LAUNCH_CONTROL);
             break;
         }
-    return torqueDemand;
+    
+    vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
 }
 
 LaunchState Launch_getState() {
