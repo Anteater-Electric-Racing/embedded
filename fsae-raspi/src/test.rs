@@ -1,7 +1,9 @@
-
-use fsae_raspi::send::{send_message};
-use fsae_raspi::can::{TelemetryData, MotorState, MotorRotateDirection, MCUMainState, MCUWorkMode, MCUWarningLevel};
-use fsae_raspi::utils::verify_influx_write;
+mod can;
+mod send;
+mod utils;
+use crate::send::{send_message};
+use crate::can::{TelemetryData, MotorState, MotorRotateDirection, MCUMainState, MCUWorkMode, MCUWarningLevel};
+use crate::utils::verify_influx_write;
 
 #[tokio::main]
 async fn main() {

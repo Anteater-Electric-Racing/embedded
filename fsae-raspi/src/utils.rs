@@ -7,32 +7,49 @@ pub async fn verify_influx_write<T: Reading + serde::Serialize>(
     test_packet: &T,
 ) -> bool {
     // build query string - topic is "telemetry"
-    let query = format!("SELECT * FROM {} ORDER BY time DESC LIMIT 5", T::topic());
-    let url = format!("{}/api/v3/query?db={}", INFLUXDB_URL, INFLUXDB_DATABASE);
+    let query = format!("SELECT * FROM {} ORDER BY time DESC LIMIT 1", T::topic());
+    let url = format!("{}/api/v3/query_sql?db={}&format=json", INFLUXDB_URL, INFLUXDB_DATABASE);
 
-    
+    let body = serde_json::json!({
+        "db": INFLUXDB_DATABASE,
+        "q": query,
+        "format": "json"
+    });
+
     let resp = INFLUX_CLIENT
         .post(&url)
         .header("Authorization", "Bearer apiv3_TQdSxXbtRc8qbzb4ejQOa-ir9-deb4fSVe5Lc-RgvQZqPKikusEJtZpQmEJakPtxZvst8wW4B20KB8iSGLC-Tg")
-        .body(query)
+        .header("Content-Type", "application/json")
+        .body(body.to_string())
         .send()
         .await;
 
-    let Ok(resp) = resp else {
-        eprintln!("Failed to query InfluxDB: {}", resp.err().unwrap());
-        return false;
+    let resp = match resp {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Failed to query InfluxDB: {}", e);
+            return false;
+        }
     };
 
     //reads raw text 
-    let Ok(text) = resp.text().await else {
-        eprintln!("Failed to parse InfluxDB response text");
-        return false;
+    let text = match resp.text().await {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("Failed to read InfluxDB response text: {}", e);
+            return false;
+        }
     };
 
+    println!("InfluxDB raw response: {}", text);
+
     //parse json to serde_json
-    let Ok(json): Result<Value, _> = serde_json::from_str(&text) else {
-        eprintln!("Failed to deserialize InfluxDB JSON response");
-        return false;
+    let json: serde_json::Value = match serde_json::from_str(&text) {
+        Ok(j) => j,
+        Err(e) => {
+            eprintln!("Failed to deserialize InfluxDB JSON response: {}", e);
+            return false;
+        }
     };
 
     // serialize test packet to json to compare 
