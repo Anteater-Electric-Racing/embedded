@@ -58,7 +58,7 @@ pub async fn send_message<T: Reading>(message: T) {
 
     let line_protocol = to_line_protocol(&message);
     let url = format!(
-        "{}/api/v3/write_lp?db={}&precision=nanosecond&accept_partial=true&no_sync=false",
+        "{}/api/v3/write_lp?db={}&precision=nanosecond",
         INFLUXDB_URL, INFLUXDB_DATABASE
     );
     if let Err(e) = INFLUX_CLIENT

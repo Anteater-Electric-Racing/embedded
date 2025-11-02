@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::send::{send_message, Reading};
 // use rand::Rng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
@@ -10,14 +10,14 @@ const CAN_INTERFACE: &str = "can0";
 
 macro_rules! define_enum {
     ($name:ident, $($variant:ident = $value:expr),*) => {
-        #[derive(Serialize)]
+        #[derive(Serialize, Deserialize, PartialEq, Clone)]
         #[allow(clippy::enum_variant_names)]
-        enum $name {
+        pub enum $name {
             $($variant = $value),*
         }
 
         impl $name {
-            fn from_byte(byte: u8) -> Self {
+            pub fn from_byte(byte: u8) -> Self {
                 match byte {
                     $($value => Self::$variant),*,
                     _ => panic!("Invalid value for {}", stringify!($name)),
@@ -68,30 +68,30 @@ define_enum!(
     ErrorHigh = 3
 );
 
-#[derive(Serialize)]
-struct TelemetryData {
-    apps_travel: f32,
-    motor_speed: f32,
-    motor_torque: f32,
-    max_motor_torque: f32,
-    motor_direction: MotorRotateDirection,
-    motor_state: MotorState,
-    mcu_main_state: MCUMainState,
-    mcu_work_mode: MCUWorkMode,
-    mcu_voltage: f32,
-    mcu_current: f32,
-    motor_temp: i32,
-    mcu_temp: i32,
-    dc_main_wire_over_volt_fault: bool,
-    dc_main_wire_over_curr_fault: bool,
-    motor_over_spd_fault: bool,
-    motor_phase_curr_fault: bool,
-    motor_stall_fault: bool,
-    mcu_warning_level: MCUWarningLevel,
-    debug_0: f32,
-    debug_1: f32,
-    debug_2: f32,
-    debug_3: f32,
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
+pub struct TelemetryData {
+    pub apps_travel: f32,
+    pub motor_speed: f32,
+    pub motor_torque: f32,
+    pub max_motor_torque: f32,
+    pub motor_direction: MotorRotateDirection,
+    pub motor_state: MotorState,
+    pub mcu_main_state: MCUMainState,
+    pub mcu_work_mode: MCUWorkMode,
+    pub mcu_voltage: f32,
+    pub mcu_current: f32,
+    pub motor_temp: i32,
+    pub mcu_temp: i32,
+    pub dc_main_wire_over_volt_fault: bool,
+    pub dc_main_wire_over_curr_fault: bool,
+    pub motor_over_spd_fault: bool,
+    pub motor_phase_curr_fault: bool,
+    pub motor_stall_fault: bool,
+    pub mcu_warning_level: MCUWarningLevel,
+    pub debug_0: f32,
+    pub debug_1: f32,
+    pub debug_2: f32,
+    pub debug_3: f32,
 }
 
 impl Reading for TelemetryData {
