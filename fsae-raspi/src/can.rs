@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use std::error::Error;
+use bincode;
 use crate::send::{send_message, Reading};
 use chrono::{DateTime, Utc};
 use influxdb::InfluxDbWriteable;
@@ -194,4 +196,69 @@ pub async fn read_can() {
             .await;
         }
     }
+}
+
+async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn Error>> {
+    let socket = IsoTpSocket::open(
+        "vcan0",
+        StandardId::new(0x123).ok_or("Invalid source ID")?,
+        StandardId::new(0x321).ok_or("Invalid destination ID")?,
+    )?;
+
+    let payload = bincode::serialize(&data)?;
+    
+    socket.write_packet(&payload).await?;
+
+    println!("TelemetryData sent over iso-tp ({} bytes)", payload.len());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn Error>> {
+    let data = TelemetryData {
+        time: Utc::now(),
+        apps_travel: 72.5,
+        bse_front_psi: 45.3,
+        bse_rear_psi: 42.8,
+        accumulator_voltage: 390.2,
+        accumulator_temp_f: 101.5,
+        motor_state: MotorState::MotorStateDriving,
+        motor_speed: 3200.0,
+        motor_torque: 85.4,
+        max_motor_torque: 120.0,
+        max_motor_brake_torque: 60.0,
+        motor_direction: MotorRotateDirection::DirectionForward,
+        mcu_main_state: MCUMainState::StateRun,
+        mcu_work_mode: MCUWorkMode::WorkModeTorque,
+        motor_temp: 75,
+        mcu_temp: 68,
+        dc_main_wire_over_volt_fault: false,
+        motor_phase_curr_fault: false,
+        mcu_over_hot_fault: false,
+        resolver_fault: false,
+        phase_curr_sensor_fault: false,
+        motor_over_spd_fault: false,
+        drv_motor_over_hot_fault: false,
+        dc_main_wire_over_curr_fault: false,
+        drv_motor_over_cool_fault: false,
+        mcu_motor_system_state: true,
+        mcu_temp_sensor_state: true,
+        motor_temp_sensor_state: true,
+        dc_volt_sensor_state: true,
+        dc_low_volt_warning: false,
+        mcu_12v_low_volt_warning: false,
+        motor_stall_fault: false,
+        motor_open_phase_fault: false,
+        mcu_warning_level: MCUWarningLevel::ErrorNone,
+        mcu_voltage: 13.8,
+        mcu_current: 2.4,
+        motor_phase_curr: 3.1,
+        debug_0: 0.0,
+        debug_1: 0.0,
+        debug_2: 0.0,
+        debug_3: 0.0,
+    };
+
+    send_telemetry_over_isotp(&data).await?;
+    Ok(())
 }
