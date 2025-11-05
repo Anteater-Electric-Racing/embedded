@@ -136,18 +136,18 @@ void threadMain(void *pvParameters) {
             }
             case ' ': { // Stop all torque
                 torqueDemand = 0;
-                enableRun = false;       // Disable run state
-                enablePrecharge = false; // Disable precharging
-                enablePower = false;
-                enableRun = false;
+                // enableRun = false;       // Disable run state
+                // enablePrecharge = false; // Disable precharging
+                // enablePower = false;
+                // enableRun = false;
                 break;
             }
             case 'f': // Fault state
             case 'F': {
-                Serial.println("Entering fault state");
+                //Serial.println("Entering fault state");
                 enableRun = false;       // Disable run state
                 enablePrecharge = false; // Disable precharging
-                enableStandby = false;
+            //    enablePower = false;
                 torqueDemand = 0;        // Reset torque demand
                 Motor_SetFaultState();   // Set motor to fault state
                 break;
@@ -184,9 +184,17 @@ void threadMain(void *pvParameters) {
 
         Serial.print("Torque: ");
         Serial.print(torqueDemand);
+        // Serial.print(" | ");
+        // Serial.print("M: ");
+        // Serial.print(MCU_GetMCU1Data()->motorTorque);
         Serial.print(" | ");
         Serial.print("RPM: ");
         Serial.print(MCU_GetMCU1Data()->motorSpeed);
+
+
+        //Serial.print(" | ");
+        // Serial.print("maxtorq ");
+        // Serial.print(MCU_GetMCU1Data()->maxMotorTorque);
 
         // Telemetry: Read battery current, phase current, motor speed,
         // temperature(s)
@@ -209,12 +217,10 @@ void threadMain(void *pvParameters) {
         Serial.print("Mtr Temp: ");
         Serial.print(MCU_GetMCU2Data()->motorTemp);
 
-        Serial.print(" | ");
-        Serial.print(" ");
 
-        Serial.print(" | ");
-        Serial.print("Regen: ");
-        Serial.print(enableRegen);
+        // Serial.print(" | ");
+        // Serial.print("Regen: ");
+        // Serial.print(enableRegen);
         Serial.print("\r");
 
 
