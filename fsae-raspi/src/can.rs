@@ -106,14 +106,17 @@ fn parse_bool(byte: u8) -> bool {
 
 pub async fn read_can() {
     loop {
-        let Ok(socket) = IsoTpSocket::open(
+        let socket = match IsoTpSocket::open(
             CAN_INTERFACE,
             StandardId::new(0x666).expect("Invalid src id"),
             StandardId::new(0x777).expect("Invalid src id"),
-        ) else {
-            println!("Failed to open socket");
-            sleep(Duration::from_secs(1)).await;
-            continue;
+        ) {
+            Ok(socket) => socket,
+            Err(e) => {
+                println!("Failed to open socket: {}", e);
+                sleep(Duration::from_secs(1)).await;
+                continue;
+            }
         };
 
         while let Ok(packet) = socket.read_packet().await {
