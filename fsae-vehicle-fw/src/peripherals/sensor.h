@@ -5,10 +5,13 @@
 
 #define SENSOR_PIN_AMT 3
 
+
 extern uint16_t sensorPins[SENSOR_PIN_AMT];
 extern uint16_t sensorIndex;
 extern uint16_t sensorReads[SENSOR_PIN_AMT];
 
 void Sensor_Init();
 void threadSensor( void *pvParameters );
-struct sensor_t Get_SensorData();
+float Sensor_GetShockTravel_mm();
+float Sensor_GetSteeringAngle_deg();
+float Sensor_GetSteeringTorque_Nm();

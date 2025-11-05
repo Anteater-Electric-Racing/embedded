@@ -67,6 +67,14 @@ void Sensor_Init() {
     xTaskCreate(threadSensor, "SensorThread", 128, NULL, 2, NULL);  //Im not entirely sure what the optimal stack size is, this might overflow easily
 }
 
-sensor_t Get_SensorData() {
-    return sensorData;
+float Get_ShockTravel_mm() {
+    return sensorData.shockTravel_mm;
+}
+
+float Get_SteeringAngle_deg() {
+    return sensorData.steeringAngle_deg;
+}
+
+float Get_SteeringTorque_Nm() {
+    return sensorData.steeringTorque_Nm;
 }
