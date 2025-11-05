@@ -11,3 +11,4 @@ extern uint16_t sensorReads[SENSOR_PIN_AMT];
 
 void Sensor_Init();
 void threadSensor( void *pvParameters );
+struct sensor_t Get_SensorData();
