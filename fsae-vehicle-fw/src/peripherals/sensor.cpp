@@ -30,7 +30,7 @@ float shockTravel_mm = 0.0f;
 float steeringAngle_deg = 0.0f;
 float steeringTorque_Nm = 0.0f;
 
-const float ADC_VOLTAGE = 5.0f; 
+const float ADC_VOLTAGE = 3.3f; 
 const float ADC_RESOLUTION = 1023;   //***Unsure of these two, but searched them up to find these values
 
 const float SHOCK_TRAVEL_MAX_MM = 50.0f;      // Placeholder: 
@@ -49,15 +49,15 @@ void threadSensor(void *pvParameters) {
         float steerAngleVolt = (sensorReads[1] / ADC_RESOLUTION) * ADC_VOLTAGE; 
         float torqueVoltage  = (sensorReads[2] / ADC_RESOLUTION) * ADC_VOLTAGE;
         //Converts those bit-RES values into the actual human-read values;
-        sensorData.shockTravel_mm = constrain((shockVoltage / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
-        sensorData.steeringAngle_deg = constrain((steerAngleVolt / 5.0f) * STEERING_ANGLE_MAX_DEG, 0.0f, STEERING_ANGLE_MAX_DEG);
-        sensorData.steeringTorque_Nm = constrain((torqueVoltage / 5.0f) * TORQUE_SENSOR_MAX_NM, 0.0f, TORQUE_SENSOR_MAX_NM);
+        sensorData.shockTravel_mm = constrain((shockVoltage / 3.3f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
+        sensorData.steeringAngle_deg = constrain((steerAngleVolt / 3.3f) * STEERING_ANGLE_MAX_DEG, 0.0f, STEERING_ANGLE_MAX_DEG);
+        sensorData.steeringTorque_Nm = constrain((torqueVoltage / 3.3f) * TORQUE_SENSOR_MAX_NM, 0.0f, TORQUE_SENSOR_MAX_NM);
 
         vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(10)); // 100 Hz
 
     }
-}
-
+}//Looking at datasheets indepth, figuring how to reado n the teensy and finding a way to get data down to get a certain voltage, 
+// Talk to dynamics about what these senors actually read, overlap with adc so just put all this shit in there
 void Sensor_Init() {
     //Initialize sensor pins
     for (int i = 0; i < SENSOR_PIN_AMT; i++) {
