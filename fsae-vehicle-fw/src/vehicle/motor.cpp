@@ -103,7 +103,6 @@ void threadMotor(void *pvParameters) {
             // T6
             vcu1.VCU_MotorMode = 0;
             vcu1.VCU_TorqueReq = 0;
-
             // Convert to little-endian format
             // bms2.sAllowMaxRegenCharge = CHANGE_ENDIANESS_16(maxRegen); //
             // Convert to little-endian format
@@ -140,7 +139,6 @@ void threadMotor(void *pvParameters) {
                                      ? 1
                                      : 2; // 0 = Standby, 1 = Drive, 2 =
                                           // Generate Electricy, 3 = Reserved
-
             break;
         }
 
