@@ -98,7 +98,7 @@ void threadADC( void *pvParameters ){
         }
 
          //Converts to the bit-RES values from raw voltage, which supposedly teensy can't read? UPDATED: Used ADC_VALUE_TO_VOLTAGE macro from utils.h to do the conversion from output to controller
-        const float shockVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX]);
+        const float shockVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX1]); // Might need to add the otherthree
         const float steerAngleVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[STEERING_ANGLE_INDEX]);
         const float torqueVoltage  = ADC_VALUE_TO_VOLTAGE(adc0Reads[STEERING_TORQUE_INDEX]);
 
@@ -107,7 +107,7 @@ void threadADC( void *pvParameters ){
         //Updated to account for the mid range (0 degrees or 0 torque) to be at center of voltage range instead of the minimum
         sensorData.steeringAngle_deg = constrain((steerAngleVoltage / 5.0f) * STEERING_ANGLE_MAX_DEG - (STEERING_ANGLE_MAX_DEG* 0.5f), -STEERING_ANGLE_MAX_DEG * 0.5f, STEERING_ANGLE_MAX_DEG * 0.5f);
         sensorData.steeringTorque_Nm = constrain((torqueVoltage / 5.0f) * TORQUE_SENSOR_MAX_NM - (TORQUE_SENSOR_MAX_NM * 0.5f), -TORQUE_SENSOR_MAX_NM * 0.5f, TORQUE_SENSOR_MAX_NM* 0.5f);
-        
+
         // Update each sensors data
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
@@ -116,7 +116,7 @@ void threadADC( void *pvParameters ){
         // Faults_HandleFaults();
         // Motor_UpdateMotor();
     }
-    
+
 }
 float Get_ShockTravel_mm() {
     return sensorData.shockTravel_mm;
