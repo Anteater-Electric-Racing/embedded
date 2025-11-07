@@ -30,10 +30,12 @@ void CAN_Init() {
     can2.setRX(DEF);
     can2.enableFIFO();
 
-    pccMsg.id = PCC_CAN_ID; // can change ID
+     // can change ID
 }
 
 void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode, float accumulatorVoltage, float tsVoltage, float prechargeProgress) {
+    pccData = {0};
+    /*
     pccData = {
         .state = state,
         .errorCode = errorCode,
@@ -41,7 +43,12 @@ void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode, float accumulatorVolta
         .tsVoltage = uint16_t(tsVoltage * 100),
         .prechargeProgress = uint16_t(prechargeProgress * 100),
     };
+    */
+   pccData.accumulatorVoltage = 1;
+
+    pccMsg.id = PCC_CAN_ID;
 
     memcpy(pccMsg.buf, &pccData, sizeof(PCC));
     can2.write(pccMsg);
+    Serial.println("CAN message sent");
 }
