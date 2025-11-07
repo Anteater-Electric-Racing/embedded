@@ -147,7 +147,7 @@ void threadMain(void *pvParameters) {
                 //Serial.println("Entering fault state");
                 enableRun = false;       // Disable run state
                 enablePrecharge = false; // Disable precharging
-            //    enablePower = false;
+                enablePower = false;
                 torqueDemand = 0;        // Reset torque demand
                 Motor_SetFaultState();   // Set motor to fault state
                 break;
