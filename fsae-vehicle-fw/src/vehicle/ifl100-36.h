@@ -10,6 +10,7 @@
 #define mMCU1_ID 0x105
 #define mMCU2_ID 0x106
 #define mMCU3_ID 0x107
+#define pcc_ID 0x123
 
 #define mBMS1_ID 0x1A0
 #define mBMS2_ID 0x1A1

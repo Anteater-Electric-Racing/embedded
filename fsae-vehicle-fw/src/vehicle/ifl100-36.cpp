@@ -10,6 +10,8 @@
 
 #include "utils/utils.h"
 
+#include "pcc_receive.h"
+
 #define THREAD_MCU_STACK_SIZE 128
 #define THREAD_MCU_PRIORITY 1
 
@@ -139,6 +141,10 @@ static void threadMCU(void *pvParameters) {
 
                 taskEXIT_CRITICAL(); // Exit critical section
                 break;
+            }
+            case pcc_ID:
+            {
+                processPCCMessage(rx_data);
             }
             default:
             {
