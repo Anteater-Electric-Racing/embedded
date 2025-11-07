@@ -23,10 +23,10 @@ T constrain(T val, T minVal, T maxVal) {
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
     APPS_2_INDEX,
-    BSE_1_INDEX,
-    BSE_2_INDEX,
-    SUSP_TRAV_LINPOT1,
     SHOCK_TRAVEL_INDEX1,
+    SHOCK_TRAVEL_INDEX2,
+    SHOCK_TRAVEL_INDEX3,
+    SHOCK_TRAVEL_INDEX4,
     STEERING_ANGLE_INDEX,
     STEERING_TORQUE_INDEX
 };
@@ -34,8 +34,8 @@ enum SensorIndexesADC0 { // TODO: Update with real values
 enum SensorIndexesADC1 { // TODO: Update with real values
     APPS_1_INDEX2,
     APPS_2_INDEX2,
-    BSE_1_INDEX2,
-    BSE_2_INDEX2,
+    BSE_1_INDEX,
+    BSE_2_INDEX,
     SUSP_TRAV_LINPOT12,
     SUSP_TRAV_LINPOT22,
     SUSP_TRAV_LINPOT32,
@@ -49,7 +49,10 @@ uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {A7, A6, A5, A4, A3, A2, A1, A0}; // A4
 uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
 struct sensor_t {
-    float shockTravel_mm;
+    float shockTravel1_mm;
+    float shockTravel2_mm;
+    float shockTravel3_mm;
+    float shockTravel4_mm;
     float steeringAngle_deg;
     float steeringTorque_Nm;
 };
@@ -98,12 +101,22 @@ void threadADC( void *pvParameters ){
         }
 
          //Converts to the bit-RES values from raw voltage, which supposedly teensy can't read? UPDATED: Used ADC_VALUE_TO_VOLTAGE macro from utils.h to do the conversion from output to controller
-        const float shockVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX1]); // Might need to add the otherthree
+        const float shockVoltage1   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX1]);
+        const float shockVoltage2   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX2]);
+        const float shockVoltage3   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX3]);
+        const float shockVoltage4   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX4]);
+
+
         const float steerAngleVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[STEERING_ANGLE_INDEX]);
         const float torqueVoltage  = ADC_VALUE_TO_VOLTAGE(adc0Reads[STEERING_TORQUE_INDEX]);
 
         //Converts those bit-RES values into the actual human-read values;
-        sensorData.shockTravel_mm = constrain((shockVoltage / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
+
+        //Get the 4 shock travels in mm
+        sensorData.shockTravel1_mm = constrain((shockVoltage1 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
+        sensorData.shockTravel2_mm = constrain((shockVoltage2 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
+        sensorData.shockTravel3_mm = constrain((shockVoltage3 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
+        sensorData.shockTravel4_mm = constrain((shockVoltage4 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
         //Updated to account for the mid range (0 degrees or 0 torque) to be at center of voltage range instead of the minimum
         sensorData.steeringAngle_deg = constrain((steerAngleVoltage / 5.0f) * STEERING_ANGLE_MAX_DEG - (STEERING_ANGLE_MAX_DEG* 0.5f), -STEERING_ANGLE_MAX_DEG * 0.5f, STEERING_ANGLE_MAX_DEG * 0.5f);
         sensorData.steeringTorque_Nm = constrain((torqueVoltage / 5.0f) * TORQUE_SENSOR_MAX_NM - (TORQUE_SENSOR_MAX_NM * 0.5f), -TORQUE_SENSOR_MAX_NM * 0.5f, TORQUE_SENSOR_MAX_NM* 0.5f);
@@ -118,8 +131,20 @@ void threadADC( void *pvParameters ){
     }
 
 }
-float Get_ShockTravel_mm() {
-    return sensorData.shockTravel_mm;
+float Get_ShockTravel1_mm() {
+    return sensorData.shockTravel1_mm;
+}
+
+float Get_ShockTravel2_mm() {
+    return sensorData.shockTravel2_mm;
+}
+
+float Get_ShockTravel3_mm() {
+    return sensorData.shockTravel3_mm;
+}
+
+float Get_ShockTravel4_mm() {
+    return sensorData.shockTravel4_mm;
 }
 
 float Get_SteeringAngle_deg() {

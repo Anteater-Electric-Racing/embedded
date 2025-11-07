@@ -19,6 +19,9 @@ extern ADC *adc;
 
 void ADC_Init();
 void threadADC( void *pvParameters );
-float getShockTravel_mm();
+float getShockTravel1_mm();
+float getShockTravel2_mm();
+float getShockTravel3_mm();
+float getShockTravel4_mm();
 float getSteeringAngle_deg();
 float getSteeringTorque_Nm();
