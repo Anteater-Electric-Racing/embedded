@@ -26,10 +26,7 @@ enum SensorIndexesADC0 { // TODO: Update with real values
     BSE_1_INDEX,
     BSE_2_INDEX,
     SUSP_TRAV_LINPOT1,
-    SUSP_TRAV_LINPOT2,
-    SUSP_TRAV_LINPOT3,
-    SUSP_TRAV_LINPOT4,
-    SHOCK_TRAVEL_INDEX,
+    SHOCK_TRAVEL_INDEX1,
     STEERING_ANGLE_INDEX,
     STEERING_TORQUE_INDEX
 };
@@ -45,7 +42,7 @@ enum SensorIndexesADC1 { // TODO: Update with real values
     SUSP_TRAV_LINPOT42
 };
 
-uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10}; // A4, A4, 18, 17, 17, 17, 17, Unkwown, Unknown, Unkwown // real values: {21, 24, 25, 19, 18, 14, 15, 17, Unknown, Unknown, Unknown
+uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {A0, A1, A2, A3, A4, A5, A6, A7}; // A4, A4, 18, 17, 17, 17, 17 // real values: {21, 24, 25, 19, 18, 14, 15, 17}
 uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 
 uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {A7, A6, A5, A4, A3, A2, A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
