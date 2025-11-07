@@ -13,6 +13,13 @@
 #include "vehicle/telemetry.h"
 #include "vehicle/motor.h"
 
+template <typename T>
+T constrain(T val, T minVal, T maxVal) {
+    if (val < minVal) return minVal;
+    if (val > maxVal) return maxVal;
+    return val;
+}
+
 enum SensorIndexesADC0 { // TODO: Update with real values
     APPS_1_INDEX,
     APPS_2_INDEX,
@@ -21,7 +28,10 @@ enum SensorIndexesADC0 { // TODO: Update with real values
     SUSP_TRAV_LINPOT1,
     SUSP_TRAV_LINPOT2,
     SUSP_TRAV_LINPOT3,
-    SUSP_TRAV_LINPOT4
+    SUSP_TRAV_LINPOT4,
+    SHOCK_TRAVEL_INDEX,
+    STEERING_ANGLE_INDEX,
+    STEERING_TORQUE_INDEX
 };
 
 enum SensorIndexesADC1 { // TODO: Update with real values
@@ -35,11 +45,18 @@ enum SensorIndexesADC1 { // TODO: Update with real values
     SUSP_TRAV_LINPOT42
 };
 
-uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {A0, A1, A2, A3, A4, A5, A6, A7}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
+uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10}; // A4, A4, 18, 17, 17, 17, 17, Unkwown, Unknown, Unkwown // real values: {21, 24, 25, 19, 18, 14, 15, 17, Unknown, Unknown, Unknown
 uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 
 uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {A7, A6, A5, A4, A3, A2, A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21, 24, 25, 19, 18, 14, 15, 17};
 uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
+
+struct sensor_t {
+    float shockTravel_mm;
+    float steeringAngle_deg;
+    float steeringTorque_Nm;
+};
+static struct sensor_t sensorData;
 
 static TickType_t lastWakeTime;
 
@@ -83,6 +100,17 @@ void threadADC( void *pvParameters ){
             adc1Reads[currentIndexADC1] = adcRead;
         }
 
+         //Converts to the bit-RES values from raw voltage, which supposedly teensy can't read? UPDATED: Used ADC_VALUE_TO_VOLTAGE macro from utils.h to do the conversion from output to controller
+        const float shockVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX]);
+        const float steerAngleVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[STEERING_ANGLE_INDEX]);
+        const float torqueVoltage  = ADC_VALUE_TO_VOLTAGE(adc0Reads[STEERING_TORQUE_INDEX]);
+
+        //Converts those bit-RES values into the actual human-read values;
+        sensorData.shockTravel_mm = constrain((shockVoltage / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
+        //Updated to account for the mid range (0 degrees or 0 torque) to be at center of voltage range instead of the minimum
+        sensorData.steeringAngle_deg = constrain((steerAngleVoltage / 5.0f) * STEERING_ANGLE_MAX_DEG - (STEERING_ANGLE_MAX_DEG* 0.5f), -STEERING_ANGLE_MAX_DEG * 0.5f, STEERING_ANGLE_MAX_DEG * 0.5f);
+        sensorData.steeringTorque_Nm = constrain((torqueVoltage / 5.0f) * TORQUE_SENSOR_MAX_NM - (TORQUE_SENSOR_MAX_NM * 0.5f), -TORQUE_SENSOR_MAX_NM * 0.5f, TORQUE_SENSOR_MAX_NM* 0.5f);
+        
         // Update each sensors data
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
@@ -91,4 +119,16 @@ void threadADC( void *pvParameters ){
         // Faults_HandleFaults();
         // Motor_UpdateMotor();
     }
+    
+}
+float Get_ShockTravel_mm() {
+    return sensorData.shockTravel_mm;
+}
+
+float Get_SteeringAngle_deg() {
+    return sensorData.steeringAngle_deg;
+}
+
+float Get_SteeringTorque_Nm() {
+    return sensorData.steeringTorque_Nm;
 }

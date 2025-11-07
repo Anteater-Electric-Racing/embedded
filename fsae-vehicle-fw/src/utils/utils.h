@@ -93,3 +93,8 @@
 
 #define MAX_REGEN_TORQUE -9.0F // TODO: test with higher value regen
 #define REGEN_BIAS 1 // Scale 0-1 of max regen torque
+
+/* Sensor Max Values */
+#define SHOCK_TRAVEL_MAX_MM    = 50.0F;   // Example travel
+#define  STEERING_ANGLE_MAX_DEG = 345.0F;  // Pot electrical angle
+#define TORQUE_SENSOR_MAX_NM   = 10.0F;  // Example max torque, vverything but Angle needs actual values
