@@ -200,8 +200,9 @@ void precharge(){
     if ( ( pcData.prechargeProgress >= PCC_TARGET_PERCENT ) ) {
         if( now - lastTimeBelowThreshold > TIME_HYSTERESIS_MS ) {
             if (now < timePrechargeStart + PCC_MIN_TIME_MS) { // Precharge too fast - something's wrong!
-                state = STATE_ERROR;
-                errorCode |= ERR_PRECHARGE_TOO_FAST;
+                //state = STATE_ERROR;
+                //errorCode |= ERR_PRECHARGE_TOO_FAST;
+                Serial.println("ERROR: TOO FAST");
             }
             // Precharge complete
             else {
@@ -220,8 +221,9 @@ void precharge(){
             Serial.print(" * Precharge time: ");
             Serial.print(now - timePrechargeStart);
             Serial.print("\n");
-            state = STATE_ERROR;
-            errorCode |= ERR_PRECHARGE_TOO_SLOW;
+            //state = STATE_ERROR;
+            //errorCode |= ERR_PRECHARGE_TOO_SLOW;
+            Serial.println("ERROR: TOO SLOW");
         }
         // else {
             // Precharging

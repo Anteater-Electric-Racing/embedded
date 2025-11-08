@@ -44,7 +44,7 @@ void threadMain(void *pvParameters) {
         ts_voltage = getTSVoltage();
         state = getPrechargeState();
 
-        Serial.print("State: ");
+        Serial.print("                                              State: ");
         switch (state) {
             case STATE_STANDBY:
                 Serial.print("STANDBY");

@@ -50,5 +50,5 @@ void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode, float accumulatorVolta
 
     memcpy(pccMsg.buf, &pccData, sizeof(PCC));
     can2.write(pccMsg);
-    Serial.println("CAN message sent");
+    //Serial.println("CAN message sent");
 }
