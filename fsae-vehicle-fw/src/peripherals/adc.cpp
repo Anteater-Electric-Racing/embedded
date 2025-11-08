@@ -90,7 +90,7 @@ void threadADC( void *pvParameters ){
         vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
         for(uint16_t currentIndexADC0 = 0; currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0){
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
-            uint16_t adcRead = adc->adc1->analogRead(currentPinADC0);
+            uint16_t adcRead = adc->adc0->analogRead(currentPinADC0);
             adc0Reads[currentIndexADC0] = adcRead;
         }
 
@@ -131,26 +131,26 @@ void threadADC( void *pvParameters ){
     }
 
 }
-float Get_ShockTravel1_mm() {
+float getShockTravel1_mm() {
     return sensorData.shockTravel1_mm;
 }
 
-float Get_ShockTravel2_mm() {
+float getShockTravel2_mm() {
     return sensorData.shockTravel2_mm;
 }
 
-float Get_ShockTravel3_mm() {
+float getShockTravel3_mm() {
     return sensorData.shockTravel3_mm;
 }
 
-float Get_ShockTravel4_mm() {
+float getShockTravel4_mm() {
     return sensorData.shockTravel4_mm;
 }
 
-float Get_SteeringAngle_deg() {
+float getSteeringAngle_deg() {
     return sensorData.steeringAngle_deg;
 }
 
-float Get_SteeringTorque_Nm() {
+float getSteeringTorque_Nm() {
     return sensorData.steeringTorque_Nm;
 }
