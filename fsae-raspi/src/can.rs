@@ -1,5 +1,8 @@
+#![allow(clippy::enum_variant_names)]
+#![allow(clippy::from_over_into)]
+#![allow(clippy::single_component_path_imports)]
+
 use std::error::Error;
-//use std::time::Duration;
 use tokio::time::Duration;
 use bincode;
 use crate::send::{send_message, Reading};
@@ -9,7 +12,7 @@ use serde::Serialize;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
-const CAN_INTERFACE: &str = "can0";
+const CAN_INTERFACE: &str = "vcan0";
 
 macro_rules! define_enum {
     ($name:ident, $($variant:ident = $value:expr => $text:expr),*) => {
@@ -198,6 +201,7 @@ pub async fn read_can() {
     }
 }
 
+#[cfg(test)]
 async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn Error>> {
     let socket = IsoTpSocket::open(
         "vcan0",

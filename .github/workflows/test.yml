@@ -22,22 +22,29 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential linux-headers-$(uname -r) kmod can-utils
+        sudo apt-get -y install linux-modules-extra-$(uname -r) can-utils build-essential linux-headers-$(uname -r) kmod
     
-    - name: Build and load ISO-TP
+    - name: Build and load ISO-TP module
       run: |
+        cd /tmp
         git clone https://github.com/hartkopp/can-isotp.git
         cd can-isotp
+        git checkout mainline-5.4+
         make
+        sudo modprobe can
         sudo insmod ./net/can/can-isotp.ko
-        cd ..
     
     - name: Setup vcan0
       run: |
         sudo modprobe vcan
         sudo ip link add dev vcan0 type vcan
-        sudo ip link set vcan0 up
+        sudo ip link set dev vcan0 up
+        ip link show vcan0
     
-    - name: Run test
-      #cd fsae-raspi
-      run: cargo test test_send_telemetry_over_isotp -- --nocapture
+    - name: Verify ISO-TP loaded
+      run: lsmod | grep isotp
+    
+    - name: Run tests
+      run: |
+        cd fsae-raspi
+        cargo test test_send_telemetry_over_isotp --package fsae-raspi -- --nocapture
