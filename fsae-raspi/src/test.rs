@@ -2,7 +2,7 @@ use crate::{
     can::{
         MCUMainState, MCUWarningLevel, MCUWorkMode, MotorRotateDirection, MotorState, TelemetryData,
     },
-    send::{send_message, Reading, INFLUXDB_DATABASE, INFLUXDB_URL},
+    send::{send_message, Reading, INFLUXDB_DATABASE, INFLUXDB_URL, MQTT_HOST, MQTT_PORT},
 };
 
 use tokio::time::Duration;
@@ -10,9 +10,7 @@ use tokio::time::Duration;
 pub async fn verify_influx_write<T: Reading + for<'de> serde::Deserialize<'de> + PartialEq>(
     test_packet: T,
 ) -> Result<bool, Box<dyn std::error::Error>> {
-    let client = reqwest::Client::builder()
-        .build()
-        .expect("Failed to build InfluxDB client");
+    let client = reqwest::Client::builder().build()?;
 
     let query = format!("SELECT * FROM {} ORDER BY time DESC LIMIT 1", T::topic());
 
@@ -77,76 +75,60 @@ fn test_verify_influx_write() {
     });
 }
 
-fn test_mqtt_send() {
-    let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(send_message(TelemetryData {
-        apps_travel: 0.0,
-        motor_speed: 0.0,
-        motor_torque: 0.0,
-        max_motor_torque: 0.0,
-        motor_direction: MotorRotateDirection::DirectionForward,
-        motor_state: MotorState::MotorStateIdle,
-        mcu_main_state: MCUMainState::StatePowerOff,
-        mcu_work_mode: MCUWorkMode::WorkModeStandby,
-        mcu_voltage: 0.0,
-        mcu_current: 0.0,
-        motor_temp: 0,
-        mcu_temp: 0,
-        dc_main_wire_over_volt_fault: false,
-        dc_main_wire_over_curr_fault: false,
-        motor_over_spd_fault: false,
-        motor_phase_curr_fault: false,
-        motor_stall_fault: false,
-        mcu_warning_level: MCUWarningLevel::ErrorNone,
-        debug_0: 0.0,
-        debug_1: 0.0,
-        debug_2: 0.0,
-        debug_3: 0.0,
-    }));
-}
-
-async fn mqtt_listener(telemetry_struct: TelemetryData) {
+async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
     // Client and event loop setup
-    let mut options = rumqttc::MqttOptions::new("telemetry", "localhost", 1883);
+    let mut options = rumqttc::MqttOptions::new("listener", MQTT_HOST, MQTT_PORT);
     options.set_keep_alive(Duration::from_secs(5));
     let (client, mut event_loop) = rumqttc::AsyncClient::new(options, 10);
 
     // Subscribe client to topic
-    client
+    if let Err(e) = client
         .subscribe("telemetry", rumqttc::QoS::AtLeastOnce)
         .await
-        .expect("[subscribe] | Unable to subscribe to the topic.");
+    {
+        eprintln!("[subscribe] | Unable to subscribe to the topic: {}", e);
+        return false;
+    }
 
     // Repeat poll check loop while event loop has not returned an Err.
-    while let Ok(notification) = event_loop.poll().await {
-        // Check for Publish messages and extract
-        if let rumqttc::Event::Incoming(rumqttc::Packet::Publish(data)) = notification {
-            let data_string = str::from_utf8(&data.payload)
-                .expect("[string parse] | Failed to convert bytes into data string.");
-            let data_deserialized = serde_json::from_str::<TelemetryData>(data_string)
-                .expect("[poll] | Failed to deserialize incoming data.");
+    let timeout = Duration::from_secs(1);
+    match tokio::time::timeout(timeout, async {
+        while let Ok(notification) = event_loop.poll().await {
+            // Check for Publish messages and extract
+            if let rumqttc::Event::Incoming(rumqttc::Packet::Publish(data)) = notification {
+                let data_string = match std::str::from_utf8(&data.payload) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!(
+                            "[string parse] | Failed to convert bytes into data string: {}",
+                            e
+                        );
+                        continue;
+                    }
+                };
 
-            if data_deserialized == telemetry_struct {
-                client
-                    .publish("telemetry", rumqttc::QoS::AtLeastOnce, false, "true")
-                    .await
-                    .expect("[Result]: Failed to send result to topic.");
-                assert!(true);
-                // For test purposes
-                break;
-            } else {
-                client
-                    .publish("telemetry", rumqttc::QoS::AtLeastOnce, false, "false")
-                    .await
-                    .expect("[Result]: Failed to send result to topic.");
-                assert!(false);
+                let data_deserialized = match serde_json::from_str::<TelemetryData>(data_string) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        eprintln!("[poll] | Failed to deserialize incoming data: {}", e);
+                        continue;
+                    }
+                };
+
+                return data_deserialized == telemetry_struct;
             }
         }
+        false
+    })
+    .await
+    {
+        Ok(result) => result,
+        Err(_) => false,
     }
 }
 
 #[test]
-fn verify_mqtt_listener() {
+fn test_verify_mqtt_listener() {
     // Test Struct (listener end)
     let listener_data: TelemetryData = TelemetryData {
         apps_travel: 0.0,
@@ -173,10 +155,18 @@ fn verify_mqtt_listener() {
         debug_3: 0.0,
     };
 
-    // Send test packet
-    test_mqtt_send();
-
     // Run verify
     let runtime = tokio::runtime::Runtime::new().expect("Unable to start listener runtime.");
-    runtime.block_on(mqtt_listener(listener_data));
+    let handle = runtime.spawn(verify_mqtt_listener(listener_data.clone()));
+    runtime.block_on(async {
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        send_message(listener_data.clone()).await;
+    });
+    let result = runtime
+        .block_on(handle)
+        .expect("Listener task panicked unexpectedly.");
+    assert!(
+        result,
+        "MQTT listener did not receive the expected message."
+    );
 }
