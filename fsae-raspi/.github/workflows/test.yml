@@ -2,7 +2,7 @@ name: Test ISO-TP
 
 on:
   push:
-    branches: [ main, mltest ]
+    branches: [ main, ml/test-branch ]
   pull_request:
     branches: [ main ]
 
