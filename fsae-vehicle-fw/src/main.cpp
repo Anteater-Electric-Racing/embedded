@@ -178,6 +178,11 @@ void threadMain(void *pvParameters) {
         Serial.print("C State: ");
         Serial.print(MCU_GetMCU1Data()->mcuMainState);
         Serial.print(" | ");
+        // Serial.print("APPS: ");
+        // Serial.print(APPS_GetAPPSReading1());
+        // Serial.print(" | ");
+        // Serial.print(APPS_GetAPPSReading2());
+        // Serial.print(" | ");
         Serial.print("T State: ");
         Serial.print(Motor_GetState());
         Serial.print(" | ");
@@ -244,6 +249,7 @@ void threadMain(void *pvParameters) {
 
         // print all errors if they are true in one line
         Serial.print("  |  ");
+
         if (MCU_GetMCU2Data()->dcMainWireOverVoltFault)
             Serial.println("DC Over Volt Fault, ");
         if (MCU_GetMCU2Data()->motorPhaseCurrFault)
