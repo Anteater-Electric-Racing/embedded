@@ -32,14 +32,16 @@ static bool can3Healthy = false;
 #define CAN_TIMEOUT_MS 100
 
 
-//CAN SETUP
+//
 /**
+ * CANBus Setup: KZ
+ *
  * CAN2 (CAN2 on diagram) --> ORION, CCM, RASPI, PCC
  * CAN3 (CAN1 on diagram) --> CCM, OMNI, RASPI
  *
+ * TODO: CAN recieve and send for each bus
+ *
  */
-
-
 void CAN_Init() {
     // Initialize CAN bus
     can2.begin();

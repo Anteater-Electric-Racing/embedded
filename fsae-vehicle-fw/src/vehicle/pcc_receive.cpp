@@ -6,6 +6,8 @@
 #include "arduino_freertos.h"
 #include "pcc_receive.h"
 
+static PCC pccData;
+
 void processPCCMessage(uint64_t rx_data){
     taskENTER_CRITICAL();
     memcpy(&pccData, &rx_data, sizeof(PCC));

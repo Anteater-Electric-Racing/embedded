@@ -17,12 +17,9 @@ TelemetryData telemetryData;
 void Telemetry_Init() {
     telemetryData = { // Fill with reasonable dummy values
         .APPS_Travel = 0.0F,
-
-
         .motorSpeed = 0.0F,
         .motorTorque = 0.0F,
         .maxMotorTorque = 0.0F,
-
         .motorDirection = DIRECTION_STANDBY,
         .motorState = MOTOR_STATE_OFF,
 
