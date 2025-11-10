@@ -4,7 +4,7 @@
 
 use std::error::Error;
 use tokio::time::Duration;
-use bincode;
+//use bincode::Serialize as bincode_serialize;
 use crate::send::{send_message, Reading};
 use chrono::{DateTime, Utc};
 use influxdb::InfluxDbWriteable;
