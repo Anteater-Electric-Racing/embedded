@@ -14,6 +14,7 @@
 #include "vehicle/telemetry.h"
 #include "peripherals/gpio.h"
 #include "vehicle/rtm_button.h"
+#include "vehicle/pcc_receive.h"
 
 #include "utils/utils.h"
 #include <iostream>
@@ -179,6 +180,9 @@ void threadMain(void *pvParameters) {
 
         // Telemetry: Read battery current, phase current, motor speed,
         // temperature(s)
+        Serial.print("PP:" );
+        Serial.print(PCC_GetData()->accumulatorVoltage);
+        Serial.print(" | ");
         Serial.print("C State: ");
         Serial.print(MCU_GetMCU1Data()->mcuMainState);
         Serial.print(" | ");
@@ -290,7 +294,7 @@ void threadMain(void *pvParameters) {
 
 
 #endif
-        Serial.print(RTMButton_GetState());
+        //Serial.print(RTMButton_GetState());
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
 }
