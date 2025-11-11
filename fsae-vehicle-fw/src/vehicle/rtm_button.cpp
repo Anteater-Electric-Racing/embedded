@@ -1,6 +1,6 @@
 // Anteater Electric Racing, 2025
 
-#define BUTTON_DEBOUNCE_MS 100
+#define BUTTON_DEBOUNCE_MS 500
 
 #include <Arduino.h>
 #include <stdint.h>

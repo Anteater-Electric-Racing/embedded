@@ -12,6 +12,8 @@
 #include "vehicle/ifl100-36.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
+#include "peripherals/gpio.h"
+#include "vehicle/rtm_button.h"
 
 #include "utils/utils.h"
 #include <iostream>
@@ -33,6 +35,7 @@ void setup() { // runs once on bootup
     Telemetry_Init();
     Motor_Init();
     MCU_Init();
+    GPIO_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
@@ -61,6 +64,7 @@ void threadMain(void *pvParameters) {
 
 #endif
     while (true) {
+        digitalWrite(13, 1);
         /*
          * Read user input from Serial to control torque demand.
          * 'w' or 'W' to increase torque demand,
@@ -286,6 +290,7 @@ void threadMain(void *pvParameters) {
 
 
 #endif
+        Serial.print(RTMButton_GetState());
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
 }
