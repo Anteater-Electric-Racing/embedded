@@ -144,7 +144,7 @@ static void threadMCU(void *pvParameters) {
             }
             case pcc_ID:
             {
-                Serial.print("PCC OK?");
+                //Serial.print("PCC OK?");
                 processPCCMessage(rx_data);
                 break;
             }

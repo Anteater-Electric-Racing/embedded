@@ -14,3 +14,5 @@ typedef struct __attribute__((packed)) {
 //static PCC pccData;
 
 void processPCCMessage(uint64_t);
+
+PCC* PCC_GetData();
