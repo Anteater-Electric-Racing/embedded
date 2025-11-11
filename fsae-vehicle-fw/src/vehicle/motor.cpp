@@ -9,6 +9,7 @@
 #include "utils/utils.h"
 
 #include "peripherals/can.h"
+#include "peripherals/gpio.h"
 
 #include "apps.h"
 #include "vehicle/ifl100-36.h"
@@ -185,6 +186,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get
     // APPS_travel
 
+    RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
     // off --> standby --> precharge --> run --> fault -->standy
     // no kl15 then off
     switch (motorData.state) {

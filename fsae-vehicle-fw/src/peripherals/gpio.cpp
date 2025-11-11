@@ -12,3 +12,13 @@ void GPIO_Init() {
     pinMode(3, INPUT_PULLUP); // wheel speed 2
     pinMode(4, INPUT_PULLDOWN); // rtm button
 }
+
+// Read the current logical level of a GPIO pin.
+// Uses digitalReadFast when available on the platform for better performance.
+int GPIO_Read(int pin) {
+#ifdef digitalReadFast
+    return digitalReadFast(pin);
+#else
+    return digitalRead(pin);
+#endif
+}

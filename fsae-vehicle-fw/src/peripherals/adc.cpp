@@ -17,7 +17,7 @@
 enum SensorIndexesADC0 { // TODO: Update with real values
     THERMISTOR_1_INDEX = 0, // A0
     APPS_1_INDEX = 5,
-    APPS_2_INDEX = 4,
+    APPS_2_INDEX = 6, //A6
     BSE_1_INDEX = 3,
     BSE_2_INDEX = 2,
     SUSP_TRAV_LINPOT1,
