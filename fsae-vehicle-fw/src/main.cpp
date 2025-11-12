@@ -37,6 +37,7 @@ void setup() { // runs once on bootup
     Motor_Init();
     MCU_Init();
     GPIO_Init();
+    PCC_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
@@ -204,11 +205,9 @@ void threadMain(void *pvParameters) {
         Serial.print("RPM: ");
         Serial.print(MCU_GetMCU1Data()->motorSpeed);
 
-
         //Serial.print(" | ");
         // Serial.print("maxtorq ");
         // Serial.print(MCU_GetMCU1Data()->maxMotorTorque);
-
         // Telemetry: Read battery current, phase current, motor speed,
         // temperature(s)
         Serial.print(" | ");
