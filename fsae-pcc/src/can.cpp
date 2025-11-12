@@ -42,7 +42,7 @@ void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode, float accumulatorVolta
         .errorCode = errorCode,
         .accumulatorVoltage = uint16_t(accumulatorVoltage * 100),
         .tsVoltage = uint16_t(tsVoltage * 100),
-        .prechargeProgress = uint16_t(prechargeProgress * 100),
+        .prechargeProgress = uint16_t(prechargeProgress)
     };
 
 //    pccData.accumulatorVoltage = 1;
@@ -52,9 +52,13 @@ void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode, float accumulatorVolta
     memcpy(pccMsg.buf, &pccData, sizeof(PCC));
     can2.write(pccMsg);
 
-    pccData.accumulatorVoltage = 1.0;
+    //pccData.accumulatorVoltage = 1.0;
     //Serial.println("CAN message sent");
-    Serial.print("Accumulator Voltage | ");
-    Serial.print(pccData.accumulatorVoltage);
-    Serial.print('\n');
+
+    // Serial.print("Accumulator Voltage | ");
+    // Serial.print(pccData.accumulatorVoltage);
+
+    // Serial.print("Precharge Progress | ");
+    // Serial.print(pccData.prechargeProgress);
+    // Serial.print('\n');
 }
