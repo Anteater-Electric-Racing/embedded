@@ -268,6 +268,8 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
 
         } else {
             motorData.state = MOTOR_STATE_IDLE;
+            torqueDemand = 0;
+
         }
 
         #else
