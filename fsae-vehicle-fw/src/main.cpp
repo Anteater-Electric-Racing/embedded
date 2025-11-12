@@ -58,7 +58,7 @@ void threadMain(void *pvParameters) {
 #if HIMAC_FLAG
     float torqueDemand = 0;
     bool enableStandby = false;
-    bool enablePrecharge = false;
+    bool enablePrecharge = true;
     bool enablePower = false;
     bool enableRun = false;
 
@@ -182,7 +182,7 @@ void threadMain(void *pvParameters) {
         // Telemetry: Read battery current, phase current, motor speed,
         // temperature(s)
         Serial.print("PP:" );
-        Serial.print(PCC_GetData()->accumulatorVoltage);
+        Serial.print(PCC_GetData()->prechargeProgress);
         Serial.print(" | ");
         Serial.print("C State: ");
         Serial.print(MCU_GetMCU1Data()->mcuMainState);

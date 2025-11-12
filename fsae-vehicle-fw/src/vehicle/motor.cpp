@@ -16,6 +16,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/rtm_button.h"
 #include "vehicle/telemetry.h"
+#include "vehicle/pcc_receive.h"
 
 typedef struct {
     MotorState state;
@@ -39,7 +40,7 @@ static BMS2 bms2 = {0};
  */
 
 void Motor_Init() {
-    motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
+    motorData.state = MOTOR_STATE_PRECHARGING; // TODO Check if we want this
     motorData.desiredTorque = 0.0F;    // No torque demand at start
 }
 
@@ -187,6 +188,9 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     // APPS_travel
 
     RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
+
+    uint8_t prechargeState = PCC_GetData()->state;
+    uint16_t prechargeProg = PCC_GetData()->prechargeProgress;
     // off --> standby --> precharge --> run --> fault -->standy
     // no kl15 then off
     switch (motorData.state) {
@@ -216,7 +220,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
     // HV switch on (PCC CAN message)
     case MOTOR_STATE_PRECHARGING: {
-        if (enablePower) {
+        if (prechargeProg >= 94 && prechargeState == 3) {
             // # if HIMAC_FLAG
             //     Serial.println("Precharge finished");
             // # endif
@@ -230,7 +234,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
     // PCC CAN message finished
     case MOTOR_STATE_IDLE: {
-        if (enableRun) {
+        if (RTMButton_GetState()) {
         #if HIMAC_FLAG
            // Serial.println("Ready to drive...");
         #endif
@@ -250,15 +254,20 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
         // }
         // torque is communicated as a percentage
         #if !SPEED_CONTROL_ENABLED
+        if (RTMButton_GetState()){
 
-        if (enableRegen && torqueDemand <= 0.0F &&
-                 MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
-            // If regen is enabled and the torque demand is zero, we need to set
-            // the torque demand to 0 to prevent the motor from applying torque
-            // in the wrong direction
-            motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
+            if (enableRegen && torqueDemand <= 0.0F &&
+                    MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
+                // If regen is enabled and the torque demand is zero, we need to set
+                // the torque demand to 0 to prevent the motor from applying torque
+                // in the wrong direction
+                motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
+            } else {
+                motorData.desiredTorque = torqueDemand;
+            }
+
         } else {
-            motorData.desiredTorque = torqueDemand;
+            motorData.state = MOTOR_STATE_IDLE;
         }
 
         #else
