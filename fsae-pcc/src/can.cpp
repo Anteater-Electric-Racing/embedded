@@ -11,11 +11,11 @@
 #define PCC_CAN_ID 0x123
 
 typedef struct __attribute__((packed)) {
-    //uint32_t timestamp; // Timestamp in milliseconds
-    uint8_t state;      // Precharge state
+    // uint32_t timestamp; // Timestamp in milliseconds
+    uint8_t state;     // Precharge state
     uint8_t errorCode; // Error code
-    //float accumulatorVoltage; // Accumulator voltage in volts
-    //float tsVoltage; // Transmission side voltage in volts
+    // float accumulatorVoltage; // Accumulator voltage in volts
+    // float tsVoltage; // Transmission side voltage in volts
     float prechargeProgress; // Precharge progress in percent
 } PCC;
 
@@ -34,10 +34,12 @@ void CAN_Init() {
     pccMsg.id = PCC_CAN_ID; // can change ID
 }
 
-void CAN_SendPCCMessage(uint32_t timestamp, uint8_t state, uint8_t errorCode, float accumulatorVoltage, float tsVoltage, float prechargeProgress) {
+void CAN_SendPCCMessage(uint32_t timestamp, uint8_t state, uint8_t errorCode,
+                        float accumulatorVoltage, float tsVoltage,
+                        float prechargeProgress) {
     pccData = {
         //.timestamp = timestamp, 4 bytes
-        .state = state, // 1 bytes
+        .state = state,         // 1 bytes
         .errorCode = errorCode, // 1 bytes
         //.accumulatorVoltage = accumulatorVoltage, 4 bytes
         //.tsVoltage = tsVoltage, 4 bytes
