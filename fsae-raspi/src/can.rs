@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use crate::send::{send_message, Reading};
-// use rand::Rng;
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
