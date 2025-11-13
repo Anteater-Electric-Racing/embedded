@@ -156,9 +156,8 @@ void threadMotor(void *pvParameters) {
             bms1.Pre_charge_Finish_Sts = 0; // 1   = ON, 0 = OFF
             // vcu1.VCU_Warning_Level = 3; // 1    0  = No Warning, 1 = Warning,
             // 2 = Fault, 3 = Critical Fault
-            vcu1.VCU_MotorMode =
-                0; // 1       0 = Standby, 1 = Drive, 2 = Generate// Electricy,
-                   // 3 = Reserved
+            vcu1.VCU_MotorMode = 0; // 1       0 = Standby, 1 = Drive, 2 =
+                                    // Generate// Electricy, 3 = Reserved
             break;
         }
 
