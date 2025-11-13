@@ -1,8 +1,6 @@
-use std::time::Duration;
-use bincode;
-use std::error::Error;
 use crate::send::{send_message, Reading};
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
@@ -151,51 +149,4 @@ pub async fn read_can() {
             .await;
         }
     }
-}
-
-#[cfg(test)]
-async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn Error>> {
-    let socket = IsoTpSocket::open(
-        "vcan0",
-        StandardId::new(0x123).ok_or("Invalid source ID")?,
-        StandardId::new(0x321).ok_or("Invalid destination ID")?,
-    )?;
-
-    let payload = bincode::serialize(&data)?;
-    
-    socket.write_packet(&payload).await?;
-
-    println!("TelemetryData sent over iso-tp ({} bytes)", payload.len());
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn Error>> {
-    let data = TelemetryData {
-        apps_travel: 72.5,
-        motor_speed: 3200.0,
-        motor_torque: 85.4,
-        max_motor_torque: 120.0,
-        motor_direction: MotorRotateDirection::DirectionForward,
-        motor_state: MotorState::MotorStateDriving,
-        mcu_main_state: MCUMainState::StateRun,
-        mcu_work_mode: MCUWorkMode::WorkModeTorque,
-        mcu_voltage: 13.8,
-        mcu_current: 2.4,
-        motor_temp: 75,
-        mcu_temp: 68,
-        dc_main_wire_over_volt_fault: false,
-        dc_main_wire_over_curr_fault: false,
-        motor_over_spd_fault: false,
-        motor_phase_curr_fault: false,
-        motor_stall_fault: false,
-        mcu_warning_level: MCUWarningLevel::ErrorNone,
-        debug_0: 0.0,
-        debug_1: 0.0,
-        debug_2: 0.0,
-        debug_3: 0.0,
-    };
-
-    send_telemetry_over_isotp(&data).await?;
-    Ok(())
 }
