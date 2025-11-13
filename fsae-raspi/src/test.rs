@@ -37,7 +37,7 @@ mod tests {
             .next()
             .ok_or("No data returned from InfluxDB")?;
 
-        return Ok(resp_struct == test_packet);
+        Ok(resp_struct == test_packet)
     }
 
     #[test]
@@ -95,7 +95,7 @@ mod tests {
 
         // Repeat poll check loop while event loop has not returned an Err.
         let timeout = Duration::from_secs(1);
-        match tokio::time::timeout(timeout, async {
+        tokio::time::timeout(timeout, async {
             while let Ok(notification) = event_loop.poll().await {
                 // Check for Publish messages and extract
                 if let rumqttc::Event::Incoming(rumqttc::Packet::Publish(data)) = notification {
@@ -125,10 +125,7 @@ mod tests {
             false
         })
         .await
-        {
-            Ok(result) => result,
-            Err(_) => false,
-        }
+        .unwrap_or(false)
     }
 
     #[test]
