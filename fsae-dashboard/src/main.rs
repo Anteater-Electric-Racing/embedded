@@ -59,7 +59,7 @@ impl Dashboard {
         }
     }
 
-    fn view(&self) -> Column<Message> {
+    fn view(&self) -> Column<'_, Message> {
         column![
             row![
                 grid_cell(
