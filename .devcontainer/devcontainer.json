@@ -3,10 +3,6 @@
     "build": {
         "dockerfile": "Dockerfile"
     },
-    "runArgs": [
-        "--cap-add=NET_ADMIN",
-        "--privileged"
-    ],
     "postCreateCommand": "curl https://www.influxdata.com/d/install_influxdb3.sh | bash && sudo cp .devcontainer/influxdb3 /etc/init.d/influxdb3 && sudo chmod +x /etc/init.d/influxdb3 && sudo service influxdb3 start && (sudo service grafana-server start || true)",
     "forwardPorts": [
         8181,
