@@ -15,7 +15,8 @@
 TelemetryData telemetryData;
 
 void Telemetry_Init() {
-    telemetryData = { // Fill with reasonable dummy values
+    telemetryData = {
+        // Fill with reasonable dummy values
         .APPS_Travel = 0.0F,
         .motorSpeed = 0.0F,
         .motorTorque = 0.0F,
@@ -42,9 +43,10 @@ void Telemetry_Init() {
     };
 }
 
-void threadTelemetry(void *pvParameters){
-    static TickType_t lastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
-    while(true){
+void threadTelemetry(void *pvParameters) {
+    static TickType_t lastWakeTime =
+        xTaskGetTickCount(); // Initialize the last wake time
+    while (true) {
         taskENTER_CRITICAL(); // Enter critical section
         telemetryData = {
             .APPS_Travel = APPS_GetAPPSReading(),
@@ -64,8 +66,10 @@ void threadTelemetry(void *pvParameters){
             .motorTemp = MCU_GetMCU2Data()->motorTemp,
             .mcuTemp = MCU_GetMCU2Data()->mcuTemp,
 
-            .dcMainWireOverVoltFault = MCU_GetMCU2Data()->dcMainWireOverVoltFault,
-            .dcMainWireOverCurrFault = MCU_GetMCU2Data()->dcMainWireOverCurrFault,
+            .dcMainWireOverVoltFault =
+                MCU_GetMCU2Data()->dcMainWireOverVoltFault,
+            .dcMainWireOverCurrFault =
+                MCU_GetMCU2Data()->dcMainWireOverCurrFault,
             .motorOverSpdFault = MCU_GetMCU2Data()->motorOverSpdFault,
             .motorPhaseCurrFault = MCU_GetMCU2Data()->motorPhaseCurrFault,
 
@@ -75,13 +79,14 @@ void threadTelemetry(void *pvParameters){
         };
         taskEXIT_CRITICAL();
 
-        uint8_t* serializedData = (uint8_t*) &telemetryData;
+        uint8_t *serializedData = (uint8_t *)&telemetryData;
         CAN_ISOTP_Send(TELEMETRY_CAN_ID, serializedData, sizeof(TelemetryData));
 
-        vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(TELEMETRY_PERIOD_MS)); // Delay until the next telemetry update
+        vTaskDelayUntil(
+            &lastWakeTime,
+            pdMS_TO_TICKS(
+                TELEMETRY_PERIOD_MS)); // Delay until the next telemetry update
     }
 }
 
-TelemetryData const* Telemetry_GetData() {
-    return &telemetryData;
-}
+TelemetryData const *Telemetry_GetData() { return &telemetryData; }
