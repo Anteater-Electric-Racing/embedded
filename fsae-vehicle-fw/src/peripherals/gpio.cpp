@@ -2,13 +2,16 @@
 
 #include <Arduino.h>
 #include "peripherals/gpio.h"
+#include "peripherals/tire_speed.h"
 
 // rtm button: 4
 // wheel speed 1: 2, wheel speed 2: 3
 // using can1 and can2
 
+
 void GPIO_Init() {
     pinMode(2, INPUT_PULLUP); // wheel speed 1
     pinMode(3, INPUT_PULLUP); // wheel speed 2
     pinMode(4, INPUT_PULLDOWN); // rtm button
+    pinMode(HALL_PIN, INPUT_PULLUP); // hall sensor
 }
