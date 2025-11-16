@@ -1,0 +1,2 @@
+void setup();
+float getTireTemp();

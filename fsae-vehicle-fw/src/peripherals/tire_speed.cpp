@@ -53,8 +53,7 @@ void SpeedTask(void *parameter) {
         }
 
         // Convert to linear speed (example tire circumference)
-        float wheelCircumference_m = 2.0f; // Insert real value
-        float speed_mps = (rpm / 60.0f) * wheelCircumference_m;
+        float speed_mps = (rpm / 60.0f) * WHEEL_CIRCUMFERENCE_M;
         float speed_kph = speed_mps * 3.6f;
 
         // Store result safely
