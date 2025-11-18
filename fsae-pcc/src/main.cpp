@@ -11,17 +11,19 @@
 
 #include <Arduino.h>
 #include <arduino_freertos.h>
-#include "precharge.h"
-#include "gpio.h"
-#include "utils.h"
+
 #include "can.h"
+#include "gpio.h"
+#include "precharge.h"
+#include "utils.h"
 
 static void threadMain(void *pvParameters);
 
 void setup() {
     Serial.begin(9600);
 
-    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
+                THREAD_MAIN_PRIORITY, NULL);
 
     gpioInit(); // Initialize GPIO pins
 
@@ -48,21 +50,21 @@ void threadMain(void *pvParameters) {
 
         Serial.print("State: ");
         switch (state) {
-            case STATE_STANDBY:
-                Serial.print("STANDBY");
-                break;
-            case STATE_PRECHARGE:
-                Serial.print("PRECHARGE");
-                break;
-            case STATE_ONLINE:
-                Serial.print("ONLINE");
-                break;
-            case STATE_ERROR:
-                Serial.print("ERROR");
-                break;
-            default:
-                Serial.print("UNDEFINED");
-                break;
+        case STATE_STANDBY:
+            Serial.print("STANDBY");
+            break;
+        case STATE_PRECHARGE:
+            Serial.print("PRECHARGE");
+            break;
+        case STATE_ONLINE:
+            Serial.print("ONLINE");
+            break;
+        case STATE_ERROR:
+            Serial.print("ERROR");
+            break;
+        default:
+            Serial.print("UNDEFINED");
+            break;
         }
         Serial.print(" | Accumulator Voltage: ");
         Serial.print(accumulator_voltage, 4);
@@ -76,5 +78,4 @@ void threadMain(void *pvParameters) {
     }
 }
 
-void loop() {
-}
+void loop() {}

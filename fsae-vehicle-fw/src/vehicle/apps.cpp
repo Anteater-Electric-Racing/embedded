@@ -1,18 +1,18 @@
 // Anteater Electric Racing, 2025
 
-#include <cmath>
-#include "utils/utils.h"
 #include "apps.h"
+#include "utils/utils.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 #include <arduino_freertos.h>
+#include <cmath>
 
 typedef struct {
     float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
     float appsReading2_Percentage; // Percentage of pedal travel (0 to 1)
 
-    float appsReading1_Voltage;    // Voltage reading from the pedal (0 to 3.3V)
-    float appsReading2_Voltage;    // Voltage reading from the pedal (0 to 3.3V)
+    float appsReading1_Voltage; // Voltage reading from the pedal (0 to 3.3V)
+    float appsReading2_Voltage; // Voltage reading from the pedal (0 to 3.3V)
 
     float apps1RawReading;
     float apps2RawReading;
@@ -20,8 +20,8 @@ typedef struct {
 
 static APPSData appsData;
 static float appsAlpha;
-static TickType_t appsLatestHealthyStateTime = 0; // Set to 0 when fault not detected
-
+static TickType_t appsLatestHealthyStateTime =
+    0; // Set to 0 when fault not detected
 
 static void checkAndHandleAPPSFault();
 static void checkAndHandlePlausibilityFault();
@@ -45,22 +45,26 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
 
     // Convert ADC values to voltage
-    appsData.appsReading1_Voltage = ADC_VALUE_TO_VOLTAGE(appsData.apps1RawReading);
-    appsData.appsReading2_Voltage = ADC_VALUE_TO_VOLTAGE(appsData.apps2RawReading);
+    appsData.appsReading1_Voltage =
+        ADC_VALUE_TO_VOLTAGE(appsData.apps1RawReading);
+    appsData.appsReading2_Voltage =
+        ADC_VALUE_TO_VOLTAGE(appsData.apps2RawReading);
 
     // Map voltage to percentage of throttle travel, limiting to 0-1 range
-    appsData.appsReading1_Percentage = LINEAR_MAP(appsData.appsReading1_Voltage, APPS_3V3_MIN, APPS_3V3_MAX, 0.0F, 1.0F);
-    appsData.appsReading2_Percentage = LINEAR_MAP(appsData.appsReading2_Voltage, APPS_5V_MIN, APPS_5V_MAX, 0.0F, 1.0F);
+    appsData.appsReading1_Percentage = LINEAR_MAP(
+        appsData.appsReading1_Voltage, APPS_3V3_MIN, APPS_3V3_MAX, 0.0F, 1.0F);
+    appsData.appsReading2_Percentage = LINEAR_MAP(
+        appsData.appsReading2_Voltage, APPS_5V_MIN, APPS_5V_MAX, 0.0F, 1.0F);
 
-    if(appsData.appsReading1_Percentage < 0.0F) {
+    if (appsData.appsReading1_Percentage < 0.0F) {
         appsData.appsReading1_Percentage = 0.0F;
-    } else if(appsData.appsReading1_Percentage > 1.0F) {
+    } else if (appsData.appsReading1_Percentage > 1.0F) {
         appsData.appsReading1_Percentage = 1.0F;
     }
 
-    if(appsData.appsReading2_Percentage < 0.0F) {
+    if (appsData.appsReading2_Percentage < 0.0F) {
         appsData.appsReading2_Percentage = 0.0F;
-    } else if(appsData.appsReading2_Percentage > 1.0F) {
+    } else if (appsData.appsReading2_Percentage > 1.0F) {
         appsData.appsReading2_Percentage = 1.0F;
     }
 
@@ -69,41 +73,40 @@ void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
 }
 
 float APPS_GetAPPSReading() {
-    return (appsData.appsReading1_Percentage + appsData.appsReading2_Percentage) / 2;
+    return (appsData.appsReading1_Percentage +
+            appsData.appsReading2_Percentage) /
+           2;
 }
 
-float APPS_GetAPPSReading1() {
-    return appsData.appsReading1_Percentage;
-}
+float APPS_GetAPPSReading1() { return appsData.appsReading1_Percentage; }
 
-float APPS_GetAPPSReading2() {
-    return appsData.appsReading2_Percentage;
-}
+float APPS_GetAPPSReading2() { return appsData.appsReading2_Percentage; }
 
 static void checkAndHandleAPPSFault() {
     // Check for open/short circuit
-    float difference = abs(appsData.appsReading1_Percentage - appsData.appsReading2_Percentage);
+    float difference = abs(appsData.appsReading1_Percentage -
+                           appsData.appsReading2_Percentage);
 
-    # if DEBUG_FLAG
-        Serial.print("Difference is: ");
-        Serial.println(difference);
-        Serial.print("Percent APPS1: ");
-        Serial.println(appsData.appsReading1_Percentage);
-        Serial.print("Percent APPS2: ");
-        Serial.println(appsData.appsReading2_Percentage);
-    # endif
+#if DEBUG_FLAG
+    Serial.print("Difference is: ");
+    Serial.println(difference);
+    Serial.print("Percent APPS1: ");
+    Serial.println(appsData.appsReading1_Percentage);
+    Serial.print("Percent APPS2: ");
+    Serial.println(appsData.appsReading2_Percentage);
+#endif
 
-    if(appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
-       appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
-       appsData.appsReading2_Voltage < APPS_5V_FAULT_MIN ||
-       appsData.appsReading2_Voltage > APPS_5V_FAULT_MAX) {
+    if (appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
+        appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
+        appsData.appsReading2_Voltage < APPS_5V_FAULT_MIN ||
+        appsData.appsReading2_Voltage > APPS_5V_FAULT_MAX) {
         TickType_t now = xTaskGetTickCount();
         TickType_t elapsedTicks = now - appsLatestHealthyStateTime;
         TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
-        if (elapsedMs > APPS_FAULT_TIME_THRESHOLD_MS){
-            # if DEBUG_FLAG
-                Serial.println("Setting APPS fault");
-            # endif
+        if (elapsedMs > APPS_FAULT_TIME_THRESHOLD_MS) {
+#if DEBUG_FLAG
+            Serial.println("Setting APPS fault");
+#endif
             Faults_SetFault(FAULT_APPS);
             return;
         }
@@ -116,9 +119,9 @@ static void checkAndHandleAPPSFault() {
         Faults_SetFault(FAULT_APPS);
         return;
     } else {
-        # if DEBUG_FLAG
-            Serial.println("Clearing fault in handle");
-        # endif
+#if DEBUG_FLAG
+        Serial.println("Clearing fault in handle");
+#endif
         Faults_ClearFault(FAULT_APPS);
     }
 }
@@ -128,20 +131,20 @@ static void checkAndHandlePlausibilityFault() {
     float BSEReading_Rear = BSE_GetBSEReading()->bseRear_PSI;
 
     float BSEReading = BSEReading_Front;
-    if (BSEReading_Rear > BSEReading_Front){
+    if (BSEReading_Rear > BSEReading_Front) {
         BSEReading = BSEReading_Rear;
     }
 
-    # if DEBUG_FLAG
-        Serial.print("BSE Reading: ");
-        Serial.println(BSEReading);
-    # endif
+#if DEBUG_FLAG
+    Serial.print("BSE Reading: ");
+    Serial.println(BSEReading);
+#endif
 
     if (APPS_GetAPPSReading() > APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD &&
         BSEReading > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD) {
         Faults_SetFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
     } else {
-        if (APPS_GetAPPSReading() < APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD){
+        if (APPS_GetAPPSReading() < APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD) {
             Faults_ClearFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
         }
     }
