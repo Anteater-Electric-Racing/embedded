@@ -1,8 +1,10 @@
-use std::time::Duration;
-use bincode;
-use std::error::Error;
 use crate::send::{send_message, Reading};
+#[cfg(test)]
+use bincode;
 use serde::{Deserialize, Serialize};
+#[cfg(test)]
+use std::error::Error;
+use std::time::Duration;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 
@@ -162,7 +164,7 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn E
     )?;
 
     let payload = bincode::serialize(&data)?;
-    
+
     socket.write_packet(&payload).await?;
 
     println!("TelemetryData sent over iso-tp ({} bytes)", payload.len());

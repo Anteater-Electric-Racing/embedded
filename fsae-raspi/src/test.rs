@@ -5,7 +5,7 @@
 //! - **InfluxDB 3 write/read**: send a [`TelemetryData`] packet via [`send_message`] and then query InfluxDB3 SQL API to verify
 //!   the same packet is received.
 //! - **MQTT publish/subscribe**: Verifies by ensuring telemetry packet JSON is published to `telemetry` topic, received, and
-//!     deserialized properly.
+//!   deserialized properly.
 //!
 //! # InfluxDB tests
 //!
@@ -24,13 +24,14 @@
 //! packet. The payload is deserialized into [`TelemetryData`] and compared against
 //! the expected value.
 
+#[cfg(test)]
 use crate::{
     can::{
         MCUMainState, MCUWarningLevel, MCUWorkMode, MotorRotateDirection, MotorState, TelemetryData,
     },
     send::{send_message, Reading, INFLUXDB_DATABASE, INFLUXDB_URL, MQTT_HOST, MQTT_PORT},
 };
-
+#[cfg(test)]
 use tokio::time::Duration;
 
 /// Verifies that a telemetry packet was written to InfluxDB.
@@ -41,6 +42,7 @@ use tokio::time::Duration;
 /// Returns `Ok(true)` if the newest row matches `test_packet`,  
 /// `Ok(false)` if it does not,  
 /// and `Err(..)` on request or deserialization failure.   
+#[cfg(test)]
 pub async fn verify_influx_write<T: Reading + for<'de> serde::Deserialize<'de> + PartialEq>(
     test_packet: T,
 ) -> Result<bool, Box<dyn std::error::Error>> {
@@ -122,6 +124,7 @@ fn test_verify_influx_write() {
 ///
 /// Returns `true` on a matching publish, or `false` on timeout, subscribe
 /// failures, or deserialization errors. Errors are logged to stderr
+#[cfg(test)]
 async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
     // Client and event loop setup
     let mut options = rumqttc::MqttOptions::new("listener", MQTT_HOST, MQTT_PORT);
