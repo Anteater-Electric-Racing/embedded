@@ -1,15 +1,15 @@
 //! Verification tests for InfluxDB3 and MQTT.
 //!
-//! This test module verifies 2 independent communication paths used 
+//! This test module verifies 2 independent communication paths used
 //!
-//! - **InfluxDB 3 write/read**: send a 'TelemetryData' packet via 'send_message' and then query InfluxDB3 sql api to verify
+//! - **InfluxDB 3 write/read**: send a [`TelemetryData`] packet via [`send_message`] and then query InfluxDB3 SQL API to verify
 //!   the same packet is received.
-//! - **MQTT publish/subscribe**: Verifies by ensuring telemetry packet JSON is published to 'telemetry' topic, received, and 
-//!     deserialized porperly
+//! - **MQTT publish/subscribe**: Verifies by ensuring telemetry packet JSON is published to `telemetry` topic, received, and
+//!     deserialized properly.
 //!
 //! # InfluxDB tests
 //!
-//! Tests will write a value, then query sql
+//! Tests will write a value, then query SQL
 //!
 //! ```sql
 //! SELECT * FROM 'telemetry' ORDER BY time DESC LIMIT 1
@@ -17,11 +17,11 @@
 //!
 //! The newest row is compared against the original struct.  
 //! Tests require an InfluxDB3 instance created when opening in devcontainer and a valid API token.
-//! 
+//!
 //! # MQTT tests
 //!
-//! A listener subscribes to the 'telemetry' topic and awaits the next 'Publish'
-//! packet. The payload is deserialized into 'TelemetryData' and compared against
+//! A listener subscribes to the `telemetry` topic and awaits the next `Publish`
+//! packet. The payload is deserialized into [`TelemetryData`] and compared against
 //! the expected value.
 
 #[cfg(test)]
@@ -38,8 +38,8 @@ mod tests {
 
     /// Verifies that a telemetry packet was written to InfluxDB.
     ///
-    /// Sends a sql query for the most recent row in the database returned by
-    /// `T::topic()` and compares it with `test_packet`.
+    /// Sends a SQL query for the most recent row in the database returned by
+    /// [`T::topic`] and compares it with `test_packet`.
     ///
     /// Returns `Ok(true)` if the newest row matches `test_packet`,  
     /// `Ok(false)` if it does not,  
@@ -76,8 +76,8 @@ mod tests {
 
     /// Test for the InfluxDB3 telemetry pipeline by creating a test packet to be sent
     ///
-    /// Sends a `TelemetryData` test packet through `send_message` and verifies that the
-    /// value can be read back using `verify_influx_write`.
+    /// Sends a [`TelemetryData`] test packet through [`send_message`] and verifies that the
+    /// value can be read back using [`verify_influx_write`].
     ///
     /// Requires a running InfluxDB instance  
     #[test]
@@ -121,10 +121,10 @@ mod tests {
     /// Waits for a telemetry publish on the `telemetry` MQTT topic
     ///
     /// Subscribes to the topic, receives the next `Publish` packet, deserializes
-    /// the payload into `TelemetryData`, and compares it with `telemetry_struct`
+    /// the payload into [`TelemetryData`], and compares it with `telemetry_struct`
     ///
     /// Returns `true` on a matching publish, or `false` on timeout, subscribe
-    /// failures, or deserialization errors. Errors are logged to stderr 
+    /// failures, or deserialization errors. Errors are logged to stderr
     async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
         // Client and event loop setup
         let mut options = rumqttc::MqttOptions::new("listener", MQTT_HOST, MQTT_PORT);
@@ -177,8 +177,8 @@ mod tests {
 
     /// End-to-end test for the MQTT telemetry path.
     ///
-    /// Spawns a listener task with `verify_mqtt_listener`, sends a
-    /// `TelemetryData` message using `send_message`, and asserts that the
+    /// Spawns a listener task with [`verify_mqtt_listener`], sends a
+    /// [`TelemetryData`] message using [`send_message`], and asserts that the
     /// listener receives an identical value.
     ///
     /// Requires a reachable MQTT broker at `MQTT_HOST:MQTT_PORT`
