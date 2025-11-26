@@ -14,11 +14,7 @@
 //! using the virtual can network setup on Github actions workflow (test.yml)
 
 use crate::send::{send_message, Reading};
-#[cfg(test)]
-use bincode;
 use serde::{Deserialize, Serialize};
-#[cfg(test)]
-use std::error::Error;
 use std::time::Duration;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
@@ -193,14 +189,14 @@ pub async fn read_can() {
 ///
 /// Requires a virtual CAN interface.
 #[cfg(test)]
-async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn Error>> {
+async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn std::error::Error>> {
     let socket = IsoTpSocket::open(
         "vcan0",
         StandardId::new(0x123).ok_or("Invalid source ID")?,
         StandardId::new(0x321).ok_or("Invalid destination ID")?,
     )?;
 
-    let payload = bincode::serde::encode_to_vec(&data, bincode::config::legacy())?;
+    let payload = bincode::serde::encode_to_vec(data, bincode::config::legacy())?;
 
     socket.write_packet(&payload).await?;
 
@@ -221,7 +217,7 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn E
 //     on test.yml Github actions workflow
 
 #[tokio::test]
-async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn Error>> {
+async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn std::error::Error>> {
     let data = TelemetryData {
         apps_travel: 72.5,
         motor_speed: 3200.0,
