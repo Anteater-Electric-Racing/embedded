@@ -1,3 +1,5 @@
+//!**This module is a helper module that contains several methods for interfacing with InfluxDB as well as MQTT.**
+
 use reqwest::Client;
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
@@ -20,6 +22,7 @@ pub trait Reading: Serialize {
 static INFLUX_CLIENT: OnceCell<Client> = OnceCell::const_new();
 static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 
+/// Returns an InfluxDB client.
 async fn get_influx_client() -> &'static Client {
     INFLUX_CLIENT
         .get_or_init(|| async {
@@ -30,6 +33,7 @@ async fn get_influx_client() -> &'static Client {
         .await
 }
 
+/// Returns an MQTT AsyncClient.
 async fn get_mqtt_client() -> &'static AsyncClient {
     MQTT_CLIENT
         .get_or_init(|| async {
@@ -51,6 +55,7 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         .await
 }
 
+/// Serializes message to JSON string and publishes over MQTT client.
 pub async fn send_message<T: Reading>(message: T) {
     let json = match serde_json::to_string(&message) {
         Ok(j) => j,
@@ -74,12 +79,12 @@ pub async fn send_message<T: Reading>(message: T) {
         INFLUXDB_URL, INFLUXDB_DATABASE
     );
     if let Err(e) = get_influx_client().await
-        .post(&url)
-        .header("Authorization", "Bearer apiv3_TQdSxXbtRc8qbzb4ejQOa-ir9-deb4fSVe5Lc-RgvQZqPKikusEJtZpQmEJakPtxZvst8wW4B20KB8iSGLC-Tg")
-        .body(line_protocol)
-        .send()
-        .await
-    {
-        eprintln!("Failed to write to InfluxDB: {}", e);
-    }
+            .post(&url)
+            .header("Authorization", "Bearer apiv3_TQdSxXbtRc8qbzb4ejQOa-ir9-deb4fSVe5Lc-RgvQZqPKikusEJtZpQmEJakPtxZvst8wW4B20KB8iSGLC-Tg")
+            .body(line_protocol)
+            .send()
+            .await
+        {
+            eprintln!("Failed to write to InfluxDB: {}", e);
+        }
 }

@@ -1,5 +1,8 @@
+//!**This module contains a function which initializes the MQTT broker.**
+
 use rumqttd::Broker;
 
+/// Initalizes MQTT broker with default config specified in rumqqtd.toml.
 pub fn mqttd() {
     let builder = tracing_subscriber::fmt()
         .pretty()
