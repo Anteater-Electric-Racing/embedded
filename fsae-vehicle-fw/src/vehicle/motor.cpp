@@ -173,6 +173,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge, bool enablePowe
                 // to prevent the motor from applying torque in the wrong direction
                 motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
             } else {
+                // add power-limiting feature with torqueDemand as argument
                 motorData.desiredTorque = torqueDemand;
             }
             #else
