@@ -1,7 +1,7 @@
 //! This module enables the recieving and decoding of telemetry
-//! data from the motor controller over CAN ISO-TP and sets up test 
+//! data from the motor controller over CAN ISO-TP and sets up test
 //! functions for transmitting test packets over vCAN.
-//! 
+//!
 //! Module includes:
 //!
 //! - ISO-TP socket setup for receiving and sending frames
@@ -13,10 +13,6 @@
 //! Code runs use relies on 'can0', while tests can run against vcan0
 //! using the virtual can network setup on Github actions workflow (test.yml)
 
-
-use std::time::Duration;
-use bincode;
-use std::error::Error;
 use crate::send::{send_message, Reading};
 #[cfg(test)]
 use bincode;
@@ -48,10 +44,6 @@ macro_rules! define_enum {
     };
 }
 
-/// State machine describing the operational state of the motor as reported by
-/// the MCU.
-///
-/// Values correspond directly to the MCU telemetry packet.
 define_enum!(
     MotorState,
     MotorStateOff = 0,
@@ -61,7 +53,6 @@ define_enum!(
     MotorStateFault = 4
 );
 
-/// Indicates the direction of motor rotation: forward, reverse, or stationary.
 define_enum!(
     MotorRotateDirection,
     DirectionStandby = 0,
@@ -70,10 +61,6 @@ define_enum!(
     DirectionError = 3
 );
 
-/// Controller state describing system power, precharge, run mode,
-/// or shutdown conditions.
-///
-/// Encoded directly in the MCU telemetry packet.
 define_enum!(
     MCUMainState,
     StateStandby = 0,
@@ -83,8 +70,6 @@ define_enum!(
     StatePowerOff = 4
 );
 
-/// MCU control mode determining whether speed, torque, or standby logic
-/// is currently active.
 define_enum!(
     MCUWorkMode,
     WorkModeStandby = 0,
@@ -92,9 +77,6 @@ define_enum!(
     WorkModeSpeed = 2
 );
 
-/// Warning severity level emitted by the MCU.
-///
-///  Represents increasing levels of system caution or fault indication.
 define_enum!(
     MCUWarningLevel,
     ErrorNone = 0,
@@ -109,7 +91,7 @@ define_enum!(
 /// CAN. It contains driver inputs, motor state information, controller status,
 /// temperatures, electrical measurements, fault flags, and debug channels.
 ///
-/// Fields match up with the telemetryData packet in 
+/// Fields match up with the telemetryData packet in
 /// test_send_telemetry_over_isotp().
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct TelemetryData {
@@ -153,7 +135,7 @@ fn parse_bool(byte: u8) -> bool {
 ///
 /// Loop retries socket creation on failure and logs malformed packets.
 ///
-/// Expected packet length of 58 bytes. 
+/// Expected packet length of 58 bytes.
 pub async fn read_can() {
     loop {
         let socket = match IsoTpSocket::open(
@@ -209,7 +191,7 @@ pub async fn read_can() {
 /// mode. The struct is serialized using bincode and written as a single
 /// ISO-TP packet.
 ///
-/// Requires a virtual CAN interface. 
+/// Requires a virtual CAN interface.
 #[cfg(test)]
 async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn Error>> {
     let socket = IsoTpSocket::open(
@@ -218,7 +200,7 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn E
         StandardId::new(0x321).ok_or("Invalid destination ID")?,
     )?;
 
-    let payload = bincode::serialize(&data)?;
+    let payload = bincode::serde::encode_to_vec(&data, bincode::config::legacy())?;
 
     socket.write_packet(&payload).await?;
 
@@ -234,9 +216,9 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn E
 /// sudo ip link add dev vcan0 type vcan
 /// sudo ip link set up vcan0
 /// '''
-/// ^^ vCAN commands automatically setup and verify 
+/// ^^ vCAN commands automatically setup and verify
 ///    'test_send_telemetry_over_isotp' function
-//     on test.yml Github actions workflow 
+//     on test.yml Github actions workflow
 
 #[tokio::test]
 async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn Error>> {
