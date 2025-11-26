@@ -1,3 +1,19 @@
+//! This module enables the recieving and decoding of telemetry
+//! data from the motor controller over CAN ISO-TP and sets up test 
+//! functions for transmitting test packets over vCAN.
+//! 
+//! Module includes:
+//!
+//! - ISO-TP socket setup for receiving and sending frames
+//! - Parsing of the MCU telemetry packet into typed data
+//! - Definitions of all enums representing MCU and motor state machines
+//! - 'TelemetryData' structure, which contains the fully decoded packet
+//! - Test function to send and verify dummy telemetry over vcan0
+//!
+//! Code runs use relies on 'can0', while tests can run against vcan0
+//! using the virtual can network setup on Github actions workflow (test.yml)
+
+
 use std::time::Duration;
 use bincode;
 use std::error::Error;
@@ -27,6 +43,10 @@ macro_rules! define_enum {
     };
 }
 
+/// State machine describing the operational state of the motor as reported by
+/// the MCU.
+///
+/// Values correspond directly to the MCU telemetry packet.
 define_enum!(
     MotorState,
     MotorStateOff = 0,
@@ -36,6 +56,7 @@ define_enum!(
     MotorStateFault = 4
 );
 
+/// Indicates the direction of motor rotation: forward, reverse, or stationary.
 define_enum!(
     MotorRotateDirection,
     DirectionStandby = 0,
@@ -44,6 +65,10 @@ define_enum!(
     DirectionError = 3
 );
 
+/// Controller state describing system power, precharge, run mode,
+/// or shutdown conditions.
+///
+/// Encoded directly in the MCU telemetry packet.
 define_enum!(
     MCUMainState,
     StateStandby = 0,
@@ -53,6 +78,8 @@ define_enum!(
     StatePowerOff = 4
 );
 
+/// MCU control mode determining whether speed, torque, or standby logic
+/// is currently active.
 define_enum!(
     MCUWorkMode,
     WorkModeStandby = 0,
@@ -60,6 +87,9 @@ define_enum!(
     WorkModeSpeed = 2
 );
 
+/// Warning severity level emitted by the MCU.
+///
+///  Represents increasing levels of system caution or fault indication.
 define_enum!(
     MCUWarningLevel,
     ErrorNone = 0,
@@ -68,6 +98,14 @@ define_enum!(
     ErrorHigh = 3
 );
 
+/// Telemetry data record produced by the motor controller.
+///
+/// Structure from the ISO-TP frame received over
+/// CAN. It contains driver inputs, motor state information, controller status,
+/// temperatures, electrical measurements, fault flags, and debug channels.
+///
+/// Fields match up with the telemetryData packet in 
+/// test_send_telemetry_over_isotp().
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct TelemetryData {
     pub apps_travel: f32,
@@ -104,6 +142,13 @@ fn parse_bool(byte: u8) -> bool {
     byte != 0
 }
 
+/// Continuously reads ISO-TP packets from 'can0', parses the MCU
+/// telemetry frame, converts it into a TelemetryData struct, and forwards it
+/// via 'send_message()'.
+///
+/// Loop retries socket creation on failure and logs malformed packets.
+///
+/// Expected packet length of 58 bytes. 
 pub async fn read_can() {
     loop {
         let socket = match IsoTpSocket::open(
@@ -153,6 +198,13 @@ pub async fn read_can() {
     }
 }
 
+/// Sends a 'TelemetryData' instance over ISO-TP on 'vcan0'.
+///
+/// This function is intended for testing and is only compiled in 'cfg(test)'
+/// mode. The struct is serialized using bincode and written as a single
+/// ISO-TP packet.
+///
+/// Requires a virtual CAN interface. 
 #[cfg(test)]
 async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn Error>> {
     let socket = IsoTpSocket::open(
@@ -168,6 +220,18 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn E
     println!("TelemetryData sent over iso-tp ({} bytes)", payload.len());
     Ok(())
 }
+
+/// Test verifying ISO-TP transmission by sending and verifying dummy `TelemetryData` packet over ISO-TP
+///
+/// Requires a virtual CAN interface configured with:
+/// ''' bash
+/// sudo modprobe vcan
+/// sudo ip link add dev vcan0 type vcan
+/// sudo ip link set up vcan0
+/// '''
+/// ^^ vCAN commands automatically setup and verify 
+///    'test_send_telemetry_over_isotp' function
+//     on test.yml Github actions workflow 
 
 #[tokio::test]
 async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn Error>> {
