@@ -63,7 +63,7 @@ void threadTelemetry(void *pvParameters){
         telemetryData = {
             .APPS_Travel = APPS_GetAPPSReading(),
             .BSEFront_PSI = BSE_GetBSEReading()->bseFront_PSI,
-            .BSERear_PSI = BSE_GetBSEReading()->bseFront_PSI,
+            .BSERear_PSI = BSE_GetBSEReading()->bseRear_PSI,
             .accumulatorVoltage = 0.0F, // TODO: Replace with actual accumulator voltage reading
             .accumulatorTemp_F = 0.0F, // TODO: Replace with actual accumulator temperature reading
             .motorState = Motor_GetState(),
