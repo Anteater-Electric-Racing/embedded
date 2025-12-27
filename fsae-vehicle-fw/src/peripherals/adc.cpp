@@ -16,8 +16,8 @@
 
 enum SensorIndexesADC0 {    // TODO: Update with real values
     THERMISTOR_1_INDEX = 0, // A0
-    APPS_1_INDEX = 5,
-    APPS_2_INDEX = 6, // A6
+    APPS_1_INDEX = 4,
+    APPS_2_INDEX = 5, // A5
     BSE_1_INDEX = 3,
     BSE_2_INDEX = 2,
     SUSP_TRAV_LINPOT1,
@@ -42,7 +42,7 @@ enum SensorIndexesADC1 { // TODO: Update with real values
 
 uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {
     A0, A1, A2,  A3,  A4, A5,
-    A6, A7, A15, A16, A17}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
+    A6, A7, A9, A16, A17}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
                             // 24, 25, 19, 18, 14, 15, 17};
 uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 
@@ -89,7 +89,7 @@ void threadADC(void *pvParameters) {
         for (uint16_t currentIndexADC0 = 0;
              currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0) {
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
-            uint16_t adcRead = adc->adc1->analogRead(currentPinADC0);
+            uint16_t adcRead = adc->adc0->analogRead(currentPinADC0);
             adc0Reads[currentIndexADC0] = adcRead;
         }
 
@@ -100,6 +100,18 @@ void threadADC(void *pvParameters) {
             adc1Reads[currentIndexADC1] = adcRead;
         }
 
+        // Serial.print("ADC0 Reads: ");
+        // for (int i = 0; i < SENSOR_PIN_AMT_ADC0; i++) {
+        //     Serial.print(adc0Reads[i]);
+        //     Serial.print(" ");
+        // }
+        // Serial.println();
+        // Serial.print("ADC1 Reads: ");
+        // for (int i = 0; i < SENSOR_PIN_AMT_ADC1; i++) {
+        //     Serial.print(adc1Reads[i]);
+        //     Serial.print(" ");
+        // }
+        // Serial.println();
         // Update each sensors data
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);

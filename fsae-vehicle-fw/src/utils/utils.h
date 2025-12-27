@@ -3,7 +3,7 @@
 #pragma once
 
 #define DEBUG_FLAG 0
-#define HIMAC_FLAG 1
+#define HIMAC_FLAG 0
 
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
@@ -26,9 +26,10 @@
 #define ADC_MAX_VALUE ((1 << ADC_RESOLUTION) - 1)
 #define TICKTYPE_FREQUENCY 1
 
-#define ADC_VOLTAGE_DIVIDER 2.0F
+#define ADC_VOLTAGE_DIVIDER  1.515151F
+
 #define ADC_VALUE_TO_VOLTAGE(x)                                                \
-    ((x) * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) * ADC_VOLTAGE_DIVIDER
+    ((x) * (LOGIC_LEVEL_V * ADC_VOLTAGE_DIVIDER / ADC_MAX_VALUE))
 
 #define APPS_FAULT_PERCENT_MIN .1
 #define APPS_FAULT_PERCENT_MAX .9
@@ -44,6 +45,35 @@
 
 #define APPS_5V_MIN (APPS2_VOLTAGE_LEVEL * APPS_RANGE_MIN_PERCENT)
 #define APPS_5V_MAX (APPS2_VOLTAGE_LEVEL * APPS_RANGE_MAX_PERCENT)
+
+
+/*     ANOOP TESTING FOR 20% HERE     */
+
+// --- APPS 0-20% -> 0-100% scaling ---
+
+// ADC values corresponding to physical 20% pedal (your "new max")
+#define APPS1_20PCT_ADC 784.0F
+#define APPS2_20PCT_ADC 1150.0F
+
+// Measured resting ADC (change these once you log them)
+#define APPS1_REST_ADC 117.75F
+#define APPS2_REST_ADC 172.5F
+
+// Clamp helper (if you don't already have it)
+#define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
+#define CLAMP01(x) CLAMP((x), 0.0F, 1.0F)
+
+// Convert raw ADC -> commanded percent using only 0-20% physical range
+#define APPS_ADC_TO_CMD_PERCENT(adc, rest_adc, adc_20) \
+    CLAMP01( ((float)(adc) - (float)(rest_adc)) / ((float)(adc_20) - (float)(rest_adc)) )
+
+
+
+
+/*     END ANOOP TESTING FOR 20% HERE     */
+
+
+
 
 #define APPS_3V3_FAULT_MIN (APPS1_VOLTAGE_LEVEL * APPS_FAULT_PERCENT_MIN)
 #define APPS_3V3_FAULT_MAX (APPS1_VOLTAGE_LEVEL * APPS_FAULT_PERCENT_MAX)
