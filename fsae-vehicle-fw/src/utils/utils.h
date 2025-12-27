@@ -48,17 +48,18 @@
 
 /*     ANOOP TESTING FOR 20% HERE     */
 
-// --- APPS 0-20% -> 0-100% scaling ---
+// APPS 0-20% -> 0-100% scaling
 
-// ADC values corresponding to physical 20% pedal (your "new max")
+// ADC values corresponding to physical 20% pedal)
 #define APPS1_20PCT_ADC 784.0F
 #define APPS2_20PCT_ADC 1150.0F
 
-// Measured resting ADC (change these once you log them)
-#define APPS1_REST_ADC 117.75F
-#define APPS2_REST_ADC 172.5F
+// Measured resting ADC (change these with actual findings this is just safe
+// zone values)
+#define APPS1_REST_ADC 11.75F
+#define APPS2_REST_ADC 17.5F
 
-// Clamp helper (if you don't already have it)
+// Clamp helper
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
 #define CLAMP01(x) CLAMP((x), 0.0F, 1.0F)
 
