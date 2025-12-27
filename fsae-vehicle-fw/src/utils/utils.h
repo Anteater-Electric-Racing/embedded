@@ -26,7 +26,7 @@
 #define ADC_MAX_VALUE ((1 << ADC_RESOLUTION) - 1)
 #define TICKTYPE_FREQUENCY 1
 
-#define ADC_VOLTAGE_DIVIDER  1.515151F
+#define ADC_VOLTAGE_DIVIDER 1.515151F
 
 #define ADC_VALUE_TO_VOLTAGE(x)                                                \
     ((x) * (LOGIC_LEVEL_V * ADC_VOLTAGE_DIVIDER / ADC_MAX_VALUE))
@@ -46,7 +46,6 @@
 #define APPS_5V_MIN (APPS2_VOLTAGE_LEVEL * APPS_RANGE_MIN_PERCENT)
 #define APPS_5V_MAX (APPS2_VOLTAGE_LEVEL * APPS_RANGE_MAX_PERCENT)
 
-
 /*     ANOOP TESTING FOR 20% HERE     */
 
 // --- APPS 0-20% -> 0-100% scaling ---
@@ -64,16 +63,11 @@
 #define CLAMP01(x) CLAMP((x), 0.0F, 1.0F)
 
 // Convert raw ADC -> commanded percent using only 0-20% physical range
-#define APPS_ADC_TO_CMD_PERCENT(adc, rest_adc, adc_20) \
-    CLAMP01( ((float)(adc) - (float)(rest_adc)) / ((float)(adc_20) - (float)(rest_adc)) )
-
-
-
+#define APPS_ADC_TO_CMD_PERCENT(adc, rest_adc, adc_20)                         \
+    CLAMP01(((float)(adc) - (float)(rest_adc)) /                               \
+            ((float)(adc_20) - (float)(rest_adc)))
 
 /*     END ANOOP TESTING FOR 20% HERE     */
-
-
-
 
 #define APPS_3V3_FAULT_MIN (APPS1_VOLTAGE_LEVEL * APPS_FAULT_PERCENT_MIN)
 #define APPS_3V3_FAULT_MAX (APPS1_VOLTAGE_LEVEL * APPS_FAULT_PERCENT_MAX)
