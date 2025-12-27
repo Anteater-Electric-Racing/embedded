@@ -53,7 +53,7 @@ void APPS_UpdateData(uint16_t rawReading1,
 
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
-
+    Serial.print("\n\n\n\n\n");
     Serial.print("Raw APPS1: ");
     Serial.println(appsData.apps1RawReading);
     Serial.print("Raw APPS2: ");
@@ -96,6 +96,7 @@ void APPS_UpdateData(uint16_t rawReading1,
     } else if (appsData.appsReading2_Voltage > APPS_5V_MAX) {
         appsData.appsReading2_Voltage = APPS_5V_MAX;
     }
+    // Moved this upwards to before the clamping of percentage
 
     // Map voltage to percentage of throttle travel, limiting to 0-1 range
     // appsData.appsReading1_Percentage =
@@ -149,6 +150,7 @@ static void checkAndHandleAPPSFault() {
     Serial.println(appsData.appsReading1_Percentage);
     Serial.print("Percent APPS2: ");
     Serial.println(appsData.appsReading2_Percentage);
+
     // # endif
 
     if (appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
