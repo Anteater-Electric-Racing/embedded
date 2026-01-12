@@ -136,12 +136,18 @@ static void checkAndHandleAPPSFault() {
         TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
 
         if (elapsedMs > APPS_FAULT_TIME_THRESHOLD_MS) {
+#if DEBUG_FLAG
+            Serial.println("Setting APPS fault");
+#endif
             Faults_SetFault(FAULT_APPS);
         }
     } else {
         faultStartTime = 0;
 
         if (APPS_GetAPPSReading() < 0.05F) {
+#if DEBUG_FLAG
+            Serial.println("Clearing fault in handle");
+#endif
             Faults_ClearFault(FAULT_APPS);
         }
     }
