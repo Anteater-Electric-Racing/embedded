@@ -54,19 +54,23 @@
 #define APPS1_20PCT_ADC 784.0F
 #define APPS2_20PCT_ADC 1150.0F
 
-// Measured resting ADC (change these with actual findings this is just safe
-// zone values)
-#define APPS1_REST_ADC 11.75F
-#define APPS2_REST_ADC 17.5F
+// TODO: change these with actual findings this is just safe zone values
+// ADC values for 0% (resting)
+#define APPS1_MIN_ADC 11.75F
+#define APPS2_MIN_ADC 17.5F
+
+// ADC values for 100% (fully pressed)
+#define APPS1_MAX_ADC 2500.0F
+#define APPS2_MAX_ADC 2500.0F
 
 // Clamp helper
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
 #define CLAMP01(x) CLAMP((x), 0.0F, 1.0F)
 
 // Convert raw ADC -> commanded percent using only 0-20% physical range
-#define APPS_ADC_TO_CMD_PERCENT(adc, rest_adc, adc_20)                         \
-    CLAMP01(((float)(adc) - (float)(rest_adc)) /                               \
-            ((float)(adc_20) - (float)(rest_adc)))
+#define APPS_ADC_TO_CMD_PERCENT(adc, min_adc, max_adc)                         \
+    CLAMP01(((float)(adc) - (float)(min_adc)) /                                \
+            ((float)(max_adc) - (float)(min_adc)))
 
 /*     END ANOOP TESTING FOR 20% HERE     */
 

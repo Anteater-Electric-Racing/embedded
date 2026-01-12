@@ -20,8 +20,7 @@ typedef struct {
 
 static APPSData appsData;
 static float appsAlpha;
-static TickType_t appsLatestHealthyStateTime =
-    0; // Set to 0 when fault not detected
+static TickType_t faultStartTime = 0;
 
 static void checkAndHandleAPPSFault();
 static void checkAndHandlePlausibilityFault();
@@ -39,40 +38,21 @@ void APPS_Init() {
     appsAlpha = COMPUTE_ALPHA(100.0F);
 }
 
-void APPS_UpdateData(uint16_t rawReading1,
-                     uint16_t rawReading2) { // changed uint16 from 32
+void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) {
     // Serial.print("Raw APPS1: ");
     // Serial.println(rawReading1);
     // Serial.print("Raw APPS2: ");
     // Serial.println(rawReading2);
 
-    if (rawReading1 > APPS1_20PCT_ADC)
-        rawReading1 = APPS1_20PCT_ADC;
-    if (rawReading2 > APPS2_20PCT_ADC)
-        rawReading2 = APPS2_20PCT_ADC;
-
+    // Apply Low Pass Filter to reduce noise
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
-    Serial.print("\n\n\n\n\n");
-    Serial.print("Raw APPS1: ");
-    Serial.println(appsData.apps1RawReading);
-    Serial.print("Raw APPS2: ");
-    Serial.println(appsData.apps2RawReading);
 
-    // after LOWPASS_FILTER
-    appsData.appsReading1_Percentage =
-        LINEAR_MAP(appsData.apps1RawReading, (float)APPS1_REST_ADC,
-                   (float)APPS1_20PCT_ADC, 0.0F, 1.0F);
-
-    appsData.appsReading2_Percentage =
-        LINEAR_MAP(appsData.apps2RawReading, (float)APPS2_REST_ADC,
-                   (float)APPS2_20PCT_ADC, 0.0F, 1.0F);
-
-    // clamp since LINEAR_MAP doesn't clamp
-    appsData.appsReading1_Percentage =
-        CLAMP01(appsData.appsReading1_Percentage);
-    appsData.appsReading2_Percentage =
-        CLAMP01(appsData.appsReading2_Percentage);
+    // Serial.print("\n\n\n\n\n");
+    // Serial.print("Raw APPS1: ");
+    // Serial.println(appsData.apps1RawReading);
+    // Serial.print("Raw APPS2: ");
+    // Serial.println(appsData.apps2RawReading);
 
     // Convert ADC values to voltage
     appsData.appsReading1_Voltage =
@@ -80,51 +60,30 @@ void APPS_UpdateData(uint16_t rawReading1,
     appsData.appsReading2_Voltage =
         ADC_VALUE_TO_VOLTAGE(appsData.apps2RawReading);
 
-    Serial.print("APPS1 RAW Voltage: ");
-    Serial.println(appsData.appsReading1_Voltage);
-    Serial.print("APPS2 RAW Voltage: ");
-    Serial.println(appsData.appsReading2_Voltage);
-
-    if (appsData.appsReading1_Voltage < APPS_3V3_MIN) {
-        appsData.appsReading1_Voltage = APPS_3V3_MIN;
-    } else if (appsData.appsReading1_Voltage > APPS_3V3_MAX) {
-        appsData.appsReading1_Voltage = APPS_3V3_MAX;
-    }
-
-    if (appsData.appsReading2_Voltage < APPS_5V_MIN) {
-        appsData.appsReading2_Voltage = APPS_5V_MIN;
-    } else if (appsData.appsReading2_Voltage > APPS_5V_MAX) {
-        appsData.appsReading2_Voltage = APPS_5V_MAX;
-    }
-    // Moved this upwards to before the clamping of percentage
-
-    // Map voltage to percentage of throttle travel, limiting to 0-1 range
-    // appsData.appsReading1_Percentage =
-    //     LINEAR_MAP(appsData.apps1RawReading, 0.0F, (float)APPS1_20PCT_ADC,
-    //     0.0F, 1.0F);
-
-    // appsData.appsReading2_Percentage =
-    //     LINEAR_MAP(appsData.apps2RawReading, 0.0F, (float)APPS2_20PCT_ADC,
-    //     0.0F, 1.0F);
-
-    // Serial.print("APPS1 raw Perc: ");
-    // Serial.println(appsData.appsReading1_Percentage);
-    // Serial.print("APPS2 raw Perc: ");
-    // Serial.println(appsData.appsReading2_Percentage);
-
-    if (appsData.appsReading1_Percentage < 0.0F) {
-        appsData.appsReading1_Percentage = 0.0F;
-    } else if (appsData.appsReading1_Percentage > 1.0F) {
-        appsData.appsReading1_Percentage = 1.0F;
-    }
-
-    if (appsData.appsReading2_Percentage < 0.0F) {
-        appsData.appsReading2_Percentage = 0.0F;
-    } else if (appsData.appsReading2_Percentage > 1.0F) {
-        appsData.appsReading2_Percentage = 1.0F;
-    }
-
+    // Fault checks
     checkAndHandleAPPSFault();
+
+    appsData.appsReading1_Percentage =
+        LINEAR_MAP(appsData.apps1RawReading, (float)APPS1_MIN_ADC,
+                   (float)APPS1_MAX_ADC, 0.0F, 1.0F);
+
+    appsData.appsReading2_Percentage =
+        LINEAR_MAP(appsData.apps2RawReading, (float)APPS2_MIN_ADC,
+                   (float)APPS2_MAX_ADC, 0.0F, 1.0F);
+
+    // Safety clamping
+    appsData.appsReading1_Percentage =
+        CLAMP01(appsData.appsReading1_Percentage);
+    appsData.appsReading2_Percentage =
+        CLAMP01(appsData.appsReading2_Percentage);
+
+#if DEBUG_FLAG
+    Serial.print("APPS1 Voltage: ");
+    Serial.println(appsData.appsReading1_Voltage);
+    Serial.print("APPS1 Percent: ");
+    Serial.println(appsData.appsReading1_Percentage);
+#endif
+
     checkAndHandlePlausibilityFault();
 }
 
@@ -139,49 +98,52 @@ float APPS_GetAPPSReading1() { return appsData.appsReading1_Percentage; }
 float APPS_GetAPPSReading2() { return appsData.appsReading2_Percentage; }
 
 static void checkAndHandleAPPSFault() {
+    bool hasFault = false;
+
     // Check for open/short circuit
     float difference = abs(appsData.appsReading1_Percentage -
                            appsData.appsReading2_Percentage);
 
     // # if DEBUG_FLAG
-    Serial.print("Difference is: ");
-    Serial.println(difference);
-    Serial.print("Percent APPS1: ");
-    Serial.println(appsData.appsReading1_Percentage);
-    Serial.print("Percent APPS2: ");
-    Serial.println(appsData.appsReading2_Percentage);
-
+    // Serial.print("Difference is: ");
+    // Serial.println(difference);
+    // Serial.print("Percent APPS1: ");
+    // Serial.println(appsData.appsReading1_Percentage);
+    // Serial.print("Percent APPS2: ");
+    // Serial.println(appsData.appsReading2_Percentage);
     // # endif
 
+    // Check open/short voltage
     if (appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
         appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
         appsData.appsReading2_Voltage < APPS_5V_FAULT_MIN ||
         appsData.appsReading2_Voltage > APPS_5V_FAULT_MAX) {
-
-        TickType_t now = xTaskGetTickCount();
-        TickType_t elapsedTicks = now - appsLatestHealthyStateTime;
-        TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
-
-        if (elapsedMs > APPS_FAULT_TIME_THRESHOLD_MS) {
-#if DEBUG_FLAG
-            Serial.println("Setting APPS fault");
-#endif
-            Faults_SetFault(FAULT_APPS);
-            return;
-        }
-    } else {
-        appsLatestHealthyStateTime = xTaskGetTickCount();
-        Faults_ClearFault(FAULT_APPS);
+        hasFault = true;
     }
 
     if (difference > APPS_IMPLAUSABILITY_THRESHOLD) {
-        Faults_SetFault(FAULT_APPS);
-        return;
+        hasFault = true;
+    }
+
+    if (hasFault) {
+        TickType_t now = xTaskGetTickCount();
+
+        if (faultStartTime == 0) {
+            faultStartTime = now;
+        }
+
+        TickType_t elapsedTicks = now - faultStartTime;
+        TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
+
+        if (elapsedMs > APPS_FAULT_TIME_THRESHOLD_MS) {
+            Faults_SetFault(FAULT_APPS);
+        }
     } else {
-#if DEBUG_FLAG
-        Serial.println("Clearing fault in handle");
-#endif
-        Faults_ClearFault(FAULT_APPS);
+        faultStartTime = 0;
+
+        if (APPS_GetAPPSReading() < 0.05F) {
+            Faults_ClearFault(FAULT_APPS);
+        }
     }
 }
 

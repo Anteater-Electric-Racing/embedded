@@ -1,7 +1,6 @@
 // Anteater Electric Racing, 2025
 
 #include "adc.h"
-#include "./vehicle/telemetry.h"
 #include "utils/utils.h"
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -40,17 +39,41 @@ enum SensorIndexesADC1 { // TODO: Update with real values
     SUSP_TRAV_LINPOT42
 };
 
-uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {
-    A0, A1, A2, A3,  A4, A5,
-    A6, A7, A9, A16, A17}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
-                           // 24, 25, 19, 18, 14, 15, 17};
-uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
+struct AdcPinConfig {
+    uint8_t pin;
+    uint8_t dataIndex;
+};
 
-uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {
-    A17, A16, A15, A7, A6, A5,
-    A4,  A3,  A2,  A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
-                            // 24, 25, 19, 18, 14, 15, 17};
+uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
+
+const AdcPinConfig adc0Pins[SENSOR_PIN_AMT_ADC0] = {
+    {A0, THERMISTOR_1_INDEX},  // index 0
+    {A1, 1},                   // index 1
+    {A2, BSE_2_INDEX},         // index 2
+    {A3, BSE_1_INDEX},         // index 3
+    {A4, APPS_1_INDEX},        // index 4
+    {A5, APPS_2_INDEX},        // index 5
+    {A6, SUSP_TRAV_LINPOT1},   // index 6
+    {A7, SUSP_TRAV_LINPOT2},   // index 7
+    {A9, THERMISTOR_4_INDEX},  // index 8
+    {A16, THERMISTOR_3_INDEX}, // index 9
+    {A17, THERMISTOR_2_INDEX}, // index 10
+};
+
+const AdcPinConfig adc1Pins[SENSOR_PIN_AMT_ADC1] = {
+    {A17, APPS_1_INDEX2},     // index 0
+    {A16, APPS_2_INDEX2},     // index 1
+    {A15, BSE_1_INDEX2},      // index 2
+    {A7, BSE_2_INDEX2},       // index 3
+    {A6, SUSP_TRAV_LINPOT12}, // index 4
+    {A5, SUSP_TRAV_LINPOT22}, // index 5
+    {A4, SUSP_TRAV_LINPOT32}, // index 6
+    {A3, SUSP_TRAV_LINPOT42}, // index 7
+    {A2, 8},
+    {A1, 9},
+    {A0, 10},
+};
 
 static TickType_t lastWakeTime;
 
@@ -84,20 +107,22 @@ void threadADC(void *pvParameters) {
 #endif
 
     lastWakeTime = xTaskGetTickCount();
+
     while (true) {
         vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
-        for (uint16_t currentIndexADC0 = 0;
-             currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0) {
-            uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
-            uint16_t adcRead = adc->adc0->analogRead(currentPinADC0);
-            adc0Reads[currentIndexADC0] = adcRead;
+
+        // Read ADC 0
+        for (uint16_t i = 0; i < SENSOR_PIN_AMT_ADC0; ++i) {
+            uint16_t currentPin = adc0Pins[i].pin;
+            uint16_t targetIndex = adc0Pins[i].dataIndex;
+            adc0Reads[targetIndex] = adc->adc0->analogRead(currentPin);
         }
 
-        for (uint16_t currentIndexADC1 = 0;
-             currentIndexADC1 < SENSOR_PIN_AMT_ADC1; ++currentIndexADC1) {
-            uint16_t currentPinADC1 = adc1Pins[currentIndexADC1];
-            uint16_t adcRead = adc->adc1->analogRead(currentPinADC1);
-            adc1Reads[currentIndexADC1] = adcRead;
+        // Read ADC 1
+        for (uint16_t i = 0; i < SENSOR_PIN_AMT_ADC1; ++i) {
+            uint16_t currentPin = adc1Pins[i].pin;
+            uint16_t targetIndex = adc1Pins[i].dataIndex;
+            adc1Reads[targetIndex] = adc->adc1->analogRead(currentPin);
         }
 
         // Serial.print("ADC0 Reads: ");
@@ -113,6 +138,7 @@ void threadADC(void *pvParameters) {
         // }
         // Serial.println();
         // Update each sensors data
+
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
 
