@@ -39,20 +39,14 @@ void APPS_Init() {
 }
 
 void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) {
-    // Serial.print("Raw APPS1: ");
-    // Serial.println(rawReading1);
-    // Serial.print("Raw APPS2: ");
-    // Serial.println(rawReading2);
-
     // Apply Low Pass Filter to reduce noise
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
 
-    // Serial.print("\n\n\n\n\n");
-    // Serial.print("Raw APPS1: ");
-    // Serial.println(appsData.apps1RawReading);
-    // Serial.print("Raw APPS2: ");
-    // Serial.println(appsData.apps2RawReading);
+    Serial.print("Raw APPS1: ");
+    Serial.println(appsData.apps1RawReading);
+    Serial.print("Raw APPS2: ");
+    Serial.println(appsData.apps2RawReading);
 
     // Convert ADC values to voltage
     appsData.appsReading1_Voltage =
@@ -77,14 +71,29 @@ void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) {
     appsData.appsReading2_Percentage =
         CLAMP01(appsData.appsReading2_Percentage);
 
-#if DEBUG_FLAG
+    // #if DEBUG_FLAG
     Serial.print("APPS1 Voltage: ");
     Serial.println(appsData.appsReading1_Voltage);
     Serial.print("APPS1 Percent: ");
     Serial.println(appsData.appsReading1_Percentage);
-#endif
+
+    Serial.print("APPS2 Voltage: ");
+    Serial.println(appsData.appsReading2_Voltage);
+    Serial.print("APPS2 Percent: ");
+    Serial.println(appsData.appsReading2_Percentage);
+    // #endif
 
     checkAndHandlePlausibilityFault();
+
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n\n\n\n");
+    Serial.print("\n\n");
 }
 
 float APPS_GetAPPSReading() {
@@ -105,12 +114,12 @@ static void checkAndHandleAPPSFault() {
                            appsData.appsReading2_Percentage);
 
     // # if DEBUG_FLAG
-    // Serial.print("Difference is: ");
-    // Serial.println(difference);
-    // Serial.print("Percent APPS1: ");
-    // Serial.println(appsData.appsReading1_Percentage);
-    // Serial.print("Percent APPS2: ");
-    // Serial.println(appsData.appsReading2_Percentage);
+    Serial.print("Difference is: ");
+    Serial.println(difference);
+    Serial.print("Percent APPS1: ");
+    Serial.println(appsData.appsReading1_Percentage);
+    Serial.print("Percent APPS2: ");
+    Serial.println(appsData.appsReading2_Percentage);
     // # endif
 
     // Check open/short voltage
