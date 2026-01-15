@@ -253,32 +253,97 @@ void threadMain(void *pvParameters) {
         // print all errors if they are true in one line
         Serial.print("  |  ");
 
-        if (MCU_GetMCU2Data()->dcMainWireOverVoltFault)
+        if (MCU_GetMCU2Data()->dcMainWireOverVoltFault) {
+            Faults_SetFault(FAULT_DC_OVER_VOLT);
             Serial.println("DC Over Volt Fault, ");
-        if (MCU_GetMCU2Data()->motorPhaseCurrFault)
+        } else {
+            Faults_ClearFault(FAULT_DC_OVER_VOLT);
+        }
+
+        if (MCU_GetMCU2Data()->motorPhaseCurrFault) {
+            Faults_SetFault(FAULT_MOTOR_PHASE_CURR);
             Serial.println("Motor Phase Curr Fault, ");
-        if (MCU_GetMCU2Data()->mcuOverHotFault)
+        } else {
+            Faults_ClearFault(FAULT_MOTOR_PHASE_CURR);
+        }
+
+        if (MCU_GetMCU2Data()->mcuOverHotFault) {
+            Faults_SetFault(FAULT_OVER_HOT);
             Serial.println("MCU Over Hot Fault, ");
-        if (MCU_GetMCU2Data()->resolverFault)
+        } else {
+            Faults_ClearFault(FAULT_OVER_HOT);
+        }
+
+        if (MCU_GetMCU2Data()->resolverFault) {
+            Faults_SetFault(FAULT_RESOLVER);
             Serial.println("Resolver Fault, ");
-        if (MCU_GetMCU2Data()->phaseCurrSensorFault)
+        } else {
+            Faults_ClearFault(FAULT_RESOLVER);
+        }
+
+        if (MCU_GetMCU2Data()->phaseCurrSensorFault) {
+            Faults_SetFault(FAULT_PHASE_CURR_SENSOR);
             Serial.println("Phase Curr Sensor Fault, ");
-        if (MCU_GetMCU2Data()->motorOverSpdFault)
+        } else {
+            Faults_ClearFault(FAULT_PHASE_CURR_SENSOR);
+        }
+
+        if (MCU_GetMCU2Data()->motorOverSpdFault) {
+            Faults_SetFault(FAULT_MOTOR_OVER_SPEED);
             Serial.println("Motor Over Spd Fault, ");
-        if (MCU_GetMCU2Data()->drvMotorOverHotFault)
+        } else {
+            Faults_ClearFault(FAULT_MOTOR_OVER_SPEED);
+        }
+
+        if (MCU_GetMCU2Data()->drvMotorOverHotFault) {
+            Faults_SetFault(FAULT_DRV_OVER_HOT);
             Serial.println("Driver Motor Over Hot Fault, ");
-        if (MCU_GetMCU2Data()->dcMainWireOverCurrFault)
+        } else {
+            Faults_ClearFault(FAULT_DRV_OVER_HOT);
+        }
+
+        if (MCU_GetMCU2Data()->dcMainWireOverCurrFault) {
+            Faults_SetFault(FAULT_DC_OVER_CURR);
             Serial.println("DC Main Wire Over Curr Fault, ");
-        if (MCU_GetMCU2Data()->drvMotorOverCoolFault)
+        } else {
+            Faults_ClearFault(FAULT_DC_OVER_CURR);
+        }
+
+        if (MCU_GetMCU2Data()->drvMotorOverCoolFault) {
+            Faults_SetFault(FAULT_DRV_OVER_COOL);
             Serial.println("Driver Motor Over Cool Fault, ");
-        if (MCU_GetMCU2Data()->dcLowVoltWarning)
+        } else {
+            Faults_ClearFault(FAULT_DRV_OVER_COOL);
+        }
+
+        if (MCU_GetMCU2Data()->dcLowVoltWarning) {
+            Faults_SetFault(FAULT_DC_LOW_VOLT_WARN);
             Serial.println("DC Low Volt Warning, ");
-        if (MCU_GetMCU2Data()->mcu12VLowVoltWarning)
+        } else {
+            Faults_ClearFault(FAULT_DC_LOW_VOLT_WARN);
+        }
+
+        if (MCU_GetMCU2Data()->mcu12VLowVoltWarning) {
+            Faults_SetFault(FAULT_12V_LOW_VOLT_WARN);
             Serial.println("MCU 12V Low Volt Warning, ");
-        if (MCU_GetMCU2Data()->motorStallFault)
+        } else {
+            Faults_ClearFault(FAULT_12V_LOW_VOLT_WARN);
+        }
+
+        if (MCU_GetMCU2Data()->motorStallFault) {
+            Faults_SetFault(FAULT_MOTOR_STALL);
             Serial.println("Motor Stall Fault, ");
-        if (MCU_GetMCU2Data()->motorOpenPhaseFault)
+        } else {
+            Faults_ClearFault(FAULT_MOTOR_STALL);
+        }
+
+        if (MCU_GetMCU2Data()->motorOpenPhaseFault) {
+            Faults_SetFault(FAULT_MOTOR_OPEN_PHASE);
             Serial.println("Motor Open Phase Fault, ");
+        } else {
+            Faults_ClearFault(FAULT_MOTOR_OPEN_PHASE);
+        }
+
 
         Motor_UpdateMotor(
             torqueDemand, enablePrecharge, enablePower, enableRun, enableRegen,

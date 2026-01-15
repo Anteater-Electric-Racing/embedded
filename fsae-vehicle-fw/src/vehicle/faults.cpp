@@ -1,5 +1,6 @@
 // Anteater Electric Racing, 2025
 
+
 #define FAULT_OVER_CURRENT_MASK (0x1)
 #define FAULT_UNDER_VOLTAGE_MASK (0x1 << 1)
 #define FAULT_OVER_TEMP_MASK (0x1 << 2)
@@ -7,6 +8,23 @@
 #define FAULT_BSE_MASK (0x1 << 4)
 #define FAULT_BPPS_MASK (0x1 << 5)
 #define FAULT_APPS_BRAKE_PLAUSIBILITY_MASK (0x1 << 6)
+
+//Inverter Faults
+#define FAULT_DC_OVER_VOLT_FAULT_MASK (0x1 << 7)
+#define FAULT_MOTOR_PHASE_CURR_FAULT_MASK (0x1 << 8)
+#define FAULT_MCU_OVER_HOT_FAULT_MASK (0x1 << 9)
+#define FAULT_RESOLVER_FAULT_MASK (0x1 << 10)
+#define FAULT_PHASE_CURR_SENSOR_FAULT_MASK (0x1 << 11)
+#define FAULT_MOTOR_OVER_SPD_FAULT_MASK (0x1 << 12)
+#define FAULT_DRV_MOTOR_OVER_HOT_FAULT_MASK (0x1 << 13)
+#define FAULT_DC_MAIN_WIRE_OVER_CURR_FAULT_MASK (0x1 << 14)
+#define FAULT_DRV_MOTOR_OVER_COOL_FAULT_MASK (0x1 << 15)
+#define FAULT_DC_LOW_VOLT_WARNING_MASK (0x1 << 16)
+#define FAULT_MCU_12V_LOW_VOLT_WARNING_MASK (0x1 << 17)
+#define FAULT_MOTOR_STALL_FAULT_MASK (0x1 << 18)
+#define FAULT_MOTOR_OPEN_PHASE_FAULT_MASK (0x1 << 19)
+
+
 
 #include "vehicle/faults.h"
 #include "utils/utils.h"
@@ -62,12 +80,66 @@ void Faults_SetFault(FaultType fault) {
         faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }
+
+    // Inverter Faults
+    case FAULT_DC_OVER_VOLT: {
+        faultBitMap |= FAULT_DC_OVER_VOLT_FAULT_MASK;
+        break;
+    }
+    case FAULT_MOTOR_PHASE_CURR: {
+        faultBitMap |= FAULT_MOTOR_PHASE_CURR_FAULT_MASK;
+        break;
+    }
+    case FAULT_OVER_HOT: {
+        faultBitMap |= FAULT_MCU_OVER_HOT_FAULT_MASK;
+        break;
+    }
+    case FAULT_RESOLVER: {
+        faultBitMap |= FAULT_RESOLVER_FAULT_MASK;
+        break;
+    }
+    case FAULT_PHASE_CURR_SENSOR: {
+        faultBitMap |= FAULT_PHASE_CURR_SENSOR_FAULT_MASK;
+        break;
+    }
+    case FAULT_MOTOR_OVER_SPEED: {
+        faultBitMap |= FAULT_MOTOR_OVER_SPD_FAULT_MASK;
+        break;
+    }
+    case FAULT_DRV_OVER_HOT: {
+        faultBitMap |= FAULT_DRV_MOTOR_OVER_HOT_FAULT_MASK;
+        break;
+    }
+    case FAULT_DC_OVER_CURR: {
+        faultBitMap |= FAULT_DC_MAIN_WIRE_OVER_CURR_FAULT_MASK;
+        break;
+    }
+    case FAULT_DRV_OVER_COOL: {
+        faultBitMap |= FAULT_DRV_MOTOR_OVER_COOL_FAULT_MASK;
+        break;
+    }
+    case FAULT_DC_LOW_VOLT_WARN: {
+        faultBitMap |= FAULT_DC_LOW_VOLT_WARNING_MASK;
+        break;
+    }
+    case FAULT_12V_LOW_VOLT_WARN: {
+        faultBitMap |= FAULT_MCU_12V_LOW_VOLT_WARNING_MASK;
+        break;
+    }
+    case FAULT_MOTOR_STALL: {
+        faultBitMap |= FAULT_MOTOR_STALL_FAULT_MASK;
+        break;
+    }
+    case FAULT_MOTOR_OPEN_PHASE: {
+        faultBitMap |= FAULT_MOTOR_OPEN_PHASE_FAULT_MASK;
+        break;
+    }
+
     default: {
         break;
     }
     }
 }
-
 void Faults_ClearFault(FaultType fault) {
     switch (fault) {
     case FAULT_NONE: {
@@ -107,6 +179,61 @@ void Faults_ClearFault(FaultType fault) {
         faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }
+
+    // Inverter Faults
+    case FAULT_DC_OVER_VOLT: {
+        faultBitMap &= ~FAULT_DC_OVER_VOLT_FAULT_MASK;
+        break;
+    }
+    case FAULT_MOTOR_PHASE_CURR: {
+        faultBitMap &= ~FAULT_MOTOR_PHASE_CURR_FAULT_MASK;
+        break;
+    }
+    case FAULT_OVER_HOT: {
+        faultBitMap &= ~FAULT_MCU_OVER_HOT_FAULT_MASK;
+        break;
+    }
+    case FAULT_RESOLVER: {
+        faultBitMap &= ~FAULT_RESOLVER_FAULT_MASK;
+        break;
+    }
+    case FAULT_PHASE_CURR_SENSOR: {
+        faultBitMap &= ~FAULT_PHASE_CURR_SENSOR_FAULT_MASK;
+        break;
+    }
+    case FAULT_MOTOR_OVER_SPEED: {
+        faultBitMap &= ~FAULT_MOTOR_OVER_SPD_FAULT_MASK;
+        break;
+    }
+    case FAULT_DRV_OVER_HOT: {
+        faultBitMap &= ~FAULT_DRV_MOTOR_OVER_HOT_FAULT_MASK;
+        break;
+    }
+    case FAULT_DC_OVER_CURR: {
+        faultBitMap &= ~FAULT_DC_MAIN_WIRE_OVER_CURR_FAULT_MASK;
+        break;
+    }
+    case FAULT_DRV_OVER_COOL: {
+        faultBitMap &= ~FAULT_DRV_MOTOR_OVER_COOL_FAULT_MASK;
+        break;
+    }
+    case FAULT_DC_LOW_VOLT_WARN: {
+        faultBitMap &= ~FAULT_DC_LOW_VOLT_WARNING_MASK;
+        break;
+    }
+    case FAULT_12V_LOW_VOLT_WARN: {
+        faultBitMap &= ~FAULT_MCU_12V_LOW_VOLT_WARNING_MASK;
+        break;
+    }
+    case FAULT_MOTOR_STALL: {
+        faultBitMap &= ~FAULT_MOTOR_STALL_FAULT_MASK;
+        break;
+    }
+    case FAULT_MOTOR_OPEN_PHASE: {
+        faultBitMap &= ~FAULT_MOTOR_OPEN_PHASE_FAULT_MASK;
+        break;
+    }
+
     default: {
         break;
     }
@@ -125,10 +252,11 @@ void Faults_HandleFaults() {
 #if DEBUG_FLAG
         Serial.println("Clearing all faults in handle faults");
 #endif
-
         Motor_ClearFaultState();
         return;
     }
+
+
     if (faultBitMap & FAULT_OVER_CURRENT_MASK) {
         Motor_SetFaultState();
     }
@@ -148,6 +276,47 @@ void Faults_HandleFaults() {
         Motor_SetFaultState();
     }
     if (faultBitMap & FAULT_APPS_BRAKE_PLAUSIBILITY_MASK) {
+        Motor_SetFaultState();
+    }
+
+    // Inverter Faults
+    if (faultBitMap & FAULT_DC_OVER_VOLT_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_MOTOR_PHASE_CURR_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_MCU_OVER_HOT_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_RESOLVER_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_PHASE_CURR_SENSOR_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_MOTOR_OVER_SPD_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_DRV_MOTOR_OVER_HOT_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_DC_MAIN_WIRE_OVER_CURR_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_DRV_MOTOR_OVER_COOL_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_DC_LOW_VOLT_WARNING_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_MCU_12V_LOW_VOLT_WARNING_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_MOTOR_STALL_FAULT_MASK) {
+        Motor_SetFaultState();
+    }
+    if (faultBitMap & FAULT_MOTOR_OPEN_PHASE_FAULT_MASK) {
         Motor_SetFaultState();
     }
 }
