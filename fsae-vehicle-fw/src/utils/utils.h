@@ -84,6 +84,9 @@
     1.5 // TODO: change back to PSI200    // PSI
 #define APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD 0.05 // 5%
 
+#define ADS_ADDR 0x48
+#define ADS_VOLTS_PER_BIT 0.0001875F
+
 #define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
 #define BSE_ADC_VALUE_TO_VOLTAGE(x)                                            \
     (x * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) *                                    \

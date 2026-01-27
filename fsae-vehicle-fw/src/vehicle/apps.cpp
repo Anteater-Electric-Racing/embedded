@@ -46,44 +46,50 @@ void APPS_UpdateData(uint16_t rawReading1,
     // Serial.print("Raw APPS2: ");
     // Serial.println(rawReading2);
 
-    if (rawReading1 > APPS1_20PCT_ADC)
-        rawReading1 = APPS1_20PCT_ADC;
-    if (rawReading2 > APPS2_20PCT_ADC)
-        rawReading2 = APPS2_20PCT_ADC;
-
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
-    Serial.print("\n\n\n\n\n");
-    Serial.print("Raw APPS1: ");
-    Serial.println(appsData.apps1RawReading);
-    Serial.print("Raw APPS2: ");
-    Serial.println(appsData.apps2RawReading);
 
-    // after LOWPASS_FILTER
+    appsData.appsReading1_Voltage =
+        appsData.apps1RawReading * ADS_VOLTS_PER_BIT * 1.25F;
+    appsData.appsReading2_Voltage =
+        appsData.apps2RawReading * ADS_VOLTS_PER_BIT * 1.25F;
+
+    Serial.printf("APPS1 (5V): %.3f V\t\tAPPS2 (3.3V): %.3f V\n",
+                  appsData.appsReading1_Voltage, appsData.appsReading2_Voltage);
+    Serial.printf("Raw: %-6d\t\t\tRaw: %d\n", rawReading1, rawReading2);
+
+    // Serial.print("\n\n\n\n\n");
+    // Serial.print("Raw APPS1: ");
+    // Serial.println(appsData.apps1RawReading);
+    // Serial.print("Raw APPS2: ");
+    // Serial.println(appsData.apps2RawReading);
+
     appsData.appsReading1_Percentage =
-        LINEAR_MAP(appsData.apps1RawReading, (float)APPS1_REST_ADC,
-                   (float)APPS1_20PCT_ADC, 0.0F, 1.0F);
+        LINEAR_MAP(appsData.appsReading1_Voltage, 0.0F, 5.0F, 0.0F, 1.0F);
 
     appsData.appsReading2_Percentage =
-        LINEAR_MAP(appsData.apps2RawReading, (float)APPS2_REST_ADC,
-                   (float)APPS2_20PCT_ADC, 0.0F, 1.0F);
+        LINEAR_MAP(appsData.appsReading2_Voltage, 0.0F, 3.3F, 0.0F, 1.0F);
+
+    Serial.print("APPS1 %: ");
+    Serial.print(appsData.appsReading1_Percentage);
+    Serial.print("\t\t\tAPPS2 %: ");
+    Serial.println(appsData.appsReading2_Percentage);
+
+    Serial.print("Difference: ");
+    Serial.println(abs(appsData.appsReading1_Percentage -
+                       appsData.appsReading2_Percentage));
+    Serial.println("");
 
     // clamp since LINEAR_MAP doesn't clamp
-    appsData.appsReading1_Percentage =
-        CLAMP01(appsData.appsReading1_Percentage);
-    appsData.appsReading2_Percentage =
-        CLAMP01(appsData.appsReading2_Percentage);
+    // appsData.appsReading1_Percentage =
+    //     CLAMP01(appsData.appsReading1_Percentage);
+    // appsData.appsReading2_Percentage =
+    //     CLAMP01(appsData.appsReading2_Percentage);
 
-    // Convert ADC values to voltage
-    appsData.appsReading1_Voltage =
-        ADC_VALUE_TO_VOLTAGE(appsData.apps1RawReading);
-    appsData.appsReading2_Voltage =
-        ADC_VALUE_TO_VOLTAGE(appsData.apps2RawReading);
-
-    Serial.print("APPS1 RAW Voltage: ");
-    Serial.println(appsData.appsReading1_Voltage);
-    Serial.print("APPS2 RAW Voltage: ");
-    Serial.println(appsData.appsReading2_Voltage);
+    // Serial.print("APPS1 RAW Voltage: ");
+    // Serial.println(appsData.appsReading1_Voltage);
+    // Serial.print("APPS2 RAW Voltage: ");
+    // Serial.println(appsData.appsReading2_Voltage);
 
     if (appsData.appsReading1_Voltage < APPS_3V3_MIN) {
         appsData.appsReading1_Voltage = APPS_3V3_MIN;
@@ -144,13 +150,12 @@ static void checkAndHandleAPPSFault() {
                            appsData.appsReading2_Percentage);
 
     // # if DEBUG_FLAG
-    Serial.print("Difference is: ");
-    Serial.println(difference);
-    Serial.print("Percent APPS1: ");
-    Serial.println(appsData.appsReading1_Percentage);
-    Serial.print("Percent APPS2: ");
-    Serial.println(appsData.appsReading2_Percentage);
-
+    // Serial.print("Difference is: ");
+    // Serial.println(difference);
+    // Serial.print("Percent APPS1: ");
+    // Serial.println(appsData.appsReading1_Percentage);
+    // Serial.print("Percent APPS2: ");
+    // Serial.println(appsData.appsReading2_Percentage);
     // # endif
 
     if (appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||

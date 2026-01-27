@@ -1,7 +1,6 @@
 // Anteater Electric Racing, 2025
 
-#include "adc.h"
-#include "./vehicle/telemetry.h"
+#include "peripherals/adc.h"
 #include "utils/utils.h"
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -10,6 +9,8 @@
 #include "vehicle/telemetry.h"
 #include "vehicle/thermal.h"
 #include <ADC.h>
+#include <Adafruit_ADS1X15.h>
+#include <Wire.h>
 #include <arduino_freertos.h>
 #include <chrono>
 #include <stdint.h>
@@ -55,6 +56,7 @@ uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 static TickType_t lastWakeTime;
 
 ADC *adc = new ADC();
+Adafruit_ADS1115 ads;
 
 void ADC_Init() {
     // ADC 0
@@ -76,6 +78,14 @@ void ADC_Init() {
 #if DEBUG_FLAG
     Serial.println("Done initializing ADCs");
 #endif
+
+    if (!ads.begin(ADS_ADDR, &Wire)) {
+#if DEBUG_FLAG
+        Serial.println("ADS1115 not found on Wire");
+#endif
+    }
+
+    ads.setGain(GAIN_TWOTHIRDS);
 }
 
 void threadADC(void *pvParameters) {
@@ -113,7 +123,12 @@ void threadADC(void *pvParameters) {
         // }
         // Serial.println();
         // Update each sensors data
-        APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
+
+        uint16_t raw1 = ads.readADC_SingleEnded(0); // pin A0
+        uint16_t raw2 = ads.readADC_SingleEnded(3);
+
+        APPS_UpdateData(raw1, raw2);
+        // APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
 
         thermal_Update(

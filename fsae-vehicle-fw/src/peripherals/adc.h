@@ -2,6 +2,7 @@
 #pragma once
 
 #include <ADC.h>
+
 #define SENSOR_PIN_AMT_ADC0 11
 #define SENSOR_PIN_AMT_ADC1 11
 
