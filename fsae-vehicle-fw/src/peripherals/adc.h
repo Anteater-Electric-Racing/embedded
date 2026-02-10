@@ -1,4 +1,3 @@
-// Anteater Electric Racing, 2025
 #pragma once
 
 #include <ADC.h>

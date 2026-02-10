@@ -4,9 +4,10 @@
 #define THREAD_CAN_PRIORITY 1
 
 #include <isotp.h>
+#include <stdint.h>
+
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
-#include <stdint.h>
 
 #include "peripherals/can.h"
 #include "utils/utils.h"
@@ -23,24 +24,8 @@ isotp<RX_BANKS_16, 512> tp;
 CAN_message_t motorMsg;
 CAN_message_t rx_msg;
 
-// CAN loss detection
-// static uint32_t lastCAN2MsgTime = 0;
-// static uint32_t lastCAN3MsgTime = 0;
-static bool can2Healthy = false;
-static bool can3Healthy = false;
-
 #define CAN_TIMEOUT_MS 100
 
-//
-/**
- * CANBus Setup: KZ
- *
- * CAN2 (CAN2 on diagram) --> ORION, CCM, RASPI, PCC
- * CAN3 (CAN1 on diagram) --> CCM, OMNI, RASPI
- *
- * TODO: CAN recieve and send for each bus
- *
- */
 void CAN_Init() {
     // Initialize CAN bus
     can2.begin();
@@ -61,42 +46,22 @@ void CAN_Init() {
     tp.setWriteBus(&can3); // Set the bus to write to can3
 }
 
-// TODO @ksthakkar: make can_send general function to select both CANbuses or
-// make seperate CAN_send functions can2
 void CAN_Send(uint32_t id, uint64_t msg) {
     motorMsg.id = id;
-    // msg.id = 0x100;
     memcpy(motorMsg.buf, &msg, sizeof(msg));
 
     can3.write(motorMsg);
-
-    // Serial.println("| Sending CAN... ");
-    // Serial.print("");
+    can2.write(motorMsg);
 }
 
 void CAN_Receive(uint32_t *rx_id, uint64_t *rx_data) {
-    if (can3.read(rx_msg)) {
+    if (can3.read(rx_msg) || can2.read(rx_msg)) {
         *rx_id = rx_msg.id;
         memcpy(rx_data, rx_msg.buf, sizeof(*rx_data));
-
-        // Serial.println("--> CAN Message recieved");
-        // lastCAN2MsgTime = millis();
-        // can2Healthy = true;
     } else { // No message received, assign default values
         *rx_id = 0;
         *rx_data = 0;
     }
-}
-
-void CAN_CheckHealth() {
-    // uint32_t now = millis();
-    // if (now - lastCAN2MsgTime > CAN_TIMEOUT_MS) {
-    //     can2Healthy = false;
-    // }
-
-    // if (now - lastCAN3MsgTime > CAN_TIMEOUT_MS) {
-    //     can3Healthy = false;
-    // }
 }
 
 void CAN_ISOTP_Send(uint32_t id, uint8_t *msg, uint16_t size) {
@@ -106,12 +71,4 @@ void CAN_ISOTP_Send(uint32_t id, uint8_t *msg, uint16_t size) {
     config.separation_time =
         1; // Time between back-to-back frames in milliseconds
     tp.write(config, msg, size);
-}
-
-bool CAN_IsBusHealthy(uint8_t bus) {
-    if (bus == 2)
-        return can2Healthy;
-    if (bus == 3)
-        return can3Healthy;
-    return false;
 }

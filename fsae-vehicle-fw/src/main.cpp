@@ -64,7 +64,9 @@ void threadMain(void *pvParameters) {
 
     bool enableRegen = false;
 
+    int toggle = 0;
 #endif
+
     while (true) {
         digitalWrite(13, 1);
         /*
@@ -86,6 +88,41 @@ void threadMain(void *pvParameters) {
          * Telemetry: battery current, phase current, motor speed,
          * temperature(s)
          */
+        //    BSE_GetBSEReading()->bseRear_Reading > 0.5F
+
+        if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
+            BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
+            digitalWrite(9, 1);
+        } else {
+            digitalWrite(9, 0);
+        }
+
+#if BMS_FLAG
+        // --- NEW: Orion BMS 2 Telemetry ---
+        // Orion BMS Telemetry
+        Serial.print(" | BMS Volt: ");
+        Serial.print(BMS_GetOrionData()->packVoltage);
+        Serial.print("V | SOC: ");
+        Serial.print(BMS_GetOrionData()->soc);
+        Serial.print("% | Current: ");
+        Serial.print(BMS_GetOrionData()->packCurrent);
+
+        // Thermal and Limits (From Message 0x6B1)
+        Serial.print(" | HiTemp: ");
+        Serial.print(BMS_GetOrionData()->highTemp);
+        Serial.print("C | DCL: ");
+        Serial.print(BMS_GetOrionData()->dischargeLimit);
+        Serial.print("A");
+
+        // Cell Health (From Message 0x6B2)
+        Serial.print(" | AvgCell: ");
+        Serial.print(BMS_GetOrionData()->avgCellVolt,
+                     4); // 4 decimal places for precision
+        Serial.print("V | HiCell: ");
+        Serial.print(BMS_GetOrionData()->highCellVolt, 4);
+
+        Serial.print("\r");
+#endif
 
 #if HIMAC_FLAG
         if (Serial.available()) {
@@ -121,7 +158,6 @@ void threadMain(void *pvParameters) {
                 enablePower = false;    // Disable run state
                 enableRun = false;      // Disable run state
                 torqueDemand = 0;       // Reset torque demand
-                // Serial.println("Entering precharge state...");
                 break;
             }
             case 'o': // IDLE: Power Ready state
@@ -158,6 +194,18 @@ void threadMain(void *pvParameters) {
                 Motor_SetFaultState(); // Set motor to fault state
                 break;
             }
+            case 'b':
+            case 'B': {
+                digitalWrite(9, 1);
+                toggle = 1;
+                break;
+            }
+            case 'n':
+            case 'N': {
+                digitalWrite(9, 0);
+                toggle = 0;
+                break;
+            }
             case 'r':
             case 'R': {
                 enableRegen = !enableRegen;
@@ -167,47 +215,40 @@ void threadMain(void *pvParameters) {
                 break;
             }
         }
-
-        // Serial.print("State: ");
-        // Serial.print(MCU_GetMCU1Data().mcuMainState);
-        // Serial.print(" | ");
-        // Serial.print("Internal State: ");
-        // Serial.print(Motor_GetState());
-        // Serial.print("      \n");
-
-        // Serial.print("Torque - ");
-        // Serial.print(torqueDemand);
-        // Serial.print("      \n");
-
         // Telemetry: Read battery current, phase current, motor speed,
         // temperature(s)
         Serial.print("PP:");
         Serial.print(PCC_GetData()->prechargeProgress);
         Serial.print(" | ");
+        Serial.print("AV: ");
+        Serial.print(PCC_GetData()->accumulatorVoltage);
+        Serial.print(" | ");
+        Serial.print("TS: ");
+        Serial.print(PCC_GetData()->tsVoltage);
+        Serial.print(" | ");
         Serial.print("C State: ");
         Serial.print(MCU_GetMCU1Data()->mcuMainState);
         Serial.print(" | ");
-        // Serial.print("APPS: ");
-        // Serial.print(APPS_GetAPPSReading1());
-        // Serial.print(" | ");
-        // Serial.print(APPS_GetAPPSReading2());
-        // Serial.print(" | ");
+
         Serial.print("T State: ");
         Serial.print(Motor_GetState());
         Serial.print(" | ");
 
-        Serial.print("Torque: ");
+        Serial.print("Torque/APPS: ");
         Serial.print(torqueDemand);
-        // Serial.print(" | ");
-        // Serial.print("M: ");
-        // Serial.print(MCU_GetMCU1Data()->motorTorque);
+        Serial.print(" / ");
+        Serial.print(APPS_GetAPPSReading1());
+        Serial.print(" / ");
+        Serial.print(BSE_GetBSEReading()->bseFront_Reading);
+
+        // if (enableRun) {
+        //     torqueDemand = APPS_GetAPPSReading1() * 10;
+        // }
+
         Serial.print(" | ");
         Serial.print("RPM: ");
         Serial.print(MCU_GetMCU1Data()->motorSpeed);
 
-        // Serial.print(" | ");
-        //  Serial.print("maxtorq ");
-        //  Serial.print(MCU_GetMCU1Data()->maxMotorTorque);
         //  Telemetry: Read battery current, phase current, motor speed,
         //  temperature(s)
         Serial.print(" | ");
@@ -219,40 +260,19 @@ void threadMain(void *pvParameters) {
         Serial.print(" | ");
         Serial.print("P Curr: ");
         Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
-        Serial.print(" | ");
-        Serial.print("WarnLvl: ");
-        Serial.print(MCU_GetMCU2Data()->mcuWarningLevel);
-        Serial.print(" | ");
-        Serial.print("MCU Temp: ");
-        Serial.print(MCU_GetMCU2Data()->mcuTemp);
-        Serial.print(" | ");
-        Serial.print("Mtr Temp: ");
-        Serial.print(MCU_GetMCU2Data()->motorTemp);
+        // Serial.print(" | ");
+        // Serial.print("MCU Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->mcuTemp);
+        // Serial.print(" | ");
+        // Serial.print("Mtr Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->motorTemp);
 
         // Serial.print(" | ");
         // Serial.print("Regen: ");
         // Serial.print(enableRegen);
         Serial.print("\r");
-
-        // Serial.print("Battery Current: ");
-        // Serial.print(MCU_GetMCU3Data().mcuCurrent);
-        // Serial.print("      \n");
-
-        // Serial.print("Phase Current: ");
-        // Serial.print(MCU_GetMCU3Data().motorPhaseCurr);
-        // Serial.print("      \n");
-
-        // Serial.print("MCU Temp: ");
-        // Serial.print(MCU_GetMCU2Data().mcuTemp);
-        // Serial.print("      \n");
-
-        // Serial.print("Motor Temp: ");
-        // Serial.print(MCU_GetMCU2Data().motorTemp);
-        // Serial.print("      \n");
-
         // print all errors if they are true in one line
         Serial.print("  |  ");
-
         if (MCU_GetMCU2Data()->dcMainWireOverVoltFault)
             Serial.println("DC Over Volt Fault, ");
         if (MCU_GetMCU2Data()->motorPhaseCurrFault)
@@ -285,7 +305,6 @@ void threadMain(void *pvParameters) {
             enableStandby); // Update motor with the current torque demand
 
 #endif
-        // Serial.print(RTMButton_GetState());
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
 }

@@ -29,16 +29,6 @@ static VCU1 vcu1 = {0};
 static BMS1 bms1 = {0};
 static BMS2 bms2 = {0};
 
-/**
- *
- * TODO 10/24/25
- *
- * CAN Communication from PCC (like ifl100-36)
- *
- * TODO Future: Enums for VCU transitions or abstracted T1-T8 transitions
- *
- */
-
 void Motor_Init() {
     motorData.state = MOTOR_STATE_PRECHARGING; // TODO Check if we want this
     motorData.desiredTorque = 0.0F;            // No torque demand at start
@@ -51,45 +41,22 @@ void threadMotor(void *pvParameters) {
         bms1 = {0};
         bms2 = {0};
 
-        /*
-        if (!CAN_IsBusHealthy(2) || !CAN_IsBusHealthy(3)) {
-            // CAN is lost, enter fault mode immediately
-            motorData.state = MOTOR_STATE_FAULT;
-            motorData.desiredTorque = 0.0F;
-
-            #if DEBUG_FLAG
-                Serial.println("CAN fault detected — entering FAULT state");
-            #endif
-        }*/
-
-        // TODO: Check if keyposition does anything --> if not then manually
-        // switch kl15, and provision a gpio pin to control a 3.3v switch or
-        // mosfet
         switch (motorData.state) {
 
         // TODO: MAKE this state 4? --> matches with inverter state machine
         case MOTOR_STATE_OFF: {
-            // T8
-            // vcu1.KeyPosition = 0;
             break;
         }
 
         case MOTOR_STATE_STANDBY: {
-            // T1
-            // vcu1.KeyPosition = 2;
 
-            // T3
             vcu1.BMS_Main_Relay_Cmd = 0;
-            bms1.Pre_charge_Relay_FB =
-                0; // 1 = ON, 0 = OFF NOTE: see if we can omit this bit
+            bms1.Pre_charge_Relay_FB = 0; // 1 = ON, 0 = OFF
             bms1.Pre_charge_Finish_Sts = 0;
             break;
         }
 
         case MOTOR_STATE_PRECHARGING: {
-            // vcu1.KeyPosition = 2;
-            //  T2 State transition: BMS_Main_Relay_Cmd == 1 &&
-            //  Pre_charge_Relay_FB == 1
             vcu1.BMS_Main_Relay_Cmd = 1;  // 1 = ON, 0 = OFF
             bms1.Pre_charge_Relay_FB = 1; // 1 = ON, 0 = OFF
             vcu1.VCU_TorqueReq = 0;
@@ -97,20 +64,14 @@ void threadMotor(void *pvParameters) {
         }
 
         case MOTOR_STATE_IDLE: {
-            // T4 BMS_Main_Relay_Cmd == 1 && Pre_charge_Finish_Sts == 1 &&
-            // Ubat>=200V
-            vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
-            bms1.Pre_charge_Relay_FB =
-                1; // 1 = ON, 0 = OFF NOTE: see if we can omit this bit
+
+            vcu1.BMS_Main_Relay_Cmd = 1;    // 1 = ON, 0 = OFF
+            bms1.Pre_charge_Relay_FB = 1;   // 1 = ON, 0 = OFF
             bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
 
             // T6
             vcu1.VCU_MotorMode = 0;
             vcu1.VCU_TorqueReq = 0;
-            // Convert to little-endian format
-            // bms2.sAllowMaxRegenCharge = CHANGE_ENDIANESS_16(maxRegen); //
-            // Convert to little-endian format
-
             break;
         }
 
@@ -118,15 +79,14 @@ void threadMotor(void *pvParameters) {
 
             uint16_t maxDischarge =
                 (uint16_t)(BATTERY_MAX_CURRENT_A + 500) * 10;
-            // uint16_t maxRegen = (uint16_t)(BATTERY_MAX_REGEN_A + 500) * 10;
+            uint16_t maxRegen = (uint16_t)(BATTERY_MAX_REGEN_A + 500) * 10;
             bms2.sAllowMaxDischarge = CHANGE_ENDIANESS_16(maxDischarge);
-            // bms2.sAllowMaxRegenCharge = CHANGE_ENDIANESS_16(
-            //     maxRegen); // Convert to little-endian format
+            bms2.sAllowMaxRegenCharge = CHANGE_ENDIANESS_16(
+                maxRegen); // Convert to little-endian format
 
             // T5 BMS_Main_Relay_Cmd == 1 && VCU_MotorMode = 1/2
-            vcu1.BMS_Main_Relay_Cmd = 1; // 1 = ON, 0 = OFF
-            bms1.Pre_charge_Relay_FB =
-                1; // 1 = ON, 0 = OFF NOTE: see if we can omit this bit
+            vcu1.BMS_Main_Relay_Cmd = 1;    // 1 = ON, 0 = OFF
+            bms1.Pre_charge_Relay_FB = 1;   // 1 = ON, 0 = OFF
             bms1.Pre_charge_Finish_Sts = 1; // 1 = ON, 0 = OFF
 
             vcu1.VehicleState = 1; // 0 = Not ready, 1 = Ready
@@ -135,9 +95,6 @@ void threadMotor(void *pvParameters) {
             vcu1.AC_Control_Cmd = 1; // 0 = Not active, 1 = Active
             vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
             vcu1.VCU_WorkMode = 0;
-
-            // vcu1.KeyPosition = 2; // 0 = Off, 1 = ACC, 2 = ON, 3 = Crank+On
-
             vcu1.VCU_TorqueReq =
                 (uint8_t)((fabsf(motorData.desiredTorque) / MOTOR_MAX_TORQUE) *
                           100); // Torque demand in percentage (0-99.6) 350Nm
@@ -150,9 +107,8 @@ void threadMotor(void *pvParameters) {
 
         case MOTOR_STATE_FAULT: {
             // T7 MCU_Warning_Level == 3
-            vcu1.BMS_Main_Relay_Cmd = 0; // 1     = ON, 0 = OFF
-            bms1.Pre_charge_Relay_FB =
-                0; // 1     = ON, 0 = OFF NOTE: see if we can omit this bit
+            vcu1.BMS_Main_Relay_Cmd = 0;    // 1     = ON, 0 = OFF
+            bms1.Pre_charge_Relay_FB = 0;   // 1     = ON, 0 = OFF
             bms1.Pre_charge_Finish_Sts = 0; // 1   = ON, 0 = OFF
             // vcu1.VCU_Warning_Level = 3; // 1    0  = No Warning, 1 = Warning,
             // 2 = Fault, 3 = Critical Fault
@@ -190,19 +146,15 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
                        bool enablePower, bool enableRun, bool enableRegen,
                        bool enableStandby) {
     // Update the motor state based on the RTM button state
-    // float throttleCommand = APPS_GetAPPSReading(); // 0; //TODO Get
-    // APPS_travel
-
+    // float throttleCommand = APPS_GetAPPSReading(); // 0;
+    // TODO Get APPS_travel
     RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
-
     uint8_t prechargeState = PCC_GetData()->state;
     uint16_t prechargeProg = PCC_GetData()->prechargeProgress;
+
     // off --> standby --> precharge --> run --> fault -->standy
     // no kl15 then off
     switch (motorData.state) {
-    // LV on, HV off
-
-    // no kl15
     case MOTOR_STATE_OFF: {
         if (enableStandby) {
             // # if HIMAC_FLAG
@@ -224,7 +176,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
     // HV switch on (PCC CAN message)
     case MOTOR_STATE_PRECHARGING: {
-        if (prechargeProg >= 94 && prechargeState == 3) {
+        if ((prechargeProg >= 94 && prechargeState == 3) || enablePower) {
             // # if HIMAC_FLAG
             //     Serial.println("Precharge finished");
             // # endif
@@ -238,10 +190,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
     // PCC CAN message finished
     case MOTOR_STATE_IDLE: {
-        if (RTMButton_GetState()) {
-#if HIMAC_FLAG
-            // Serial.println("Ready to drive...");
-#endif
+        if (enableRun) {
             motorData.state = MOTOR_STATE_DRIVING;
         }
         motorData.desiredTorque = 0.0F;
@@ -249,16 +198,15 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
     // Ready to drive button pressed
     case MOTOR_STATE_DRIVING: {
-// if(!enableRun){
-//     motorData.state = MOTOR_STATE_IDLE;
-// }
+        // if(!enableRun){
+        //     motorData.state = MOTOR_STATE_IDLE;
+        // }
 
-// if (enablePower) {
-//     motorData.state = MOTOR_STATE_IDLE;
-// }
-// torque is communicated as a percentage
-#if !SPEED_CONTROL_ENABLED
-        if (RTMButton_GetState()) {
+        // if (enablePower) {
+        //     motorData.state = MOTOR_STATE_IDLE;
+        // }
+        // torque is communicated as a percentage
+        if (enableRun) {
 
             if (enableRegen && torqueDemand <= 0.0F &&
                 MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
@@ -274,12 +222,6 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
             motorData.state = MOTOR_STATE_IDLE;
             torqueDemand = 0;
         }
-
-#else
-        // Speed control is enabled, we need to set the torque demand to 0
-        vcu1.VCU_TorqueReq = 0; // 0 = No torque
-#endif
-
         break;
     }
     // Any fault error occurs
@@ -290,11 +232,6 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
         } else if (enableRun) {
             Motor_ClearFaultState();
         }
-        // GOES BACK TO HV ON
-        //  TODO Implement RTM Button
-        //  if(RTMButton_GetState() == false){
-        //      motorData.state = MOTOR_STATE_IDLE;
-        //  }
         motorData.desiredTorque = 0.0F;
         break;
     }
