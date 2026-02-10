@@ -10,6 +10,12 @@
 #define mMCU1_ID 0x105
 #define mMCU2_ID 0x106
 #define mMCU3_ID 0x107
+
+#define mOBMS1_ID 0x6B0
+#define mOBMS2_ID 0x6B1
+#define mOBMS3_ID 0x6B2
+#define mOBMS4_ID 0x6B3
+
 #define pcc_ID 0x222
 
 #define mBMS1_ID 0x1A0
@@ -209,6 +215,58 @@ typedef struct {
     float mcuCurrent;     // DC main wire current in A
     float motorPhaseCurr; // Motor phase current in A
 } MCU3Data;
+
+typedef struct __attribute__((packed)) {
+    int16_t packCurrent;  // Byte 0-1: Pack Current (0.1A/bit)
+    uint16_t packVoltage; // Byte 2-3: Pack Voltage (0.1V/bit)
+    uint8_t packSOC;      // Byte 4: SOC (0.5%/bit)
+    uint8_t relayState;   // Byte 5: Relay State Bitmask
+    uint8_t reserved;     // Byte 6
+    uint8_t checksum;     // Byte 7
+} OBMS1;
+
+typedef struct __attribute__((packed)) {
+    uint16_t packDCL; // Byte 0-1: Discharge Current Limit (1A/bit)
+    uint16_t packCCL; // Byte 2-3: Charge Current Limit (1A/bit)
+    int8_t highTemp;  // Byte 4: Highest Temp (1C/bit)
+    int8_t lowTemp;   // Byte 5: Lowest Temp (1C/bit)
+    uint8_t reserved; // Byte 6
+    uint8_t checksum; // Byte 7
+} OBMS2;
+
+typedef struct __attribute__((packed)) {
+    uint16_t lowCellVolt;  // Byte 0-1: Lowest Cell Voltage (0.0001V/bit)
+    uint16_t highCellVolt; // Byte 2-3: Highest Cell Voltage (0.0001V/bit)
+    uint16_t avgCellVolt;  // Byte 4-5: Average Cell Voltage (0.0001V/bit)
+    uint8_t lowCellVoltID; // Byte 6: ID of the lowest voltage cell
+    uint8_t checksum;      // Byte 7
+} OBMS3;
+
+typedef struct __attribute__((packed)) {
+    uint16_t packResistance;  // Example: Pack Internal Resistance
+    uint16_t packOpenVoltage; // Example: Pack Open Circuit Voltage
+    uint8_t reserved[3];
+    uint8_t checksum;
+} OBMS4;
+
+typedef struct {
+    float packCurrent;  // Amps
+    float packVoltage;  // Volts
+    float soc;          // Percentage (0-100%)
+    uint8_t relayState; // Bitmask (Discharge, Charge, etc.)
+
+    float dischargeLimit; // Amps
+    float chargeLimit;    // Amps
+    int8_t highTemp;      // Celsius
+    int8_t lowTemp;       // Celsius
+
+    float lowCellVolt;  // Volts (e.g., 3.4215f)
+    float highCellVolt; // Volts
+    float avgCellVolt;  // Volts
+    uint8_t lowCellID;
+} OrionBMSData;
+
+OrionBMSData *BMS_GetOrionData();
 
 void MCU_Init();
 uint8_t ComputeChecksum(uint8_t *data);

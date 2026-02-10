@@ -3,7 +3,9 @@
 #pragma once
 
 #define DEBUG_FLAG 0
-#define HIMAC_FLAG 0
+#define HIMAC_FLAG 1
+#define HIMACBSE_FLAG 0
+#define BMS_FLAG 0
 
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
@@ -54,10 +56,13 @@
 #define APPS1_20PCT_ADC 784.0F
 #define APPS2_20PCT_ADC 1150.0F
 
+#define APPS1_FULL_PCT_ADC 1580.0F
+#define APPS2_FULL_PCT_ADC 3680.0F
+
 // Measured resting ADC (change these with actual findings this is just safe
 // zone values)
-#define APPS1_REST_ADC 11.75F
-#define APPS2_REST_ADC 17.5F
+#define APPS1_REST_ADC 4.75F
+#define APPS2_REST_ADC 2797.0F
 
 // Clamp helper
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
@@ -79,9 +84,9 @@
 #define APPS_FAULT_TIME_THRESHOLD_MS 100
 
 #define APPS_IMPLAUSABILITY_THRESHOLD 0.1            // 10%
-#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.25 // 25%
+#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.20 // 20%
 #define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD                                  \
-    1.5 // TODO: change back to PSI200    // PSI
+    0.50 // TODO: change back to PSI200    // IN VOLTS
 #define APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD 0.05 // 5%
 
 #define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
@@ -91,7 +96,8 @@
 
 #define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
 
-#define BSE_LOWER_THRESHOLD 0.5F
+#define BRAKE_LIGHT_THRESHOLD 0.5F
+#define BSE_LOWER_THRESHOLD 0.25F
 #define BSE_UPPER_THRESHOLD 4.5F
 #define BSE_IMPLAUSABILITY_THRESHOLD 0.1F
 
@@ -99,10 +105,10 @@
 
 #define BSE_CUTOFF_HZ 100.0F
 
-#define MOTOR_MAX_TORQUE 260.0F // TODO: Update with real value
+#define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
 
-#define BATTERY_MAX_CURRENT_A 1.0F
-#define BATTERY_MAX_REGEN_A 1.0F
+#define BATTERY_MAX_CURRENT_A 1.0F // TO CHANGE
+#define BATTERY_MAX_REGEN_A 1.0F   // TO CHANGE
 
 #define COMPUTE_ALPHA(CUTOFF_HZ)                                               \
     (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))

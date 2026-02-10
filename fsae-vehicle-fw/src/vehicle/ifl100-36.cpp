@@ -23,6 +23,8 @@ static MCU1Data mcu1Data;
 static MCU2Data mcu2Data;
 static MCU3Data mcu3Data;
 
+static OrionBMSData bmsData;
+
 void MCU_Init() {
     // Fill with reasonable dummy values
     mcu1Data = {.motorSpeed = 0.0F,
@@ -61,6 +63,15 @@ void MCU_Init() {
         .motorPhaseCurr = 3.0F // Default phase current in A
     };
 
+    bmsData = {.packCurrent = 0.0F,
+               .packVoltage = 0.0F,
+               .soc = 0.0F,
+               .relayState = 0,
+               .dischargeLimit = 0.0F,
+               .chargeLimit = 0.0F,
+               .highTemp = 25,
+               .lowTemp = 25};
+
     // Initialize the motor thread
     xTaskCreate(threadMCU, "threadMCU", THREAD_MCU_STACK_SIZE, NULL,
                 THREAD_MCU_PRIORITY, NULL);
@@ -70,6 +81,7 @@ static void threadMCU(void *pvParameters) {
     while (true) {
         // Read the CAN messages
         CAN_Receive(&rx_id, &rx_data);
+
         switch (rx_id) {
         case mMCU1_ID: {
             MCU1 mcu1 = {0};
@@ -163,6 +175,45 @@ static void threadMCU(void *pvParameters) {
             processPCCMessage(rx_data);
             break;
         }
+
+        case mOBMS1_ID: {
+            OBMS1 raw = {0};
+            memcpy(&raw, &rx_data, sizeof(raw));
+
+            taskENTER_CRITICAL();
+            bmsData.packCurrent = raw.packCurrent * 0.1F;
+            bmsData.packVoltage = raw.packVoltage * 0.1F;
+            bmsData.soc = raw.packSOC * 0.5F;
+            bmsData.relayState = raw.relayState;
+            taskEXIT_CRITICAL();
+            break;
+        }
+
+        case mOBMS2_ID: {
+            OBMS2 raw = {0};
+            memcpy(&raw, &rx_data, sizeof(raw));
+
+            taskENTER_CRITICAL();
+            bmsData.dischargeLimit = (float)raw.packDCL;
+            bmsData.chargeLimit = (float)raw.packCCL;
+            bmsData.highTemp = raw.highTemp;
+            bmsData.lowTemp = raw.lowTemp;
+            taskEXIT_CRITICAL();
+            break;
+        }
+
+        case mOBMS3_ID: {
+            OBMS3 raw = {0};
+            memcpy(&raw, &rx_data, sizeof(raw));
+
+            taskENTER_CRITICAL();
+            bmsData.lowCellVolt = raw.lowCellVolt * 0.0001F;
+            bmsData.highCellVolt = raw.highCellVolt * 0.0001F;
+            bmsData.avgCellVolt = raw.avgCellVolt * 0.0001F;
+            bmsData.lowCellID = raw.lowCellVoltID;
+            taskEXIT_CRITICAL();
+            break;
+        }
         default: {
             break;
         }
@@ -175,6 +226,8 @@ MCU1Data *MCU_GetMCU1Data() { return &mcu1Data; }
 MCU2Data *MCU_GetMCU2Data() { return &mcu2Data; }
 
 MCU3Data *MCU_GetMCU3Data() { return &mcu3Data; }
+
+OrionBMSData *BMS_GetOrionData() { return &bmsData; }
 
 // checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
 uint8_t ComputeChecksum(uint8_t *data) {

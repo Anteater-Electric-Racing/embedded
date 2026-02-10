@@ -11,6 +11,7 @@ void GPIO_Init() {
     pinMode(2, INPUT_PULLUP);   // wheel speed 1
     pinMode(3, INPUT_PULLUP);   // wheel speed 2
     pinMode(4, INPUT_PULLDOWN); // rtm button
+    pinMode(9, OUTPUT);
 }
 
 // Read the current logical level of a GPIO pin.
@@ -20,5 +21,31 @@ int GPIO_Read(int pin) {
     return digitalReadFast(pin);
 #else
     return digitalRead(pin);
+#endif
+}
+
+void GPIO_Toggle(int *toggle, int pin) {
+    if (toggle) {
+        digitalWrite(pin, HIGH);
+        *toggle = 0;
+    } else {
+        digitalWrite(pin, LOW);
+        *toggle = 1;
+    }
+}
+
+void GPIO_SetHigh(int pin) {
+#ifdef digitalReadFast
+    return digitalReadFast(pin);
+#else
+    digitalWrite(pin, HIGH);
+#endif
+}
+
+void GPIO_SetLow(int pin) {
+#ifdef digitalReadFast
+    return digitalReadFast(pin);
+#else
+    digitalWrite(pin, LOW);
 #endif
 }

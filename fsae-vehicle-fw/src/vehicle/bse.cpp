@@ -21,8 +21,8 @@ static TickType_t bseLatestHealthyStateTime =
     0; // Set to 0 when fault not detected
 
 void BSE_Init() {
-    bseData.bseFront_PSI = 0;
-    bseData.bseRear_PSI = 0;
+    bseData.bseFront_Reading = 0;
+    bseData.bseRear_Reading = 0;
 
     bseRawData.bseRawFront = 0;
     bseRawData.bseRawRear = 0;
@@ -39,9 +39,12 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
     float bseVoltage1 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawFront);
     float bseVoltage2 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawRear);
 
-#if DEBUG_FLAG
-    Serial.print("BSE Voltage: ");
-    Serial.println(bseVoltage1);
+#if HIMACBSE_FLAG
+    Serial.print("bseRawData.bseRawFront: ");
+    Serial.print(bseVoltage1);
+    Serial.print(" | bseRawData.bseRawRear: ");
+    Serial.print(bseVoltage2);
+    Serial.print("\r");
 #endif
 
     // Check BSE open/short circuit
@@ -53,9 +56,9 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
         TickType_t elapsedTicks = now - bseLatestHealthyStateTime;
         TickType_t elapsedMs = elapsedTicks * portTICK_PERIOD_MS;
         if (elapsedMs > BSE_FAULT_TIME_THRESHOLD_MS) {
-#if DEBUG_FLAG
-            Serial.println("Setting BSE fault");
-#endif
+            // // #if DEBUG_FLAG
+            // Serial.println("Setting BSE fault");
+            // // #endif
             Faults_SetFault(FAULT_BSE);
         }
 
@@ -64,8 +67,8 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
         Faults_ClearFault(FAULT_BSE);
     }
 
-    bseData.bseFront_PSI = BSE_VOLTAGE_TO_PSI(bseVoltage1);
-    bseData.bseRear_PSI = BSE_VOLTAGE_TO_PSI(bseVoltage2);
+    bseData.bseFront_Reading = BSE_VOLTAGE_TO_PSI(bseVoltage1);
+    bseData.bseRear_Reading = BSE_VOLTAGE_TO_PSI(bseVoltage2);
 }
 
 BSEData *BSE_GetBSEReading() { return &bseData; }
