@@ -194,8 +194,8 @@ static void threadMCU(void *pvParameters) {
             memcpy(&raw, &rx_data, sizeof(raw));
 
             taskENTER_CRITICAL();
-            bmsData.dischargeLimit = (float)raw.packDCL;
-            bmsData.chargeLimit = (float)raw.packCCL;
+            bmsData.dischargeLimit = (float)raw.packDCL; // Drive Current Limits
+            bmsData.chargeLimit = (float)raw.packCCL;    // Regen Current Limits
             bmsData.highTemp = raw.highTemp;
             bmsData.lowTemp = raw.lowTemp;
             taskEXIT_CRITICAL();

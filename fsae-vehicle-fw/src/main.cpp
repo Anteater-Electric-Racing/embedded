@@ -81,6 +81,33 @@ void threadMain(void *pvParameters) {
             digitalWrite(9, LOW);
         }
 
+        /*============SERIAL MONITOR: ANSI ESCAPE CODES============*/
+        Serial.print("\033[H");
+
+        Serial.println("========= VEHICLE TELEMETRY =========");
+
+        Serial.printf(
+            "Precharge: %3d %%        AccVolt: %7.2f V     TS: %7.2f V\n",
+            PCC_GetData()->prechargeProgress, PCC_GetData()->accumulatorVoltage,
+            PCC_GetData()->tsVoltage);
+
+        Serial.printf("MCU State: %-3d          Motor State: %-3d\n",
+                      MCU_GetMCU1Data()->mcuMainState, Motor_GetState());
+
+        Serial.printf("APPS: %6.2f      Brake: %6.2f\n", APPS_GetAPPSReading1(),
+                      BSE_GetBSEReading()->bseFront_Reading);
+
+        Serial.printf("RPM: %7d\n", MCU_GetMCU1Data()->motorSpeed);
+
+        Serial.printf("Battery V: %7.2f V      Battery I: %7.2f A\n",
+                      MCU_GetMCU3Data()->mcuVoltage,
+                      MCU_GetMCU3Data()->mcuCurrent);
+
+        Serial.printf("Phase Current: %7.2f A\n",
+                      MCU_GetMCU3Data()->motorPhaseCurr);
+
+        Serial.println("-------------------------------------");
+
 #if BMS_FLAG
         // --- NEW: Orion BMS 2 Telemetry ---
         // Orion BMS Telemetry

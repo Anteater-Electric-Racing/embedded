@@ -31,7 +31,7 @@ static BMS1 bms1 = {0};
 static BMS2 bms2 = {0};
 
 void Motor_Init() {
-    motorData.state = MOTOR_STATE_PRECHARGING; // TODO yes, DEFAULT TO PRECHARGE
+    motorData.state = MOTOR_STATE_PRECHARGING; // DEFAULT TO PRECHARGE
     motorData.desiredTorque = 0.0F;            // No torque demand at start
 }
 
@@ -76,8 +76,11 @@ void threadMotor(void *pvParameters) {
 
         case MOTOR_STATE_DRIVING: {
 
+            /*============VARIABLE POWER DERATING (PREREQ: BMS) ============*/
             // float maxBatteryCurrent = min(BATTERY_MAX_CURRENT_A, INFINITY);
             // float maxRegenCurrent = min(BATTERY_MAX_REGEN_A, INFINITY);
+
+            // pass into maxDischarge/maxRegen fields
 
             uint16_t maxDischarge =
                 (uint16_t)(BATTERY_MAX_CURRENT_A + 500) * 10;
