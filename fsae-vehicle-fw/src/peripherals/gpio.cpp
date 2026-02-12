@@ -24,16 +24,6 @@ int GPIO_Read(int pin) {
 #endif
 }
 
-void GPIO_Toggle(int *toggle, int pin) {
-    if (toggle) {
-        digitalWrite(pin, HIGH);
-        *toggle = 0;
-    } else {
-        digitalWrite(pin, LOW);
-        *toggle = 1;
-    }
-}
-
 void GPIO_SetHigh(int pin) {
 #ifdef digitalReadFast
     return digitalReadFast(pin);
