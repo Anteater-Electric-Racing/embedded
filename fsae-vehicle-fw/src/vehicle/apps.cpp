@@ -46,6 +46,7 @@ void APPS_UpdateData(uint16_t rawReading1,
     // Serial.print("Raw APPS2: ");
     // Serial.println(rawReading2);
 
+    /*========================== REMOVE: RAW CLAMP ==========================*/
     // if (rawReading1 > APPS1_20PCT_ADC)
     //     rawReading1 = APPS1_20PCT_ADC;
     // if (rawReading2 > APPS2_20PCT_ADC)
@@ -69,6 +70,7 @@ void APPS_UpdateData(uint16_t rawReading1,
         LINEAR_MAP(appsData.apps2RawReading, (float)APPS2_REST_ADC,
                    (float)APPS2_FULL_PCT_ADC, 0.0F, 1.0F);
 
+    /*========================== HELPER PCT CLAMP ==========================*/
     // clamp since LINEAR_MAP doesn't clamp
     // appsData.appsReading1_Percentage =
     //     CLAMP01(appsData.appsReading1_Percentage);
@@ -81,6 +83,7 @@ void APPS_UpdateData(uint16_t rawReading1,
     appsData.appsReading2_Voltage =
         ADC_VALUE_TO_VOLTAGE(appsData.apps2RawReading);
 
+    /*========================== RAW VOLTAGE ==========================*/
     // Serial.print("APPS1 RAW Voltage: ");
     // Serial.println(appsData.appsReading1_Voltage);
     // Serial.print("APPS2 RAW Voltage: ");
@@ -97,6 +100,8 @@ void APPS_UpdateData(uint16_t rawReading1,
     } else if (appsData.appsReading2_Voltage > APPS_5V_MAX) {
         appsData.appsReading2_Voltage = APPS_5V_MAX;
     }
+
+    /*========================== 20 PCT LINEAR MAP ==========================*/
     // Moved this upwards to before the clamping of percentage
 
     // Map voltage to percentage of throttle travel, limiting to 0-1 range

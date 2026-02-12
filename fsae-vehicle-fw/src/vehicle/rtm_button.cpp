@@ -19,3 +19,5 @@ void RTMButton_Update(bool rtmButton) {
 }
 
 bool RTMButton_GetState() { return rtmState; }
+
+void RTMButton_Reset() { rtmState = false; }

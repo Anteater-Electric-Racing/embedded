@@ -68,33 +68,17 @@ void threadMain(void *pvParameters) {
 #endif
 
     while (true) {
-        digitalWrite(13, 1);
-        /*
-         * Read user input from Serial to control torque demand.
-         * 'w' or 'W' to increase torque demand,
-         * 's' or 'S' to decrease torque demand,
-         *
-         * 'p' or 'P' to enter precharging state from standby,
-         * 'l' or 'L' to enter standby from precharging
-         *
-         * 'o' or 'O' to enter run state,
-         * 'k' or 'K' to go back to idle from run
-         *
-         * ' ' (space) to stop all torque. (reset w/s to 0)
-         * R to toggle regen
-         *
-         * The torque demand is limited between 0 and TORQUE_MAX_NM.
-         *
-         * Telemetry: battery current, phase current, motor speed,
-         * temperature(s)
-         */
-        //    BSE_GetBSEReading()->bseRear_Reading > 0.5F
+
+        /*============LOW PRIORITY GPIO UPDATES============*/
+        digitalWrite(13, 1); // orange led on teensy
+
+        RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
 
         if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
             BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
-            digitalWrite(9, 1);
+            digitalWrite(9, HIGH);
         } else {
-            digitalWrite(9, 0);
+            digitalWrite(9, LOW);
         }
 
 #if BMS_FLAG
@@ -125,6 +109,26 @@ void threadMain(void *pvParameters) {
 #endif
 
 #if HIMAC_FLAG
+        /*
+         * Read user input from Serial to control torque demand.
+         * 'w' or 'W' to increase torque demand,
+         * 's' or 'S' to decrease torque demand,
+         *
+         * 'p' or 'P' to enter precharging state from standby,
+         * 'l' or 'L' to enter standby from precharging
+         *
+         * 'o' or 'O' to enter run state,
+         * 'k' or 'K' to go back to idle from run
+         *
+         * ' ' (space) to stop all torque. (reset w/s to 0)
+         * R to toggle regen
+         *
+         * The torque demand is limited between 0 and TORQUE_MAX_NM.
+         *
+         * Telemetry: battery current, phase current, motor speed,
+         * temperature(s)
+         */
+
         if (Serial.available()) {
             char input = Serial.read();
 
