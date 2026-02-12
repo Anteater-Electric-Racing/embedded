@@ -11,8 +11,6 @@ typedef struct __attribute__((packed)) {
     uint16_t prechargeProgress;
 } PCC;
 
-// static PCC pccData;
-
 void PCC_Init();
 void processPCCMessage(uint64_t);
 

@@ -18,9 +18,6 @@ void processPCCMessage(uint64_t rx_data) {
     taskENTER_CRITICAL();
     memcpy(&pccData, &rx_data, sizeof(PCC));
     taskEXIT_CRITICAL();
-
-    // Serial.print("Precharge Progress: ");
-    // Serial.println(pccData.prechargeProgress);
 }
 
 PCC *PCC_GetData() { return &pccData; }

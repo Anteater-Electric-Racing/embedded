@@ -100,28 +100,10 @@ void threadADC(void *pvParameters) {
             adc1Reads[currentIndexADC1] = adcRead;
         }
 
-        // Serial.print("ADC0 Reads: ");
-        // for (int i = 0; i < SENSOR_PIN_AMT_ADC0; i++) {
-        //     Serial.print(adc0Reads[i]);
-        //     Serial.print(" ");
-        // }
-        // Serial.println();
-        // Serial.print("ADC1 Reads: ");
-        // for (int i = 0; i < SENSOR_PIN_AMT_ADC1; i++) {
-        //     Serial.print(adc1Reads[i]);
-        //     Serial.print(" ");
-        // }
-        // Serial.println();
-        // Update each sensors data
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
-
-        thermal_Update(
-            adc0Reads[THERMISTOR_1_INDEX], adc0Reads[THERMISTOR_2_INDEX],
-            adc0Reads[THERMISTOR_3_INDEX], adc0Reads[THERMISTOR_4_INDEX]);
-
-        // Handle any faults that were raised
-        // Faults_HandleFaults();
-        // Motor_UpdateMotor();
+        // thermal_Update(
+        //     adc0Reads[THERMISTOR_1_INDEX], adc0Reads[THERMISTOR_2_INDEX],
+        //     adc0Reads[THERMISTOR_3_INDEX], adc0Reads[THERMISTOR_4_INDEX]);
     }
 }

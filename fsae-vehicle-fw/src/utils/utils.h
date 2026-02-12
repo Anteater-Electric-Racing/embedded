@@ -2,10 +2,40 @@
 
 #pragma once
 
+/*TODO Fixes:
+ ANSI ESCAPE CODES LES GO
+
+
+2/12 Morning (8am - 10:30am sprint)
+    - Add only ONE testing flag (only debug flag)
+    - DONE Move updateMotor into motorTask.
+
+
+
+    - add checksum for BMS messages
+    - Fix PCC packet structure (acc/Ts voltage as uint8s)
+    - DONE Make threadMain() the GPIO spot
+    - Better serial output (with everything. look into this online examples or
+   tools or libs or vscode extension??
+
+- LOOK AT THREAD STACK SIZES???
+
+    - DONE APPS sensors for throttle control (variable MAX adjusted with
+serial?) -- see if I can keep this flashed past startup?
+
+    - Big thing will be current limiting and variable derating, this will take 1
+hr to implement properly with testing features along the way
+
+
+   ENSURE NO LOGIC Breaks, bare minum 10% should work.
+*/
+
 #define DEBUG_FLAG 0
-#define HIMAC_FLAG 1
-#define HIMACBSE_FLAG 0
-#define BMS_FLAG 0
+#define HIMAC_FLAG 0
+#define BMS_FLAG 0 // TO REMOVE
+
+#define HIGH 1
+#define LOW 0
 
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
@@ -56,11 +86,13 @@
 #define APPS1_20PCT_ADC 784.0F
 #define APPS2_20PCT_ADC 1150.0F
 
+/**KZ Driving MAX (1+2) */
 #define APPS1_FULL_PCT_ADC 1580.0F
 #define APPS2_FULL_PCT_ADC 3680.0F
 
 // Measured resting ADC (change these with actual findings this is just safe
 // zone values)
+/**KZ Driving MIN (1+2) */
 #define APPS1_REST_ADC 4.75F
 #define APPS2_REST_ADC 2797.0F
 
@@ -84,7 +116,7 @@
 #define APPS_FAULT_TIME_THRESHOLD_MS 100
 
 #define APPS_IMPLAUSABILITY_THRESHOLD 0.1            // 10%
-#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.20 // 20%
+#define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.15 // 15%
 #define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD                                  \
     0.50 // TODO: change back to PSI200    // IN VOLTS
 #define APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD 0.05 // 5%
@@ -106,6 +138,7 @@
 #define BSE_CUTOFF_HZ 100.0F
 
 #define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
+#define CAPPED_MOTOR_TORQUE 50.0F
 
 #define BATTERY_MAX_CURRENT_A 1.0F // TO CHANGE
 #define BATTERY_MAX_REGEN_A 1.0F   // TO CHANGE
