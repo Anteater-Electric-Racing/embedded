@@ -2,32 +2,9 @@
 
 #pragma once
 
-/*TODO Fixes:
- ANSI ESCAPE CODES LES GO
-
-
-2/12 Morning (8am - 10:30am sprint)
-    - DONE Add only TWO testing flag (only debug, HIMAC flag)
-    - DONE Move updateMotor into motorTask.
-
-
-
-    - ehhhhh add checksum for BMS messages <--- only ones that matter?
+/*TODO Fixes
     - Fix PCC packet structure (acc/Ts voltage as uint8s)
-    - DONE Make threadMain() the GPIO spot
-    - Better serial output (with everything. look into this online examples or
-   tools or libs or vscode extension??
-
-- LOOK AT THREAD STACK SIZES???
-
-    - DONE APPS sensors for throttle control (variable MAX adjusted with
-serial?) -- see if I can keep this flashed past startup?
-
-    - DONE Big thing will be current limiting and variable derating, this will
-take 1 hr to implement properly with testing features along the way
-
-
-   ENSURE NO LOGIC Breaks, bare minum 10% should work.
+    - Better serial output (read off port and output in more readable form)
 */
 
 #define DEBUG_FLAG 0

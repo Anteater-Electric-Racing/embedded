@@ -151,6 +151,7 @@ void threadMotor(void *pvParameters) {
     }
 }
 
+#if !HIMAC_FLAG
 void Motor_UpdateMotor(float torqueDemand) {
 
     Faults_HandleFaults();
@@ -207,6 +208,9 @@ void Motor_UpdateMotor(float torqueDemand) {
     }
 }
 
+#endif
+
+#if HIMAC_FLAG
 void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
                        bool enablePower, bool enableRun, bool enableRegen,
                        bool enableStandby) {
@@ -293,6 +297,7 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
     }
 }
+#endif
 
 float Motor_GetTorqueDemand() { return motorData.desiredTorque; }
 

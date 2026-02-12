@@ -53,6 +53,7 @@ void setup() { // runs once on bootup
 
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
+
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
 #if HIMAC_FLAG
@@ -70,7 +71,7 @@ void threadMain(void *pvParameters) {
     while (true) {
 
         /*============LOW PRIORITY GPIO UPDATES============*/
-        digitalWrite(13, 1); // orange led on teensy
+        digitalWrite(13, HIGH); // orange led on teensy
 
         RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
 
@@ -81,33 +82,8 @@ void threadMain(void *pvParameters) {
             digitalWrite(9, LOW);
         }
 
-        /*============SERIAL MONITOR: ANSI ESCAPE CODES============*/
-        Serial.print("\033[H");
-
-        Serial.println("========= VEHICLE TELEMETRY =========");
-
-        Serial.printf(
-            "Precharge: %3d %%        AccVolt: %7.2f V     TS: %7.2f V\n",
-            PCC_GetData()->prechargeProgress, PCC_GetData()->accumulatorVoltage,
-            PCC_GetData()->tsVoltage);
-
-        Serial.printf("MCU State: %-3d          Motor State: %-3d\n",
-                      MCU_GetMCU1Data()->mcuMainState, Motor_GetState());
-
-        Serial.printf("APPS: %6.2f      Brake: %6.2f\n", APPS_GetAPPSReading1(),
-                      BSE_GetBSEReading()->bseFront_Reading);
-
-        Serial.printf("RPM: %7d\n", MCU_GetMCU1Data()->motorSpeed);
-
-        Serial.printf("Battery V: %7.2f V      Battery I: %7.2f A\n",
-                      MCU_GetMCU3Data()->mcuVoltage,
-                      MCU_GetMCU3Data()->mcuCurrent);
-
-        Serial.printf("Phase Current: %7.2f A\n",
-                      MCU_GetMCU3Data()->motorPhaseCurr);
-
-        Serial.println("-------------------------------------");
-
+        // IMPLEMENT BETTER SERIAL PROCESSING
+        // (TEENSY does not support ANSI escape codes)
 #if BMS_FLAG
         // --- NEW: Orion BMS 2 Telemetry ---
         // Orion BMS Telemetry
@@ -336,7 +312,7 @@ void threadMain(void *pvParameters) {
             enableStandby); // Update motor with the current torque demand
 
 #endif
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(100)); // Delay for 100ms
     }
 }
 
