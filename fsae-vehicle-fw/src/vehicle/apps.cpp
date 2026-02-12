@@ -195,10 +195,10 @@ static void checkAndHandlePlausibilityFault() {
     float BSEReading_Front = BSE_GetBSEReading()->bseFront_Reading;
     float BSEReading_Rear = BSE_GetBSEReading()->bseRear_Reading;
 
-    float BSEReading = BSEReading_Front;
-    if (BSEReading_Rear > BSEReading_Front) {
-        BSEReading = BSEReading_Rear;
-    }
+    // float BSEReading = BSEReading_Front;
+    // if (BSEReading_Rear > BSEReading_Front) {
+    //     BSEReading = BSEReading_Rear;
+    // }
 
 #if DEBUG_FLAG
     Serial.print("BSE Reading: ");
@@ -206,7 +206,8 @@ static void checkAndHandlePlausibilityFault() {
 #endif
 
     if (APPS_GetAPPSReading() > APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD &&
-        BSEReading_Front > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD) {
+        (BSEReading_Front > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD ||
+         BSEReading_Rear > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD)) {
         Faults_SetFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
     } else {
         if (APPS_GetAPPSReading() < APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD) {
