@@ -2,12 +2,9 @@
 
 #pragma once
 
-/*
-    TODO Fixes
-        - Fix PCC packet structure (acc/Ts voltage as uint8s)
-        - Better serial output (read off port and output in more readable form)
-
-
+/*TODO Fixes
+    - Fix PCC packet structure (acc/Ts voltage as uint8s)
+    - Better serial output (read off port and output in more readable form)
 */
 
 #define DEBUG_FLAG 0
