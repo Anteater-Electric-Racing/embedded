@@ -156,7 +156,6 @@ static void checkAndHandleAPPSFault() {
     Serial.println(appsData.appsReading1_Percentage);
     Serial.print("Percent APPS2: ");
     Serial.println(appsData.appsReading2_Percentage);
-
 #endif
 
     if (appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
