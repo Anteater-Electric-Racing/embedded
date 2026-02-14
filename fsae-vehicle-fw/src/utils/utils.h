@@ -11,7 +11,7 @@
 */
 
 #define DEBUG_FLAG 0
-#define HIMAC_FLAG 1
+#define HIMAC_FLAG 0
 #define BMS_FLAG 0 // TO REMOVE
 
 #define HIGH 1
@@ -28,7 +28,7 @@
 
 #define WHEEL_SPEED_1_PIN 2
 #define WHEEL_SPEED_2_PIN 3
-#define RTM_BUTTON_PIN 4
+#define RTM_BUTTON_PIN 23
 
 #define LOGIC_LEVEL_V 3.3F
 #define TIME_STEP 0.001F // 1ms time step
@@ -118,10 +118,10 @@
 #define BSE_CUTOFF_HZ 100.0F
 
 #define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
-#define CAPPED_MOTOR_TORQUE 50.0F
+#define CAPPED_MOTOR_TORQUE 0.0F
 
-#define BATTERY_MAX_CURRENT_A 1.0F // TO CHANGE
-#define BATTERY_MAX_REGEN_A 1.0F   // TO CHANGE
+#define BATTERY_MAX_CURRENT_A 20.0F // TO CHANGE
+#define BATTERY_MAX_REGEN_A 1.0F    // TO CHANGE
 
 #define COMPUTE_ALPHA(CUTOFF_HZ)                                               \
     (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))

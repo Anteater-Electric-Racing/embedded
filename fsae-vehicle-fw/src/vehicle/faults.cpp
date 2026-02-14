@@ -12,9 +12,9 @@
 #include "utils/utils.h"
 #include "vehicle/motor.h"
 
-#if DEBUG_FLAG
+// #if DEBUG_FLAG
 #include <Arduino.h>
-#endif
+// #endif
 
 static uint32_t faultBitMap;
 
@@ -38,16 +38,16 @@ void Faults_SetFault(FaultType fault) {
         break;
     }
     case FAULT_APPS: {
-#if DEBUG_FLAG
+        // #if DEBUG_FLAG
         Serial.println("Setting APPS fault");
-#endif
+        // #endif
         faultBitMap |= FAULT_APPS_MASK;
         break;
     }
     case FAULT_BSE: {
-#if DEBUG_FLAG
+        // #if DEBUG_FLAG
         Serial.println("Setting BSE fault");
-#endif
+        // #endif
         faultBitMap |= FAULT_BSE_MASK;
         break;
     }
@@ -56,9 +56,9 @@ void Faults_SetFault(FaultType fault) {
         break;
     }
     case FAULT_APPS_BRAKE_PLAUSIBILITY: {
-#if DEBUG_FLAG
+        // #if DEBUG_FLAG
         Serial.println("Setting APPS Plausibility fault");
-#endif
+        // #endif
         faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }

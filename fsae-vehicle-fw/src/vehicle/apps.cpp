@@ -205,8 +205,7 @@ static void checkAndHandlePlausibilityFault() {
 #endif
 
     if (APPS_GetAPPSReading() > APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD &&
-        (BSEReading_Front > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD ||
-         BSEReading_Rear > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD)) {
+        (BSEReading_Front > APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD)) {
         Faults_SetFault(FAULT_APPS_BRAKE_PLAUSIBILITY);
     } else {
         if (APPS_GetAPPSReading() < APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD) {

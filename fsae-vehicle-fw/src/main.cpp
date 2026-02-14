@@ -73,14 +73,95 @@ void threadMain(void *pvParameters) {
         /*============LOW PRIORITY GPIO UPDATES============*/
         digitalWrite(13, HIGH); // orange led on teensy
 
-        RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
-
         if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
             BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
             digitalWrite(9, HIGH);
         } else {
             digitalWrite(9, LOW);
         }
+
+        Serial.print("PP:");
+        Serial.print(PCC_GetData()->prechargeProgress);
+        Serial.print(" | ");
+        Serial.print("RTMB: ");
+        Serial.print(RTMButton_GetState());
+        Serial.print(" | ");
+        Serial.print("C State: ");
+        Serial.print(MCU_GetMCU1Data()->mcuMainState);
+        Serial.print(" | ");
+
+        Serial.print("T State: ");
+        Serial.print(Motor_GetState());
+        Serial.print(" | ");
+
+        Serial.print("Torque/APPS: ");
+        Serial.print((APPS_GetAPPSReading1() * (CAPPED_MOTOR_TORQUE)));
+        Serial.print(" / ");
+        Serial.print(APPS_GetAPPSReading1());
+        Serial.print(" / ");
+        Serial.print(BSE_GetBSEReading()->bseFront_Reading);
+
+        // if (enableRun) {
+        //     torqueDemand = APPS_GetAPPSReading1() * 10;
+        // }
+
+        Serial.print(" | ");
+        Serial.print("RPM: ");
+        Serial.print(MCU_GetMCU1Data()->motorSpeed);
+
+        //  Telemetry: Read battery current, phase current, motor speed,
+        //  temperature(s)
+        Serial.print(" | ");
+        Serial.print("B Volt: ");
+        Serial.print(MCU_GetMCU3Data()->mcuVoltage);
+        Serial.print(" | ");
+        Serial.print("B Curr: ");
+        Serial.print(MCU_GetMCU3Data()->mcuCurrent);
+        Serial.print(" | ");
+        Serial.print("P Curr: ");
+        Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
+        Serial.print(" | ");
+        Serial.print("FaultMap: ");
+        Serial.print(Faults_GetFaults(), arduino::BIN);
+        // Serial.print(" | ");
+        // Serial.print("MCU Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->mcuTemp);
+        // Serial.print(" | ");
+        // Serial.print("Mtr Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->motorTemp);
+
+        // Serial.print(" | ");
+        // Serial.print("Regen: ");
+        // Serial.print(enableRegen);
+        Serial.print("\r");
+        // print all errors if they are true in one line
+        Serial.print("  |  ");
+        if (MCU_GetMCU2Data()->dcMainWireOverVoltFault)
+            Serial.println("DC Over Volt Fault, ");
+        if (MCU_GetMCU2Data()->motorPhaseCurrFault)
+            Serial.println("Motor Phase Curr Fault, ");
+        if (MCU_GetMCU2Data()->mcuOverHotFault)
+            Serial.println("MCU Over Hot Fault, ");
+        if (MCU_GetMCU2Data()->resolverFault)
+            Serial.println("Resolver Fault, ");
+        if (MCU_GetMCU2Data()->phaseCurrSensorFault)
+            Serial.println("Phase Curr Sensor Fault, ");
+        if (MCU_GetMCU2Data()->motorOverSpdFault)
+            Serial.println("Motor Over Spd Fault, ");
+        if (MCU_GetMCU2Data()->drvMotorOverHotFault)
+            Serial.println("Driver Motor Over Hot Fault, ");
+        if (MCU_GetMCU2Data()->dcMainWireOverCurrFault)
+            Serial.println("DC Main Wire Over Curr Fault, ");
+        if (MCU_GetMCU2Data()->drvMotorOverCoolFault)
+            Serial.println("Driver Motor Over Cool Fault, ");
+        if (MCU_GetMCU2Data()->dcLowVoltWarning)
+            Serial.println("DC Low Volt Warning, ");
+        if (MCU_GetMCU2Data()->mcu12VLowVoltWarning)
+            Serial.println("MCU 12V Low Volt Warning, ");
+        if (MCU_GetMCU2Data()->motorStallFault)
+            Serial.println("Motor Stall Fault, ");
+        if (MCU_GetMCU2Data()->motorOpenPhaseFault)
+            Serial.println("Motor Open Phase Fault, ");
 
         // IMPLEMENT BETTER SERIAL PROCESSING
         // (TEENSY does not support ANSI escape codes)
@@ -312,7 +393,7 @@ void threadMain(void *pvParameters) {
             enableStandby); // Update motor with the current torque demand
 
 #endif
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(100)); // Delay for 100ms
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10)); // Delay for 100ms
     }
 }
 

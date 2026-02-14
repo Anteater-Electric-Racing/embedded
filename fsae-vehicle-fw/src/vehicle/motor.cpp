@@ -143,7 +143,12 @@ void threadMotor(void *pvParameters) {
         memcpy(&bms2_msg, &bms2, sizeof(bms2_msg));
         CAN_Send(mBMS2_ID, bms2_msg);
 
-        float pedalTorque = APPS_GetAPPSReading1() * (CAPPED_MOTOR_TORQUE);
+        float pedalTorque;
+        if (APPS_GetAPPSReading1() > 0.125) {
+            pedalTorque = APPS_GetAPPSReading1() * (MOTOR_MAX_TORQUE);
+        } else {
+            pedalTorque = 0;
+        }
 
 #if !HIMAC_FLAG
         Motor_UpdateMotor(pedalTorque);
@@ -157,6 +162,7 @@ void threadMotor(void *pvParameters) {
 void Motor_UpdateMotor(float torqueDemand) {
 
     Faults_HandleFaults();
+    RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
 
     switch (motorData.state) {
     case MOTOR_STATE_OFF:
@@ -166,7 +172,7 @@ void Motor_UpdateMotor(float torqueDemand) {
         motorData.desiredTorque = 0.0F;
         break;
     case MOTOR_STATE_PRECHARGING: /* default state */
-        if ((PCC_GetData()->prechargeProgress >= 94 &&
+        if ((PCC_GetData()->prechargeProgress >= 85 &&
              PCC_GetData()->state == 3)) {
             motorData.state = MOTOR_STATE_IDLE;
         }
@@ -199,7 +205,7 @@ void Motor_UpdateMotor(float torqueDemand) {
 
         break;
     case MOTOR_STATE_FAULT:
-        RTMButton_Reset(); // force set RTM OFF
+        // RTMButton_Reset(); // force set RTM OFF
         motorData.desiredTorque = 0.0F;
         if (Faults_CheckAllClear()) {
             Motor_ClearFaultState();
