@@ -145,7 +145,9 @@ void threadMotor(void *pvParameters) {
 
         float pedalTorque = APPS_GetAPPSReading1() * (CAPPED_MOTOR_TORQUE);
 
+#if !HIMAC_FLAG
         Motor_UpdateMotor(pedalTorque);
+#endif
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(20));
     }

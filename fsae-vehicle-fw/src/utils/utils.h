@@ -11,7 +11,7 @@
 */
 
 #define DEBUG_FLAG 0
-#define HIMAC_FLAG 0
+#define HIMAC_FLAG 1
 #define BMS_FLAG 0 // TO REMOVE
 
 #define HIGH 1
