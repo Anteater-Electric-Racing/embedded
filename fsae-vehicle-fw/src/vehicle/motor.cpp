@@ -12,6 +12,7 @@
 #include "peripherals/gpio.h"
 
 #include "apps.h"
+#include "bse.h"
 #include "vehicle/ifl100-36.h"
 #include "vehicle/motor.h"
 #include "vehicle/pcc_receive.h"
@@ -238,7 +239,18 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
     // PCC CAN message finished
     case MOTOR_STATE_IDLE: {
-        if (RTMButton_GetState()) {
+        float BSEReading_Front = BSE_GetBSEReading()->bseFront_PSI;
+        float BSEReading_Rear = BSE_GetBSEReading()->bseRear_PSI;
+
+        // Taking min of the two readings, not sure if they will be different
+        // since car will be stationary when this is pressed.
+        // TODO monitor this and update if needed
+        float BSEReading = BSEReading_Front;
+        if (BSEReading_Rear > BSEReading_Front) {
+            BSEReading = BSEReading_Rear;
+        }
+
+        if (RTMButton_GetState() && BSEReading >= BSE_PRESSED_THRESHOLD) {
 #if HIMAC_FLAG
             // Serial.println("Ready to drive...");
 #endif

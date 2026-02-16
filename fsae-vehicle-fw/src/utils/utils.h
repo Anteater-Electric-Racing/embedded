@@ -97,6 +97,8 @@
 
 #define BSE_FAULT_TIME_THRESHOLD_MS 100
 
+#define BSE_PRESSED_THRESHOLD 3.75
+
 #define BSE_CUTOFF_HZ 100.0F
 
 #define MOTOR_MAX_TORQUE 260.0F // TODO: Update with real value
