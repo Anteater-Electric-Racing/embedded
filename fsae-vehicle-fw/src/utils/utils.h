@@ -5,9 +5,8 @@
 /*
     TODO Fixes
         - Fix PCC packet structure (acc/Ts voltage as uint8s)
-        - Better serial output (read off port and output in more readable form)
-
-
+        - MITAGED --> send proper telemetry packet --> Better serial output
+   (read off port and output in more readable form
 */
 
 #define DEBUG_FLAG 0
@@ -29,6 +28,7 @@
 #define WHEEL_SPEED_1_PIN 2
 #define WHEEL_SPEED_2_PIN 3
 #define RTM_BUTTON_PIN 23
+#define BRAKE_LIGHT_PIN 9
 
 #define LOGIC_LEVEL_V 3.3F
 #define TIME_STEP 0.001F // 1ms time step
@@ -101,13 +101,14 @@
     0.50 // TODO: change back to PSI200    // IN VOLTS
 #define APPS_BSE_PLAUSIBILITY_RESET_THRESHOLD 0.05 // 5%
 
-#define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value
+#define BSE_VOLTAGE_DIVIDER 2.0F // TODO: Update with real value: 1.515151F
 #define BSE_ADC_VALUE_TO_VOLTAGE(x)                                            \
     (x * (LOGIC_LEVEL_V / ADC_MAX_VALUE)) *                                    \
         BSE_VOLTAGE_DIVIDER // ADC value to voltage conversion
 
 #define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
 
+// ALL in volts rn
 #define BRAKE_LIGHT_THRESHOLD 0.5F
 #define BSE_LOWER_THRESHOLD 0.25F
 #define BSE_UPPER_THRESHOLD 4.5F
