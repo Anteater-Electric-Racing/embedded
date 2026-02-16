@@ -12,6 +12,7 @@
 #include "peripherals/gpio.h"
 
 #include "vehicle/apps.h"
+#include "vehicle/bse.h"
 #include "vehicle/faults.h"
 #include "vehicle/ifl100-36.h"
 #include "vehicle/motor.h"
@@ -181,7 +182,11 @@ void Motor_UpdateMotor(float torqueDemand) {
     case MOTOR_STATE_IDLE:
         if (RTMButton_GetState() &&
             Faults_CheckAllClear()) { // transition to IDLE
-            motorData.state = MOTOR_STATE_DRIVING;
+            // TODO Update brake light threshold if we only want to move when mech brakes are engaged
+            if (BSE_GetBSEReading()->bseFront_Reading >= BRAKE_LIGHT_THRESHOLD &&
+                BSE_GetBSEReading()->bseRear_Reading >= BRAKE_LIGHT_THRESHOLD){
+                    motorData.state = MOTOR_STATE_DRIVING;
+            }
         }
         motorData.desiredTorque = 0.0F;
         break;
