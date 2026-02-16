@@ -75,9 +75,9 @@ void threadMain(void *pvParameters) {
 
         if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
             BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
-            digitalWrite(9, HIGH);
+            digitalWrite(BRAKE_LIGHT_PIN, HIGH);
         } else {
-            digitalWrite(9, LOW);
+            digitalWrite(BRAKE_LIGHT_PIN, LOW);
         }
 
         Serial.print("PP:");
