@@ -1,5 +1,12 @@
-on: push
 name: Clippy check
+
+on:
+  push:
+    paths-ignore:
+      - 'fsae-vehicle-fw/**'
+  pull_request:
+    paths-ignore:
+      - 'fsae-vehicle-fw/**'
 
 env:
   RUSTFLAGS: "-Dwarnings"
