@@ -12,11 +12,11 @@
 // #define PCC_CAN_ID 0x123
 
 typedef struct __attribute__((packed)) {
-    uint8_t state;      // Precharge state
-    uint8_t errorCode; // Error code
+    uint8_t state;               // Precharge state
+    uint8_t errorCode;           // Error code
     uint16_t accumulatorVoltage; // Accumulator voltage in volts
-    uint16_t tsVoltage; // Transmission side voltage in volts
-    uint16_t prechargeProgress; // Precharge progress in percent
+    uint16_t tsVoltage;          // Transmission side voltage in volts
+    uint16_t prechargeProgress;  // Precharge progress in percent
 } PCC;
 
 static PCC pccData;
@@ -31,29 +31,30 @@ void CAN_Init() {
     can2.setRX(DEF);
     can2.enableFIFO();
 
-     // can change ID
+    // can change ID
 }
 
-void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode, float accumulatorVoltage, float tsVoltage, float prechargeProgress) {
+void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode,
+                        float accumulatorVoltage, float tsVoltage,
+                        float prechargeProgress) {
     pccData = {0};
 
-    pccData = {
-        .state = state,
-        .errorCode = errorCode,
-        .accumulatorVoltage = uint16_t(accumulatorVoltage * 100),
-        .tsVoltage = uint16_t(tsVoltage * 100),
-        .prechargeProgress = uint16_t(prechargeProgress)
-    };
+    pccData = {.state = state,
+               .errorCode = errorCode,
+               .accumulatorVoltage = uint16_t(accumulatorVoltage * 100),
+               .tsVoltage = uint16_t(tsVoltage * 100),
+               .prechargeProgress = uint16_t(prechargeProgress)};
 
-//    pccData.accumulatorVoltage = 1;
+    //    pccData.accumulatorVoltage = 1;
 
     pccMsg.id = PCC_CAN_ID;
 
+    pccMsg.len = PCC_CAN_ID;
     memcpy(pccMsg.buf, &pccData, sizeof(PCC));
     can2.write(pccMsg);
 
-    //pccData.accumulatorVoltage = 1.0;
-    //Serial.println("CAN message sent");
+    // pccData.accumulatorVoltage = 1.0;
+    // Serial.println("CAN message sent");
 
     // Serial.print("Accumulator Voltage | ");
     // Serial.print(pccData.accumulatorVoltage);
