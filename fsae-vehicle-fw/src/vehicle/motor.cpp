@@ -5,9 +5,7 @@
 #define SPEED_I_GAIN 0.1F  // Integral gain for speed control
 
 #include <arduino_freertos.h>
-
 #include "utils/utils.h"
-
 #include "peripherals/can.h"
 #include "peripherals/gpio.h"
 

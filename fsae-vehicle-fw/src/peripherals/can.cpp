@@ -13,6 +13,7 @@
 #include "utils/utils.h"
 #include "vehicle/ifl100-36.h"
 #include "vehicle/motor.h"
+#include "vehicle/telemetry.h"
 
 #define CAN_INSTANCE CAN1
 #define CAN_BAUD_RATE 500000
