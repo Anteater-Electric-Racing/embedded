@@ -1,7 +1,6 @@
 #!/bin/bash
 
 NETWORK_FILE="80-can.network"
-SRC_DIR="$(pwd)"
 DEST_DIR="/etc/systemd/network/"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -15,7 +14,7 @@ if [ -f "${DEST_DIR}${NETWORK_FILE}" ]; then
 fi
 
 echo "Copying ${NETWORK_FILE} to ${DEST_DIR}..."
-cp "${SRC_DIR}/${NETWORK_FILE}" "${DEST_DIR}" || { echo "Failed to copy network file."; exit 1; }
+cp "${NETWORK_FILE}" "${DEST_DIR}" || { echo "Failed to copy network file."; exit 1; }
 
 echo "Enabling systemd-networkd service..."
 systemctl enable systemd-networkd

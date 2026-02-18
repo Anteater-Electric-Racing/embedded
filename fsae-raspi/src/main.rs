@@ -1,6 +1,8 @@
 mod can;
+mod influxdb;
 mod mqtt;
 mod send;
+mod test;
 use can::read_can;
 use mqtt::mqttd;
 

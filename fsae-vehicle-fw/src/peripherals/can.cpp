@@ -3,126 +3,73 @@
 #define THREAD_CAN_STACK_SIZE 128
 #define THREAD_CAN_PRIORITY 1
 
-#include "can.h"
+#include <isotp.h>
+#include <stdint.h>
+
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
 
+#include "peripherals/can.h"
 #include "utils/utils.h"
+#include "vehicle/ifl100-36.h"
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 
 #define CAN_INSTANCE CAN1
 #define CAN_BAUD_RATE 500000
-#define VCU1_ID 0x101
-#define VCU1_LEN 8 // bytes
 
-typedef struct __attribute__((packed)) {
-    uint64_t TorqueReq : 8;
-    uint64_t MotorSpdReq : 16;
-    uint64_t ChangeGearAlarm: 1;
-    uint64_t VCUAuthStatus : 2;
-    uint64_t Reserved : 5;
-    uint64_t VehicleState: 1;
-    uint64_t Brake_Pedal_State: 2;
-    uint64_t BMS_Main_Relay_Cmd: 1;
-    uint64_t GearLevelPos_Sts : 3;
-    uint64_t GearLevelPos_Sts_F : 1;
-    uint64_t AC_Control_Cmd : 1;
-    uint64_t VCU_WorkMode : 1;
-    uint64_t VCU_MotorMode : 2;
-    uint64_t VCU_Warning_Level : 2;
-    uint64_t KeyPosition : 2;
-    uint64_t BMS_Aux_Relay_Cmd: 1;
-    uint64_t PowerReduceReq : 3;
-    uint64_t RollingCounter : 4;
-    uint64_t Checksum : 8;
-} VCU1;
-
-typedef struct __attribute__((packed)) {
-    uint8_t state;      // Precharge state
-    uint8_t errorCode; // Error code
-    uint16_t accumulatorVoltage; // Accumulator voltage in volts
-    uint16_t tsVoltage; // Transmission side voltage in volts
-    uint16_t prechargeProgress; // Precharge progress in percent
-} PCC;
-
-static PCC pccData;
-
-static uint8_t ComputeChecksum(uint8_t* data, uint8_t length);
-
+FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
 FlexCAN_T4<CAN3, RX_SIZE_256, TX_SIZE_16> can3;
+isotp<RX_BANKS_16, 512> tp;
 
 CAN_message_t motorMsg;
 CAN_message_t rx_msg;
 
+#define CAN_TIMEOUT_MS 100
+
 void CAN_Init() {
     // Initialize CAN bus
+    can2.begin();
+    can2.setBaudRate(CAN_BAUD_RATE);
+    can2.setTX(DEF);
+    can2.setRX(DEF);
+    can2.enableFIFO();
+
     can3.begin();
     can3.setBaudRate(CAN_BAUD_RATE);
     can3.setTX(DEF);
     can3.setRX(DEF);
-    can3.setMaxMB(16);
     can3.enableFIFO();
+    // can3.enableFIFOInterrupt();
+    // can3.setMaxMB(16); // Set maximum message buffers to 16
+
+    tp.begin();
+    tp.setWriteBus(&can3); // Set the bus to write to can3
 }
 
-void CAN_ReceivePCCMessage(){
-    can3.mailboxStatus();
-    if (can3.read(rx_msg)) {
-        if (rx_msg.id == 0x123){
-            Serial.println("Getting PCC message");
-        }
-        memcpy(&pccData, rx_msg.buf, sizeof(PCC));
-        Serial.println(pccData.tsVoltage);
-        Telemetry_UpdatePCCData(
-            pccData.errorCode,
-            pccData.state,
-            pccData.accumulatorVoltage / 100.0F,
-            pccData.tsVoltage / 100.0F,
-            pccData.prechargeProgress / 100.0F
-        );
+void CAN_Send(uint32_t id, uint64_t msg) {
+    motorMsg.id = id;
+    memcpy(motorMsg.buf, &msg, sizeof(msg));
+
+    can3.write(motorMsg);
+    can2.write(motorMsg);
+}
+
+void CAN_Receive(uint32_t *rx_id, uint64_t *rx_data) {
+    if (can3.read(rx_msg) || can2.read(rx_msg)) {
+        *rx_id = rx_msg.id;
+        memcpy(rx_data, rx_msg.buf, sizeof(*rx_data));
+    } else { // No message received, assign default values
+        *rx_id = 0;
+        *rx_data = 0;
     }
 }
 
-void CAN_SendVCU1Message(float torqueValue)
-{
-    motorMsg.id = VCU1_ID;
-    motorMsg.len = VCU1_LEN;
-
-    VCU1 vcu1 = {0};
-
-    // Map throttle percentage to uint8 value
-    vcu1.TorqueReq = (uint8_t) LINEAR_MAP(torqueValue, 0.0F, 1.0F, 0.0F, 255.0F);
-
-    memcpy(motorMsg.buf, &vcu1, sizeof(vcu1));
-    motorMsg.buf[7] = ComputeChecksum(motorMsg.buf, 8);
-
-    # if DEBUG_FLAG
-        if (can3.write(motorMsg)) {
-            Serial.println("VCU1 message sent");
-            Serial.print("Torque: ");
-            Serial.println(vcu1.TorqueReq);
-            Serial.print("Motor message buf: ");
-            for (int i = 0; i < 8; ++i){
-                Serial.print(motorMsg.buf[i]);
-                Serial.print(" ");
-            }
-            Serial.println();
-
-
-        } else {
-            Serial.println("VCU1 message failed to send");
-        }
-    # endif
+void CAN_ISOTP_Send(uint32_t id, uint8_t *msg, uint16_t size) {
+    ISOTP_data config;
+    config.id = id;
+    config.flags.extended = 0; // Standard frame
+    config.separation_time =
+        1; // Time between back-to-back frames in milliseconds
+    tp.write(config, msg, size);
 }
-
-// checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
-static uint8_t ComputeChecksum(uint8_t* data, uint8_t length) {
-    uint8_t sum = 0;
-    for (uint8_t i = 0; i < length - 1; i++) {
-        sum += data[i];
-    }
-    return sum ^ 0xFF;
-}
-
-
-

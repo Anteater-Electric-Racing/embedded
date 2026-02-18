@@ -1,95 +1,89 @@
 // Anteater Electric Racing, 2025
+#define TELEMETRY_CAN_ID 0x666 // Example CAN ID for telemetry messages
+#define TELEMETRY_PERIOD_MS 10 // Telemetry update period in milliseconds
 
-#include "telemetry.h"
-#include <FlexCAN_T4.h>
-#include <isotp.h>
 #include <arduino_freertos.h>
-#include <semphr.h>
 
-SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
+#include "vehicle/apps.h"
+#include "vehicle/bse.h"
+#include "vehicle/telemetry.h"
 
-// TODO: Update IDs to be more logical values
-const uint32_t canid = 0x666;
-const uint32_t request = 0x777;
-TelemetryData telemetryDataCAN;
-isotp<RX_BANKS_16, 512> tp;
-FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2; // TODO: Figure out actual values for send and recieve
+#include "utils/utils.h"
 
-void threadTelemetryCAN( void *pvParameters );
+#include "peripherals/can.h"
+
+TelemetryData telemetryData;
 
 void Telemetry_Init() {
-    // TODO: Update initialization
-    telemetryDataCAN = {
-        .accumulatorVoltage = 0,
-        .accumulatorTemp_F = 0,
-        .tractiveSystemVoltage = 0
+    telemetryData = {
+        // Fill with reasonable dummy values
+        .APPS_Travel = 0.0F,
+        .motorSpeed = 0.0F,
+        .motorTorque = 0.0F,
+        .maxMotorTorque = 0.0F,
+        .motorDirection = DIRECTION_STANDBY,
+        .motorState = MOTOR_STATE_OFF,
+
+        .mcuMainState = STATE_STANDBY,
+        .mcuWorkMode = WORK_MODE_STANDBY,
+
+        .mcuVoltage = 0.0F,
+        .mcuCurrent = 0.0F,
+        .motorTemp = 25,
+        .mcuTemp = 25,
+
+        .dcMainWireOverVoltFault = false,
+        .dcMainWireOverCurrFault = false,
+        .motorOverSpdFault = false,
+        .motorPhaseCurrFault = false,
+        .motorStallFault = false,
+
+        .mcuWarningLevel = ERROR_NONE,
+
     };
-
-    can2.begin();
-    can2.setBaudRate(1000000);
-    can2.setTX(DEF);
-    can2.setRX(DEF);
-    can2.enableFIFO();
-    can2.enableFIFOInterrupt();
-    can2.setMaxMB(16);
-    tp.begin();
-    tp.setWriteBus(&can2); /* we write to this bus */
-
 }
 
-void threadTelemetryCAN(void *pvParameters){
-    uint8_t serializedTelemetryBuf[sizeof(TelemetryData)];
-    TickType_t lastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = 1;
-    while(true){
-        vTaskDelayUntil(&lastWakeTime, xFrequency);
-        // Serial.print("Semaphor take successful");
-        xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-        Telemetry_SerializeData(telemetryDataCAN, serializedTelemetryBuf);
-        xSemaphoreGive(xSemaphore);
+void threadTelemetry(void *pvParameters) {
+    static TickType_t lastWakeTime =
+        xTaskGetTickCount(); // Initialize the last wake time
+    while (true) {
+        taskENTER_CRITICAL(); // Enter critical section
+        telemetryData = {
+            .APPS_Travel = APPS_GetAPPSReading(),
 
-        ISOTP_data config;
-        config.id = 0x666;
-        config.flags.extended = 0; /* standard frame */
-        config.separation_time = 10; /* time between back-to-back frames in millisec */
-        tp.write(config, serializedTelemetryBuf, sizeof(serializedTelemetryBuf));
+            .motorSpeed = MCU_GetMCU1Data()->motorSpeed,
+            .motorTorque = MCU_GetMCU1Data()->motorTorque,
+            .maxMotorTorque = MCU_GetMCU1Data()->maxMotorTorque,
+            .motorState = Motor_GetState(),
+            .mcuMainState = MCU_GetMCU1Data()->mcuMainState,
+            .mcuWorkMode = MCU_GetMCU1Data()->mcuWorkMode,
+
+            .mcuVoltage = MCU_GetMCU3Data()->mcuVoltage,
+            .mcuCurrent = MCU_GetMCU3Data()->mcuCurrent,
+            .motorTemp = MCU_GetMCU2Data()->motorTemp,
+            .mcuTemp = MCU_GetMCU2Data()->mcuTemp,
+
+            .dcMainWireOverVoltFault =
+                MCU_GetMCU2Data()->dcMainWireOverVoltFault,
+            .dcMainWireOverCurrFault =
+                MCU_GetMCU2Data()->dcMainWireOverCurrFault,
+            .motorOverSpdFault = MCU_GetMCU2Data()->motorOverSpdFault,
+            .motorPhaseCurrFault = MCU_GetMCU2Data()->motorPhaseCurrFault,
+
+            .motorStallFault = MCU_GetMCU2Data()->motorStallFault,
+            .mcuWarningLevel = MCU_GetMCU2Data()->mcuWarningLevel,
+
+        };
+        taskEXIT_CRITICAL();
+
+        uint8_t *serializedData = (uint8_t *)&telemetryData;
+        CAN_ISOTP_Send(TELEMETRY_CAN_ID, serializedData, sizeof(TelemetryData));
+
+        vTaskDelayUntil(
+            &lastWakeTime,
+            pdMS_TO_TICKS(
+                TELEMETRY_PERIOD_MS)); // Delay until the next telemetry update
     }
 }
 
-void Telemetry_SerializeData(TelemetryData data, uint8_t* serializedTelemetryBuf){
-    memcpy(serializedTelemetryBuf, &data, sizeof(data));
-}
-
-TelemetryData const* Telemetry_GetData() {
-    return &telemetryDataCAN;
-}
-
-void Telemetry_UpdateData(TelemetryData* data) {
-    telemetryDataCAN = *data;
-}
-
-void Telemetry_UpdateADCData(volatile uint16_t* adc0reads, volatile uint16_t* adc1reads){
-    xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-    memcpy(telemetryDataCAN.adc0Reads, (const uint16_t*)adc0reads, sizeof(telemetryDataCAN.adc0Reads));
-    memcpy(telemetryDataCAN.adc1Reads, (const uint16_t*)adc1reads, sizeof(telemetryDataCAN.adc1Reads));
-    xSemaphoreGive(xSemaphore);
-}
-
-void Telemetry_UpdatePCCData(
-    uint8_t state,
-    uint8_t errorCode,
-    float accumulatorVoltage,
-    float tsVoltage,
-    float prechargeProgress
-){
-    xSemaphoreTake(xSemaphore, (TickType_t) 1000);
-    telemetryDataCAN.pccErrorCode = errorCode;
-    telemetryDataCAN.pccState = state;
-    telemetryDataCAN.pccAccumulatorVoltage = accumulatorVoltage;
-    telemetryDataCAN.pccTsVoltage = tsVoltage;
-    telemetryDataCAN.pccPrechargeProgress = prechargeProgress;
-    xSemaphoreGive(xSemaphore);
-}
-
-
-
+TelemetryData const *Telemetry_GetData() { return &telemetryData; }

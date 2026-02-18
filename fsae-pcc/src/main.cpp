@@ -11,17 +11,19 @@
 
 #include <Arduino.h>
 #include <arduino_freertos.h>
-#include "precharge.h"
-#include "gpio.h"
-#include "utils.h"
+
 #include "can.h"
+#include "gpio.h"
+#include "precharge.h"
+#include "utils.h"
 
 static void threadMain(void *pvParameters);
 
 void setup() {
     Serial.begin(9600);
 
-    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL, THREAD_MAIN_PRIORITY, NULL);
+    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
+                THREAD_MAIN_PRIORITY, NULL);
 
     gpioInit(); // Initialize GPIO pins
 
@@ -76,5 +78,4 @@ void threadMain(void *pvParameters) {
     }
 }
 
-void loop() {
-}
+void loop() {}

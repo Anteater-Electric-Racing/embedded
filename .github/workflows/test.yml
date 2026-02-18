@@ -1,0 +1,50 @@
+name: Test ISO-TP
+
+on:
+  push:
+    branches: [ main, ml/vcan-setup ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install linux-modules-extra-$(uname -r) can-utils build-essential linux-headers-$(uname -r) kmod
+    
+    - name: Build and load ISO-TP module
+      run: |
+        cd /tmp
+        git clone https://github.com/hartkopp/can-isotp.git
+        cd can-isotp
+        git checkout mainline-5.4+
+        make
+        sudo modprobe can
+        sudo insmod ./net/can/can-isotp.ko
+    
+    - name: Setup vcan0
+      run: |
+        sudo modprobe vcan
+        sudo ip link add dev vcan0 type vcan
+        sudo ip link set dev vcan0 up
+        ip link show vcan0
+    
+    - name: Verify ISO-TP loaded
+      run: lsmod | grep isotp
+    
+    - name: Run tests
+      run: |
+        cd fsae-raspi
+        cargo test test_send_telemetry_over_isotp --package fsae-raspi -- --nocapture

@@ -22,4 +22,3 @@ uint32_t Faults_GetFaults();
 void Faults_ClearFault(FaultType fault);
 void Faults_HandleFaults();
 bool Faults_CheckAllClear();
-

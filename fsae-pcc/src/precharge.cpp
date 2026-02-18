@@ -3,10 +3,11 @@
 #include <Arduino.h>
 #include <FreeRTOS.h>
 #include <stdint.h>
-#include "semphr.h"
-#include "precharge.h"
-#include "utils.h"
+
 #include "can.h"
+#include "precharge.h"
+#include "semphr.h"
+#include "utils.h"
 
 #define PRECHARGE_STACK_SIZE 512U
 #define PRECHARGE_PRIORITY 8
@@ -48,7 +49,8 @@ void prechargeInit(){
     pcData.prechargeProgress = 0.0F; // Initialize accumulator voltage
 
     // Create precharge task
-    xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL, PRECHARGE_PRIORITY, NULL);
+    xTaskCreate(prechargeTask, "PrechargeTask", PRECHARGE_STACK_SIZE, NULL,
+                PRECHARGE_PRIORITY, NULL);
 
     Serial.println("Precharge initialized");
 }
@@ -102,11 +104,14 @@ void prechargeTask(void *pvParameters){
                 break;
             }
 
-            default: // Undefined state
-                state = STATE_ERROR;
-                errorCode |= ERR_STATE_UNDEFINED;
-                errorState();
+        case STATE_ERROR:
+            errorState();
+            break;
 
+        default: // Undefined state
+            state = STATE_ERROR;
+            errorCode |= ERR_STATE_UNDEFINED;
+            errorState();
         }
         // taskEXIT_CRITICAL(); // Exit critical section
 
@@ -217,7 +222,9 @@ void precharge(){
             }
         }
     } else {
-        if (now > timePrechargeStart + PCC_MAX_TIME_MS) {       // Precharge too slow - something's wrong!
+        if (now >
+            timePrechargeStart +
+                PCC_MAX_TIME_MS) { // Precharge too slow - something's wrong!
             Serial.print(" * Precharge time: ");
             Serial.print(now - timePrechargeStart);
             Serial.print("\n");
@@ -232,8 +239,9 @@ void precharge(){
     }
 }
 
-// ONLINE STATE: Close AIR+ to connect ACC to TS, Open Precharge relay, indicate status
-void running(){
+// ONLINE STATE: Close AIR+ to connect ACC to TS, Open Precharge relay, indicate
+// status
+void running() {
     if (lastState != STATE_ONLINE) {
         lastState = STATE_ONLINE;
         Serial.println(" === ONLINE");
@@ -245,41 +253,44 @@ void running(){
 }
 
 // ERROR STATE: Indicate error, open AIRs and precharge relay
-void errorState(){
+void errorState() {
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
 
-    if (lastState != STATE_ERROR){
+    if (lastState != STATE_ERROR) {
         lastState = STATE_ERROR;
         Serial.println(" === ERROR");
 
         // Display errors: Serial and Status LEDs
-        if (errorCode == ERR_NONE){
-        Serial.println("   *Error state, but no error code logged...");
+        if (errorCode == ERR_NONE) {
+            Serial.println("   *Error state, but no error code logged...");
         }
         if (errorCode & ERR_PRECHARGE_TOO_FAST) {
-        Serial.println("   *Precharge too fast. Suspect wiring fault / chatter in shutdown circuit.");
+            Serial.println("   *Precharge too fast. Suspect wiring fault / "
+                           "chatter in shutdown circuit.");
         }
         if (errorCode & ERR_PRECHARGE_TOO_SLOW) {
-        Serial.println("   *Precharge too slow. Potential causes:\n   - Wiring fault\n   - Discharge is stuck-on\n   - Target precharge percent is too high");
+            Serial.println("   *Precharge too slow. Potential causes:\n   - "
+                           "Wiring fault\n   - Discharge is stuck-on\n   - "
+                           "Target precharge percent is too high");
         }
         if (errorCode & ERR_STATE_UNDEFINED) {
-        Serial.println("   *State not defined in The State Machine.");
+            Serial.println("   *State not defined in The State Machine.");
         }
     }
 }
 
-float getTSVoltage(){
+float getTSVoltage() {
     // Get the tractive system voltage
     return pcData.tsVoltage;
 }
 
-float getAccumulatorVoltage(){
+float getAccumulatorVoltage() {
     // Get the accumulator voltage
     return pcData.accVoltage;
 }
 
 // Return current precharge state
-PrechargeState getPrechargeState(){
+PrechargeState getPrechargeState() {
     PrechargeState currentPrechargeState;
 
     taskENTER_CRITICAL(); // Ensure atomic access to state
@@ -290,7 +301,7 @@ PrechargeState getPrechargeState(){
 }
 
 // Obtain current error information
-int getPrechargeError(){
+int getPrechargeError() {
     int currentPrechargeError;
 
     taskENTER_CRITICAL(); // Ensure atomic access to error code
