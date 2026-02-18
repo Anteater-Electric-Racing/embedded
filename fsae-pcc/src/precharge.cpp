@@ -41,11 +41,13 @@ static void running();
 static void errorState();
 
 // Initialize mutex and precharge task
-void prechargeInit(){
-    pcData.tsAlpha = COMPUTE_ALPHA(100.0F); // 100Hz cutoff frequency for lowpass filter
-    pcData.accAlpha = COMPUTE_ALPHA(100.0F); // 1Hz cutoff frequency for lowpass filter
-    pcData.accVoltage = 0.0F; // Initialize filtered tractive system frequency
-    pcData.tsVoltage = 0.0F; // Initialize filtered accumulator frequency
+void prechargeInit() {
+    pcData.tsAlpha =
+        COMPUTE_ALPHA(100.0F); // 100Hz cutoff frequency for lowpass filter
+    pcData.accAlpha =
+        COMPUTE_ALPHA(100.0F); // 1Hz cutoff frequency for lowpass filter
+    pcData.accVoltage = 0.0F;  // Initialize filtered tractive system frequency
+    pcData.tsVoltage = 0.0F;   // Initialize filtered accumulator frequency
     pcData.prechargeProgress = 0.0F; // Initialize accumulator voltage
 
     // Create precharge task
@@ -56,58 +58,51 @@ void prechargeInit(){
 }
 
 // Main precharge task: handles state machine and status updates
-void prechargeTask(void *pvParameters){
+void prechargeTask(void *pvParameters) {
     TickType_t xLastWakeTime;
     const TickType_t xFrequency = pdMS_TO_TICKS(TIME_STEP_S * 1000);
     xLastWakeTime = xTaskGetTickCount();
 
-    while (true){
+    while (true) {
         updateVoltage(ACCUMULATOR_VOLTAGE_PIN); // Get raw accumulator voltage
         updateVoltage(TS_VOLTAGE_PIN); // Get raw tractive system voltage
 
         // taskENTER_CRITICAL(); // Ensure atomic access to state
-        switch(state){
-            case STATE_STANDBY:
-            {
-                standby();
-                break;
+        switch (state) {
+        case STATE_STANDBY: {
+            standby();
+            break;
+        }
+        case STATE_PRECHARGE: {
+            if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE) {
+                state = STATE_DISCHARGE;
             }
-            case STATE_PRECHARGE:
-            {
-                if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE){
-                    state = STATE_DISCHARGE;
-                }
-                precharge();
-                break;
+            precharge();
+            break;
+        }
+        case STATE_DISCHARGE: {
+            if (pcData.tsVoltage == 0.0F) {
+                state = STATE_STANDBY;
             }
-            case STATE_DISCHARGE:
-            {
-                if (pcData.tsVoltage == 0.0F){
-                    state = STATE_STANDBY;
-                }
-                break;
+            break;
+        }
+        case STATE_ONLINE: {
+            if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE) {
+                state = STATE_DISCHARGE;
             }
-            case STATE_ONLINE:
-            {
-                if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE){
-                    state = STATE_DISCHARGE;
-                }
-                running();
-                break;
+            running();
+            break;
+        }
+        case STATE_ERROR: {
+            if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE) {
+                state = STATE_DISCHARGE;
             }
-            case STATE_ERROR:
-            {
-                if (pcData.accVoltage < PCC_MIN_ACC_VOLTAGE){
-                    state = STATE_DISCHARGE;
-                }
-                errorState();
-                break;
-            }
-
-        case STATE_ERROR:
             errorState();
             break;
-
+        }
+        // case STATE_ERROR:
+        //     errorState();
+        //     break;
         default: // Undefined state
             state = STATE_ERROR;
             errorCode |= ERR_STATE_UNDEFINED;
@@ -116,7 +111,8 @@ void prechargeTask(void *pvParameters){
         // taskEXIT_CRITICAL(); // Exit critical section
 
         // Send CAN message of current PCC state
-        CAN_SendPCCMessage(state, errorCode, pcData.accVoltage, pcData.tsVoltage, pcData.prechargeProgress);
+        CAN_SendPCCMessage(state, errorCode, pcData.accVoltage,
+                           pcData.tsVoltage, pcData.prechargeProgress);
         // CAN_SendPCCMessage(STATE_DISCHARGE, errorCode, 10.0F, 20.0F, 50.0F);
 
         // Wait for next cycle
@@ -124,46 +120,44 @@ void prechargeTask(void *pvParameters){
     }
 }
 
-float getFrequency(int pin){
+float getFrequency(int pin) {
     uint32_t TIMEOUT = 2000;
-    uint32_t tHigh = pulseIn(pin, 1, TIMEOUT);  // microseconds
+    uint32_t tHigh = pulseIn(pin, 1, TIMEOUT); // microseconds
     uint32_t tLow = pulseIn(pin, 0, TIMEOUT);
-    if (tHigh == 0 || tLow == 3){
+    if (tHigh == 0 || tLow == 3) {
         return 0; // timed out
     }
-    return ( 1000000.0 / (float)(tHigh + tLow) );    // f = 1/T
+    return (1000000.0 / (float)(tHigh + tLow)); // f = 1/T
 }
 
-void updateVoltage(int pin){
+void updateVoltage(int pin) {
     float rawFreq = getFrequency(pin);
     float rawVoltage = FREQ_TO_VOLTAGE(rawFreq); // Convert frequency to voltage
 
     switch (pin) {
-        case ACCUMULATOR_VOLTAGE_PIN:
-        {
-            if (pcData.accVoltage == 0.0 && rawVoltage != 0.0){
-                pcData.accVoltage = rawVoltage;
-                break;
-            }
-            // if(rawVoltage == 0.0F) rawVoltage = pcData.accVoltage;
-            LOWPASS_FILTER(rawVoltage, pcData.accVoltage, pcData.accAlpha);
+    case ACCUMULATOR_VOLTAGE_PIN: {
+        if (pcData.accVoltage == 0.0 && rawVoltage != 0.0) {
+            pcData.accVoltage = rawVoltage;
             break;
         }
-        case TS_VOLTAGE_PIN:
-        {
-            // if(rawVoltage == 0.0F) rawVoltage = pcData.tsVoltage;
-            LOWPASS_FILTER(rawVoltage, pcData.tsVoltage, pcData.tsAlpha);
-            break;
-        }
-        default:
-        {
-            break;
-        }
+        // if(rawVoltage == 0.0F) rawVoltage = pcData.accVoltage;
+        LOWPASS_FILTER(rawVoltage, pcData.accVoltage, pcData.accAlpha);
+        break;
+    }
+    case TS_VOLTAGE_PIN: {
+        // if(rawVoltage == 0.0F) rawVoltage = pcData.tsVoltage;
+        LOWPASS_FILTER(rawVoltage, pcData.tsVoltage, pcData.tsAlpha);
+        break;
+    }
+    default: {
+        break;
+    }
     }
 }
 
-// STANDBY STATE: Open AIRs, Open Precharge, indicate status, wait for stable SDC
-void standby(){
+// STANDBY STATE: Open AIRs, Open Precharge, indicate status, wait for stable
+// SDC
+void standby() {
     // Disable AIR, Disable Precharge
     digitalWrite(SHUTDOWN_CTRL_PIN, LOW);
     if (pcData.accVoltage >= PCC_MIN_ACC_VOLTAGE) {
@@ -173,20 +167,22 @@ void standby(){
 }
 
 // PRECHARGE STATE: Close AIR- and precharge relay, monitor precharge voltage
-void precharge(){
+void precharge() {
     uint32_t now = millis();
     static uint32_t lastTimeBelowThreshold;
     static uint32_t timePrechargeStart;
 
     if (lastState != STATE_PRECHARGE) {
         lastState = STATE_PRECHARGE;
-        Serial.printf(" === PRECHARGE   Target precharge %4.1f%%\n", PCC_TARGET_PERCENT);
+        Serial.printf(" === PRECHARGE   Target precharge %4.1f%%\n",
+                      PCC_TARGET_PERCENT);
         Serial.println();
         timePrechargeStart = now;
     }
 
     // The precharge progress is a function of the accumulator voltage
-    pcData.prechargeProgress = 100.0 * pcData.tsVoltage / pcData.accVoltage; // [%]
+    pcData.prechargeProgress =
+        100.0 * pcData.tsVoltage / pcData.accVoltage; // [%]
 
     // Print Precharging progress
     static uint32_t lastPrint = 0U;
@@ -202,11 +198,13 @@ void precharge(){
     }
 
     // Check if precharge complete
-    if ( ( pcData.prechargeProgress >= PCC_TARGET_PERCENT ) ) {
-        if( now - lastTimeBelowThreshold > TIME_HYSTERESIS_MS ) {
-            if (now < timePrechargeStart + PCC_MIN_TIME_MS) { // Precharge too fast - something's wrong!
-                //state = STATE_ERROR;
-                //errorCode |= ERR_PRECHARGE_TOO_FAST;
+    if ((pcData.prechargeProgress >= PCC_TARGET_PERCENT)) {
+        if (now - lastTimeBelowThreshold > TIME_HYSTERESIS_MS) {
+            if (now <
+                timePrechargeStart + PCC_MIN_TIME_MS) { // Precharge too fast -
+                                                        // something's wrong!
+                // state = STATE_ERROR;
+                // errorCode |= ERR_PRECHARGE_TOO_FAST;
                 Serial.println("ERROR: TOO FAST");
             }
             // Precharge complete
@@ -228,13 +226,13 @@ void precharge(){
             Serial.print(" * Precharge time: ");
             Serial.print(now - timePrechargeStart);
             Serial.print("\n");
-            //state = STATE_ERROR;
-            //errorCode |= ERR_PRECHARGE_TOO_SLOW;
+            // state = STATE_ERROR;
+            // errorCode |= ERR_PRECHARGE_TOO_SLOW;
             Serial.println("ERROR: TOO SLOW");
         }
         // else {
-            // Precharging
-            lastTimeBelowThreshold = now;
+        // Precharging
+        lastTimeBelowThreshold = now;
         // }
     }
 }
