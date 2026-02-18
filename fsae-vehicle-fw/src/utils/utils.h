@@ -3,7 +3,13 @@
 #pragma once
 
 /*
-    TODO Fixes
+    Test BMS limits, get full throttle working
+
+
+
+
+    TODO Fixes:
+    BIG MZ Change - INTERUPT BASED CAN Testing:
         - Fix PCC packet structure (acc/Ts voltage as uint8s)
         - MITAGED --> send proper telemetry packet --> Better serial output
    (read off port and output in more readable form

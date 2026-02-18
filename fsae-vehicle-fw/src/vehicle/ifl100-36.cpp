@@ -16,6 +16,8 @@
 #define THREAD_MCU_PRIORITY 1
 
 static void threadMCU(void *pvParameters);
+
+static TickType_t xLastWakeTime;
 static uint32_t rx_id;
 static uint64_t rx_data;
 
@@ -218,6 +220,7 @@ static void threadMCU(void *pvParameters) {
             break;
         }
         }
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
     }
 }
 
