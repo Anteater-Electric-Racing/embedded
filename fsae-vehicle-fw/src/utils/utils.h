@@ -58,11 +58,11 @@
 #define APPS_RANGE_MIN_PERCENT .15
 #define APPS_RANGE_MAX_PERCENT .85
 
-#define APPS_3V3_MIN (APPS1_VOLTAGE_LEVEL * APPS_RANGE_MIN_PERCENT)
-#define APPS_3V3_MAX (APPS1_VOLTAGE_LEVEL * APPS_RANGE_MAX_PERCENT)
+#define APPS_3V3_MIN 0.52F //(APPS1_VOLTAGE_LEVEL * APPS_RANGE_MIN_PERCENT)
+#define APPS_3V3_MAX 0.65F //(APPS1_VOLTAGE_LEVEL * APPS_RANGE_MAX_PERCENT)
 
-#define APPS_5V_MIN (APPS2_VOLTAGE_LEVEL * APPS_RANGE_MIN_PERCENT)
-#define APPS_5V_MAX (APPS2_VOLTAGE_LEVEL * APPS_RANGE_MAX_PERCENT)
+#define APPS_5V_MIN 3.50F //(APPS2_VOLTAGE_LEVEL * APPS_RANGE_MIN_PERCENT)
+#define APPS_5V_MAX 3.68F //(APPS2_VOLTAGE_LEVEL * APPS_RANGE_MAX_PERCENT)
 
 /*     ANOOP TESTING FOR 20% HERE     */
 
@@ -72,15 +72,15 @@
 #define APPS1_20PCT_ADC 784.0F
 #define APPS2_20PCT_ADC 1150.0F
 
-/**KZ Driving MAX (1+2) */
-#define APPS1_FULL_PCT_ADC 1580.0F
-#define APPS2_FULL_PCT_ADC 3680.0F
+/**KZ Driving MAX (30%)) */
+#define APPS1_FULL_PCT_ADC 550.0F
+#define APPS2_FULL_PCT_ADC 3045.0F
 
 // Measured resting ADC (change these with actual findings this is just safe
 // zone values)
 /**KZ Driving MIN (1+2) */
-#define APPS1_REST_ADC 4.75F
-#define APPS2_REST_ADC 2797.0F
+#define APPS1_REST_ADC 120.0F
+#define APPS2_REST_ADC 2860.0F
 
 // Clamp helper
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
@@ -101,7 +101,7 @@
 
 #define APPS_FAULT_TIME_THRESHOLD_MS 100
 
-#define APPS_IMPLAUSABILITY_THRESHOLD 0.1            // 10%
+#define APPS_IMPLAUSABILITY_THRESHOLD 0.2            // 10%
 #define APPS_BSE_PLAUSABILITY_TROTTLE_THRESHOLD 0.15 // 15%
 #define APPS_BSE_PLAUSABILITY_BRAKE_THRESHOLD                                  \
     0.50 // TODO: change back to PSI200    // IN VOLTS
@@ -115,7 +115,7 @@
 #define BSE_VOLTAGE_TO_PSI(x) x // Voltage to PSI conversion
 
 // ALL in volts rn
-#define BRAKE_LIGHT_THRESHOLD 0.5F
+#define BRAKE_LIGHT_THRESHOLD 0.45F
 #define BSE_LOWER_THRESHOLD 0.25F
 #define BSE_UPPER_THRESHOLD 4.5F
 #define BSE_IMPLAUSABILITY_THRESHOLD 0.1F
@@ -127,8 +127,8 @@
 #define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
 #define CAPPED_MOTOR_TORQUE 0.0F
 
-#define BATTERY_MAX_CURRENT_A 20.0F // TO CHANGE
-#define BATTERY_MAX_REGEN_A 1.0F    // TO CHANGE
+#define BATTERY_MAX_CURRENT_A 50.0F // TO CHANGE
+#define BATTERY_MAX_REGEN_A 50.0F   // TO CHANGE
 
 #define COMPUTE_ALPHA(CUTOFF_HZ)                                               \
     (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))

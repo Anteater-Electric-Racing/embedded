@@ -3,8 +3,8 @@
 #define THREAD_CAN_STACK_SIZE 128
 #define THREAD_CAN_PRIORITY 1
 
+#include <cstdint>
 #include <isotp.h>
-#include <stdint.h>
 
 #include <FlexCAN_T4.h>
 #include <arduino_freertos.h>
@@ -47,7 +47,7 @@ void CAN_Init() {
     tp.setWriteBus(&can3); // Set the bus to write to can3
 }
 
-void CAN_Send(uint32_t id, uint64_t msg) {
+void CAN_Send(std::uint32_t id, std::uint64_t msg) {
     motorMsg.id = id;
     memcpy(motorMsg.buf, &msg, sizeof(msg));
 
@@ -55,7 +55,7 @@ void CAN_Send(uint32_t id, uint64_t msg) {
     can2.write(motorMsg);
 }
 
-void CAN_Receive(uint32_t *rx_id, uint64_t *rx_data) {
+void CAN_Receive(std::uint32_t *rx_id, std::uint64_t *rx_data) {
     if (can3.read(rx_msg) || can2.read(rx_msg)) {
         *rx_id = rx_msg.id;
         memcpy(rx_data, rx_msg.buf, sizeof(*rx_data));
@@ -65,7 +65,7 @@ void CAN_Receive(uint32_t *rx_id, uint64_t *rx_data) {
     }
 }
 
-void CAN_ISOTP_Send(uint32_t id, uint8_t *msg, uint16_t size) {
+void CAN_ISOTP_Send(std::uint32_t id, std::uint8_t *msg, std::uint16_t size) {
     ISOTP_data config;
     config.id = id;
     config.flags.extended = 0; // Standard frame

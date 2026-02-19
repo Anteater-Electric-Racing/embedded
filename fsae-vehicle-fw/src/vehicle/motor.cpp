@@ -4,10 +4,12 @@
 #define SPEED_P_GAIN 0.01F // Proportional gain for speed control
 #define SPEED_I_GAIN 0.1F  // Integral gain for speed control
 
-#include <arduino_freertos.h>
-#include "utils/utils.h"
+#define LOW_VOLT_LIMIT 2.3F
+
 #include "peripherals/can.h"
 #include "peripherals/gpio.h"
+#include "utils/utils.h"
+#include <arduino_freertos.h>
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -143,17 +145,54 @@ void threadMotor(void *pvParameters) {
         CAN_Send(mBMS2_ID, bms2_msg);
 
         float pedalTorque;
-        if (APPS_GetAPPSReading1() > 0.125) {
-            pedalTorque = APPS_GetAPPSReading1() * (MOTOR_MAX_TORQUE);
+        float p = APPS_GetAPPSReading1();
+        float TmaxCmd = (MOTOR_MAX_TORQUE * 0.5F);
+
+        // impromptu pedal curve: PIECEWISE
+        // Breakpoints
+        const float p1 = 0.10F;
+        const float p2 = 0.50F;
+
+        // Relative slope scalars
+        const float K_LOW = 1.2;
+        const float K_MID = 3.42F;
+        const float K_HIGH = 2.4F;
+
+        // best constants: KLOW = 0.35, KMID = 1.0, K_HIGH = 0.7
+
+        // Compute mid slope so that p=1.0 -> TmaxCmd (keeps same top-end as
+        // before)
+        float denom =
+            (K_LOW * p1) + (K_MID * (p2 - p1)) + (K_HIGH * (1.0F - p2));
+        float m2 = TmaxCmd / denom;
+
+        float m1 = K_LOW * m2;
+        float m3 = K_HIGH * m2;
+
+        if (p <= p1) {
+            pedalTorque = m1 * p + 5.0F;
+        } else if (p <= p2) {
+            float T1 = m1 * p1;
+            pedalTorque = T1 + m2 * (p - p1) + 5.0F;
         } else {
-            pedalTorque = 0;
+            float T1 = m1 * p1;
+            float T2 = T1 + m2 * (p2 - p1);
+            pedalTorque = T2 + m3 * (p - p2) + 5.0F;
         }
+
+        // Linear Map Torque
+        //  if (APPS_GetAPPSReading1() > 0.06) {
+        //      pedalTorque = APPS_GetAPPSReading1() * (MOTOR_MAX_TORQUE *
+        //      0.5F);
+        //  } else {
+        //      pedalTorque = 0;
+        //  }
 
 #if !HIMAC_FLAG
         Motor_UpdateMotor(pedalTorque);
 #endif
 
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(20));
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
     }
 }
 
@@ -161,6 +200,9 @@ void threadMotor(void *pvParameters) {
 void Motor_UpdateMotor(float torqueDemand) {
 
     Faults_HandleFaults();
+    if (BMS_GetOrionData()->lowCellVolt > LOW_VOLT_LIMIT) {
+        Faults_ClearFault(LOW_BATTERY_VOLTAGE_FAULT);
+    }
     RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
 
     switch (motorData.state) {
@@ -178,19 +220,25 @@ void Motor_UpdateMotor(float torqueDemand) {
         motorData.desiredTorque = 0.0F;
         break;
     case MOTOR_STATE_IDLE:
-        if (RTMButton_GetState() &&
-            Faults_CheckAllClear()) { // transition to IDLE
-            // TODO Update brake light threshold if we only want to move when mech brakes are engaged
-            if (BSE_GetBSEReading()->bseFront_Reading >= BRAKE_LIGHT_THRESHOLD &&
-                BSE_GetBSEReading()->bseRear_Reading >= BRAKE_LIGHT_THRESHOLD){
-                    motorData.state = MOTOR_STATE_DRIVING;
+        // transition to IDLE
+        // TODO Update brake light threshold if we only want to move when
+        // mech brakes are engaged
+        if (BSE_GetBSEReading()->bseFront_Reading >= BRAKE_LIGHT_THRESHOLD &&
+            BSE_GetBSEReading()->bseRear_Reading >= BRAKE_LIGHT_THRESHOLD) {
+            if (RTMButton_GetState() && Faults_CheckAllClear()) {
+                motorData.state = MOTOR_STATE_DRIVING;
             }
+        } else {
+            RTMButton_Reset();
         }
         motorData.desiredTorque = 0.0F;
         break;
     case MOTOR_STATE_DRIVING:
         if (RTMButton_GetState()) {
 
+            if (BMS_GetOrionData()->lowCellVolt < LOW_VOLT_LIMIT) {
+                Faults_SetFault(LOW_BATTERY_VOLTAGE_FAULT);
+            }
             if (torqueDemand <= 0.0F &&
                 MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
                 // If regen is enabled and the torque demand is zero, we need to
@@ -314,6 +362,11 @@ float Motor_GetTorqueDemand() { return motorData.desiredTorque; }
 
 void Motor_SetFaultState() { motorData.state = MOTOR_STATE_FAULT; }
 
-void Motor_ClearFaultState() { motorData.state = MOTOR_STATE_IDLE; }
+void Motor_ClearToIdleFault() {
+    motorData.state = MOTOR_STATE_FAULT;
+    RTMButton_Reset();
+}
+
+void Motor_ClearFaultState() { motorData.state = MOTOR_STATE_DRIVING; }
 
 MotorState Motor_GetState() { return motorData.state; }

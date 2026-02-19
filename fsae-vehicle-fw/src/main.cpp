@@ -123,12 +123,21 @@ void threadMain(void *pvParameters) {
         Serial.print(" | ");
         Serial.print("FaultMap: ");
         Serial.print(Faults_GetFaults(), arduino::BIN);
-        // Serial.print(" | ");
-        // Serial.print("MCU Temp: ");
-        // Serial.print(MCU_GetMCU2Data()->mcuTemp);
-        // Serial.print(" | ");
-        // Serial.print("Mtr Temp: ");
-        // Serial.print(MCU_GetMCU2Data()->motorTemp);
+
+        // Serial.print(" | Current: ");
+        // Serial.print(BMS_GetOrionData()->packCurrent);
+
+        // // // Thermal and Limits (From Message 0x6B1)
+        // // Serial.print(" | HiTemp: ");
+        // // Serial.print(BMS_GetOrionData()->highTemp);
+        // Serial.print(" | DCL: ");
+        // Serial.print(BMS_GetOrionData()->dischargeLimit);
+        Serial.print(" | ");
+        Serial.print("MCU Temp: ");
+        Serial.print(MCU_GetMCU2Data()->mcuTemp);
+        Serial.print(" | ");
+        Serial.print("Mtr Temp: ");
+        Serial.print(MCU_GetMCU2Data()->motorTemp);
 
         // Serial.print(" | ");
         // Serial.print("Regen: ");
@@ -175,7 +184,7 @@ void threadMain(void *pvParameters) {
         Serial.print("% | Current: ");
         Serial.print(BMS_GetOrionData()->packCurrent);
 
-        // Thermal and Limits (From Message 0x6B1)
+        // // Thermal and Limits (From Message 0x6B1)
         Serial.print(" | HiTemp: ");
         Serial.print(BMS_GetOrionData()->highTemp);
         Serial.print("C | DCL: ");

@@ -39,13 +39,13 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
     float bseVoltage1 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawFront);
     float bseVoltage2 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawRear);
 
-#if HIMACBSE_FLAG
-    Serial.print("bseRawData.bseRawFront: ");
-    Serial.print(bseVoltage1);
-    Serial.print(" | bseRawData.bseRawRear: ");
-    Serial.print(bseVoltage2);
-    Serial.print("\r");
-#endif
+    // // #if HIMACBSE_FLAG
+    // Serial.print("bseRawData.bseRawFront: ");
+    // Serial.print(bseVoltage1);
+    // Serial.print(" | bseRawData.bseRawRear: ");
+    // Serial.print(bseVoltage2);
+    // Serial.print("\r");
+    // // #endif
 
     // Check BSE open/short circuit
     if (bseVoltage1 < BSE_LOWER_THRESHOLD ||

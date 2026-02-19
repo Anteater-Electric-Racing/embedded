@@ -55,11 +55,29 @@ void APPS_UpdateData(uint16_t rawReading1,
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
 
-    // // Serial.print("\n\n\n\n\n");
+    // Serial.print("\n\n\n\n\n");
     // Serial.print("Raw APPS1: ");
     // Serial.println(appsData.apps1RawReading);
     // Serial.print("Raw APPS2: ");
     // Serial.println(appsData.apps2RawReading);
+
+    // if (rawReading1 < APPS1_REST_ADC) {
+    //     rawReading1 = APPS1_REST_ADC;
+    // } else if (rawReading1 > APPS1_FULL_PCT_ADC) {
+    //     rawReading1 = APPS1_FULL_PCT_ADC;
+    // }
+
+    // if (rawReading2 < APPS2_REST_ADC) {
+    //     rawReading2 = APPS2_REST_ADC;
+    // } else if (rawReading2 > APPS2_FULL_PCT_ADC) {
+    //     rawReading2 = APPS2_FULL_PCT_ADC;
+    // }
+
+    if (appsData.appsReading2_Percentage < 0.0F) {
+        appsData.appsReading2_Percentage = 0.0F;
+    } else if (appsData.appsReading2_Percentage > 1.0F) {
+        appsData.appsReading2_Percentage = 1.0F;
+    }
 
     // after LOWPASS_FILTER
     appsData.appsReading1_Percentage =
@@ -100,6 +118,11 @@ void APPS_UpdateData(uint16_t rawReading1,
     } else if (appsData.appsReading2_Voltage > APPS_5V_MAX) {
         appsData.appsReading2_Voltage = APPS_5V_MAX;
     }
+
+    // Serial.print("APPS1 RAW Voltage: ");
+    // Serial.println(appsData.appsReading1_Voltage);
+    // Serial.print("APPS2 RAW Voltage: ");
+    // Serial.println(appsData.appsReading2_Voltage);
 
     /*========================== 20 PCT LINEAR MAP ==========================*/
     // Moved this upwards to before the clamping of percentage
@@ -149,14 +172,14 @@ static void checkAndHandleAPPSFault() {
     float difference = abs(appsData.appsReading1_Percentage -
                            appsData.appsReading2_Percentage);
 
-#if DEBUG_FLAG
-    Serial.print("Difference is: ");
-    Serial.println(difference);
-    Serial.print("Percent APPS1: ");
-    Serial.println(appsData.appsReading1_Percentage);
-    Serial.print("Percent APPS2: ");
-    Serial.println(appsData.appsReading2_Percentage);
-#endif
+    // // #if DEBUG_FLAG
+    // Serial.print("Difference is: ");
+    // Serial.println(difference);
+    // Serial.print("Percent APPS1: ");
+    // Serial.println(appsData.appsReading1_Percentage);
+    // Serial.print("Percent APPS2: ");
+    // Serial.println(appsData.appsReading2_Percentage);
+    // #endif
 
     if (appsData.appsReading1_Voltage < APPS_3V3_FAULT_MIN ||
         appsData.appsReading1_Voltage > APPS_3V3_FAULT_MAX ||
@@ -194,10 +217,10 @@ static void checkAndHandlePlausibilityFault() {
     float BSEReading_Front = BSE_GetBSEReading()->bseFront_Reading;
     float BSEReading_Rear = BSE_GetBSEReading()->bseRear_Reading;
 
-    // float BSEReading = BSEReading_Front;
-    // if (BSEReading_Rear > BSEReading_Front) {
-    //     BSEReading = BSEReading_Rear;
-    // }
+    float BSEReading = BSEReading_Front;
+    if (BSEReading_Rear > BSEReading_Front) {
+        BSEReading = BSEReading_Rear;
+    }
 
 #if DEBUG_FLAG
     Serial.print("BSE Reading: ");

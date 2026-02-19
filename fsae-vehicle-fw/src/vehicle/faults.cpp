@@ -7,6 +7,7 @@
 #define FAULT_BSE_MASK (0x1 << 4)
 #define FAULT_BPPS_MASK (0x1 << 5)
 #define FAULT_APPS_BRAKE_PLAUSIBILITY_MASK (0x1 << 6)
+#define LOW_BATTERY_VOLTAGE_MASK (0x1 << 7)
 
 #include "vehicle/faults.h"
 #include "utils/utils.h"
@@ -62,6 +63,10 @@ void Faults_SetFault(FaultType fault) {
         faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }
+    case LOW_BATTERY_VOLTAGE_FAULT: {
+        faultBitMap |= LOW_BATTERY_VOLTAGE_MASK;
+        break;
+    }
     default: {
         break;
     }
@@ -107,6 +112,10 @@ void Faults_ClearFault(FaultType fault) {
         faultBitMap &= ~FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }
+    case LOW_BATTERY_VOLTAGE_FAULT: {
+        faultBitMap &= ~LOW_BATTERY_VOLTAGE_MASK;
+        break;
+    }
     default: {
         break;
     }
@@ -149,6 +158,9 @@ void Faults_HandleFaults() {
     }
     if (faultBitMap & FAULT_APPS_BRAKE_PLAUSIBILITY_MASK) {
         Motor_SetFaultState();
+    }
+    if (faultBitMap & LOW_BATTERY_VOLTAGE_MASK) {
+        Motor_ClearToIdleFault();
     }
 }
 
