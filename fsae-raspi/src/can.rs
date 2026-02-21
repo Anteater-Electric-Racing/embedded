@@ -196,7 +196,7 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn s
         StandardId::new(0x321).ok_or("Invalid destination ID")?,
     )?;
 
-    let payload = bincode::serde::encode_to_vec(data, bincode::config::legacy())?;
+    let payload = bincode::serialize(data)?;
 
     socket.write_packet(&payload).await?;
 
