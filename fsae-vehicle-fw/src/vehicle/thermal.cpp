@@ -22,6 +22,11 @@ void thermal_Init() {
     analogWriteResolution(ANALOG_WRITE_RESOLUTION); // 0-255
 }
 
+/*open loop  control */
+/**
+ * faults to add: (temp out of bounds??)
+ *
+ */
 void thermal_Update(uint32_t rawReading1, uint32_t rawReading2,
                     uint32_t rawReading3, uint32_t rawReading4) {
     // Assuming rawReading1 and rawReading2 are the temperature readings from
