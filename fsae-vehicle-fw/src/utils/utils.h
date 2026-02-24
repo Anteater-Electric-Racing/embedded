@@ -6,8 +6,6 @@
     Test BMS limits, get full throttle working
 
 
-
-
     TODO Fixes:
     BIG MZ Change - INTERUPT BASED CAN Testing:
         - Fix PCC packet structure (acc/Ts voltage as uint8s)
@@ -19,12 +17,14 @@
 #define HIMAC_FLAG 0
 #define BMS_FLAG 0 // TO REMOVE
 
+#define ACTIVE_MAP 1
+
 #define HIGH 1
 #define LOW 0
 
 #define THREAD_MAIN_STACK_SIZE 128
 #define THREAD_MAIN_PRIORITY 1
-#define THREAD_MOTOR_STACK_SIZE 128
+#define THREAD_MOTOR_STACK_SIZE 256
 #define THREAD_MOTOR_PRIORITY 4
 #define THREAD_CAN_TELEMETRY_STACK_SIZE 512
 #define THREAD_CAN_TELEMETRY_PRIORITY 1
@@ -125,7 +125,10 @@
 #define BSE_CUTOFF_HZ 100.0F
 
 #define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
-#define CAPPED_MOTOR_TORQUE 0.0F
+#define CAPPED_MOTOR_TORQUE 75.0F
+#define MAX_TORQUE_STEP_UP 0.05F
+#define MAX_TORQUE_STEP_DOWN 0.2F
+#define TORQUE_SHIFT_OFFSET 5.0F
 
 #define BATTERY_MAX_CURRENT_A 50.0F // TO CHANGE
 #define BATTERY_MAX_REGEN_A 50.0F   // TO CHANGE

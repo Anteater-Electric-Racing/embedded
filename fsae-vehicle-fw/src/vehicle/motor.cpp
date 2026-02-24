@@ -31,9 +31,26 @@ static VCU1 vcu1 = {0};
 static BMS1 bms1 = {0};
 static BMS2 bms2 = {0};
 
+// Define 3 Presets (Steepness k, Midpoint x0)
+// Map 0: Rain (High precision, late power)
+// Map 1: Endurance (Balanced, predictable)
+// Map 2: Autocross  (More linear + induce level shift)
+const float k_vals[] = {10.0f, 9.0f, 12.0f};
+const float x0_vals[] = {0.7f, 0.35f, 0.3f};
+
+float k = k_vals[ACTIVE_MAP];
+float x0 = x0_vals[ACTIVE_MAP];
+
+float k, x0, low_limit, high_limit;
+
+float targetTorque = 0.0F;
+
 void Motor_Init() {
     motorData.state = MOTOR_STATE_PRECHARGING; // DEFAULT TO PRECHARGE
     motorData.desiredTorque = 0.0F;            // No torque demand at start
+
+    low_limit = 1.0f / (1.0f + expf(-k * (0.0f - x0)));
+    high_limit = 1.0f / (1.0f + expf(-k * (1.0f - x0)));
 }
 
 void threadMotor(void *pvParameters) {
@@ -144,41 +161,61 @@ void threadMotor(void *pvParameters) {
         memcpy(&bms2_msg, &bms2, sizeof(bms2_msg));
         CAN_Send(mBMS2_ID, bms2_msg);
 
-        float pedalTorque;
-        float p = APPS_GetAPPSReading1();
-        float TmaxCmd = (MOTOR_MAX_TORQUE * 0.5F);
+        static float lastTorqueSent = 0.0f;
 
-        // impromptu pedal curve: PIECEWISE
-        // Breakpoints
-        const float p1 = 0.10F;
-        const float p2 = 0.50F;
+        targetTorque = torqueMap(APPS_GetAPPSReading());
 
-        // Relative slope scalars
-        const float K_LOW = 1.2;
-        const float K_MID = 3.42F;
-        const float K_HIGH = 2.4F;
-
-        // best constants: KLOW = 0.35, KMID = 1.0, K_HIGH = 0.7
-
-        // Compute mid slope so that p=1.0 -> TmaxCmd (keeps same top-end as
-        // before)
-        float denom =
-            (K_LOW * p1) + (K_MID * (p2 - p1)) + (K_HIGH * (1.0F - p2));
-        float m2 = TmaxCmd / denom;
-
-        float m1 = K_LOW * m2;
-        float m3 = K_HIGH * m2;
-
-        if (p <= p1) {
-            pedalTorque = m1 * p + 5.0F;
-        } else if (p <= p2) {
-            float T1 = m1 * p1;
-            pedalTorque = T1 + m2 * (p - p1) + 5.0F;
-        } else {
-            float T1 = m1 * p1;
-            float T2 = T1 + m2 * (p2 - p1);
-            pedalTorque = T2 + m3 * (p - p2) + 5.0F;
+        // Apply Deadband
+        if (APPS_GetAPPSReading() < 0.03f) {
+            targetTorque = 0.0f;
         }
+        // 3. Slew Rate Limiting
+        float torqueDelta = targetTorque - lastTorqueSent;
+        if (torqueDelta > MAX_TORQUE_STEP_UP_PCT) {
+            // Capping the Acceleration
+            targetTorque = lastTorqueSent + MAX_TORQUE_STEP_UP_PCT;
+        } else if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) {
+            // Capping the Deceleration
+            targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
+        }
+
+        lastTorqueSent = targetTorque;
+
+        // float pedalTorque;
+        // float p = APPS_GetAPPSReading1();
+        // float TmaxCmd = (MOTOR_MAX_TORQUE * 0.5F);
+
+        // // PIECEWISE pedal map
+        // // Breakpoints
+        // const float p1 = 0.10F;
+        // const float p2 = 0.50F;
+
+        // // Relative slope scalars
+        // const float K_LOW = 1.2;
+        // const float K_MID = 3.42F;
+        // const float K_HIGH = 2.4F;
+
+        // // best constants: KLOW = 0.35, KMID = 1.0, K_HIGH = 0.7
+
+        // // Compute mid slope so that p=1.0 -> TmaxCmd (keeps same top-end as
+        // // before)
+        // float denom =
+        //     (K_LOW * p1) + (K_MID * (p2 - p1)) + (K_HIGH * (1.0F - p2));
+        // float m2 = TmaxCmd / denom;
+
+        // float m1 = K_LOW * m2;
+        // float m3 = K_HIGH * m2;
+
+        // if (p <= p1) {
+        //     pedalTorque = m1 * p + 5.0F;
+        // } else if (p <= p2) {
+        //     float T1 = m1 * p1;
+        //     pedalTorque = T1 + m2 * (p - p1) + 5.0F;
+        // } else {
+        //     float T1 = m1 * p1;
+        //     float T2 = T1 + m2 * (p2 - p1);
+        //     pedalTorque = T2 + m3 * (p - p2) + 5.0F;
+        // }
 
         // Linear Map Torque
         //  if (APPS_GetAPPSReading1() > 0.06) {
@@ -189,7 +226,7 @@ void threadMotor(void *pvParameters) {
         //  }
 
 #if !HIMAC_FLAG
-        Motor_UpdateMotor(pedalTorque);
+        Motor_UpdateMotor(targetTorque);
 #endif
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
@@ -357,6 +394,15 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
     }
 }
 #endif
+
+float torqueMap(float pedal) {
+    // Raw Sigmoid curve
+    float raw = 1.0f / (1.0f + expf(-k * (pedal - x0)));
+    float normalized_ratio = (raw - low_limit) / (high_limit - low_limit);
+    float target =
+        (normalized_ratio * CAPPED_MOTOR_TORQUE) + TORQUE_SHIFT_OFFSET;
+    return target;
+}
 
 float Motor_GetTorqueDemand() { return motorData.desiredTorque; }
 

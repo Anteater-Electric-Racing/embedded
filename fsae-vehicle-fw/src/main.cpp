@@ -94,10 +94,10 @@ void threadMain(void *pvParameters) {
         Serial.print(Motor_GetState());
         Serial.print(" | ");
 
-        Serial.print("Torque/APPS: ");
-        Serial.print((APPS_GetAPPSReading1() * (CAPPED_MOTOR_TORQUE)));
+        Serial.print("Current Torque: ");
+        Serial.print("-1");
         Serial.print(" / ");
-        Serial.print(APPS_GetAPPSReading1());
+        Serial.print(APPS_GetAPPSReading());
         Serial.print(" / ");
         Serial.print(BSE_GetBSEReading()->bseFront_Reading);
 
