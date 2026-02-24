@@ -133,6 +133,7 @@ fn parse_bool(byte: u8) -> bool {
 ///
 /// Expected packet length of 58 bytes.
 pub async fn read_can() {
+    #[cfg(not(debug_assertions))]
     loop {
         let socket = match IsoTpSocket::open(
             CAN_INTERFACE,
@@ -177,6 +178,55 @@ pub async fn read_can() {
                 debug_3: f32::from_le_bytes(packet[54..58].try_into().unwrap()),
             })
             .await;
+        }
+    }
+    #[cfg(debug_assertions)]
+    {
+        println!("Debug mode: generating synthetic telemetry data on 100ms interval");
+        let mut tick: u64 = 0;
+
+        loop {
+            let t = tick as f32 * 0.1;
+
+            let cycle = (t * 0.05).sin().max(0.0); // 0.0–1.0 envelope
+
+            let synthetic = TelemetryData {
+                apps_travel: cycle * 95.0,
+                motor_speed: cycle * 4500.0,
+                motor_torque: cycle * 110.0,
+                max_motor_torque: 120.0,
+                motor_direction: if cycle > 0.01 {
+                    MotorRotateDirection::DirectionForward
+                } else {
+                    MotorRotateDirection::DirectionStandby
+                },
+                motor_state: if cycle > 0.01 {
+                    MotorState::MotorStateDriving
+                } else {
+                    MotorState::MotorStateIdle
+                },
+                mcu_main_state: MCUMainState::StateRun,
+                mcu_work_mode: MCUWorkMode::WorkModeTorque,
+                mcu_voltage: 300.0 + 20.0 * (t * 0.2).sin(),
+                mcu_current: cycle * 150.0 + 5.0 * (t * 0.7).sin(),
+                motor_temp: 35 + (cycle * 45.0) as i32,
+                mcu_temp: 30 + (cycle * 30.0) as i32,
+                dc_main_wire_over_volt_fault: false,
+                dc_main_wire_over_curr_fault: false,
+                motor_over_spd_fault: false,
+                motor_phase_curr_fault: false,
+                motor_stall_fault: false,
+                mcu_warning_level: MCUWarningLevel::ErrorNone,
+                debug_0: t.sin(),
+                debug_1: t.cos(),
+                debug_2: (t * 2.0).sin(),
+                debug_3: (t * 2.0).cos(),
+            };
+
+            send_message(synthetic).await;
+
+            tick += 1;
+            sleep(Duration::from_millis(100)).await;
         }
     }
 }
