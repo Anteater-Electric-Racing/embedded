@@ -183,7 +183,7 @@ impl TelemetryData {
                 bytes.len()
             ));
         }
-        let fault: u32 = u32::from_be_bytes(bytes[42..46].try_into().unwrap());
+        let fault: u32 = u32::from_le_bytes(bytes[42..46].try_into().unwrap());
 
         Ok(TelemetryData {
             apps_travel: f32::from_le_bytes(bytes[0..4].try_into().unwrap()),
