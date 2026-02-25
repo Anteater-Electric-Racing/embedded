@@ -33,7 +33,7 @@ sudo -u "$REAL_USER" bash -c "
     cd influxdb &&
     CARGO_PROFILE_RELEASE_LTO=off \
     CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 \
-    '$REAL_HOME/.cargo/bin/cargo' build --release --jobs 2
+    '$REAL_HOME/.cargo/bin/cargo' build --release --jobs 4
 "
 
 echo "==> Installing InfluxDB3 binary..."
