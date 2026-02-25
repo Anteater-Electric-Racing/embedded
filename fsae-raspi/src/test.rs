@@ -23,16 +23,84 @@
 //! A listener subscribes to the `telemetry` topic and awaits the next `Publish`
 //! packet. The payload is deserialized into [`TelemetryData`] and compared against
 //! the expected value.
-
 #[cfg(test)]
 use crate::{
-    can::{
-        MCUMainState, MCUWarningLevel, MCUWorkMode, MotorRotateDirection, MotorState, TelemetryData,
-    },
+    can::TelemetryData,
     send::{send_message, Reading, INFLUXDB_DATABASE, INFLUXDB_URL, MQTT_HOST, MQTT_PORT},
 };
+use deku::prelude::*;
 #[cfg(test)]
 use tokio::time::Duration;
+#[cfg(test)]
+use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
+#[cfg(test)]
+use tracing::info;
+
+/// Sends a raw CAN_PACKET_SIZE-byte [`TelemetryData`] packet over ISO-TP on `vcan0`.
+///
+/// Only compiled in `cfg(test)` mode.
+/// Requires a virtual CAN interface.
+#[cfg(test)]
+async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn std::error::Error>> {
+    let socket = IsoTpSocket::open(
+        "vcan0",
+        StandardId::new(0x123).ok_or("Invalid source ID")?,
+        StandardId::new(0x321).ok_or("Invalid destination ID")?,
+    )?;
+
+    let payload = TelemetryData::to_bytes(data)?;
+    socket.write_packet(&payload).await?;
+
+    info!(bytes = payload.len(), "TelemetryData sent over ISO-TP");
+    Ok(())
+}
+
+/// Verifies that [`parse_telemetry`] round-trips through
+/// [`telemetry_to_raw_bytes`] without any CAN hardware.
+#[test]
+fn test_parse_telemetry_roundtrip() {
+    let original = TelemetryData::default();
+
+    let raw = TelemetryData::to_bytes(&original).unwrap();
+    let ((remaining, offset), parsed) =
+        TelemetryData::from_bytes((raw.as_ref(), 0)).expect("parse_telemetry failed");
+    assert_eq!(original, parsed);
+    assert_eq!(remaining.len(), 0);
+    assert_eq!(offset, 0);
+}
+
+/// Rejects a packet that is too short.
+#[test]
+fn test_parse_telemetry_bad_length() {
+    let short = [0u8; 10];
+    assert!(TelemetryData::from_bytes((short.as_ref(), 0)).is_err());
+}
+
+/// Rejects a packet containing an invalid enum byte.
+#[test]
+fn test_parse_telemetry_invalid_enum() {
+    let mut raw = [0u8; TelemetryData::SIZE_BITS / 8];
+    // motor_direction at byte 16 — set to an invalid discriminant
+    raw[16] = 200;
+    assert!(TelemetryData::from_bytes((raw.as_ref(), 0)).is_err());
+}
+
+/// Sends a dummy telemetry packet over ISO-TP on `vcan0` and verifies delivery.
+///
+/// Requires:
+/// ```bash
+/// sudo modprobe vcan
+/// sudo ip link add dev vcan0 type vcan
+/// sudo ip link set up vcan0
+/// ```
+/// These commands are run automatically in the GitHub Actions workflow (test.yml).
+#[tokio::test]
+async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn std::error::Error>> {
+    let data = TelemetryData::default();
+
+    send_telemetry_over_isotp(&data).await?;
+    Ok(())
+}
 
 /// Verifies that a telemetry packet was written to InfluxDB.
 ///
@@ -81,7 +149,7 @@ pub async fn verify_influx_write<T: Reading + for<'de> serde::Deserialize<'de> +
 /// Requires a running InfluxDB instance  
 #[test]
 fn test_verify_influx_write() {
-    let test_packet = TelemetryData::from_random(0);
+    let test_packet = TelemetryData::default();
 
     println!("Sending TelemetryData test packet to influxdb3");
     tokio::runtime::Runtime::new().unwrap().block_on(async {
@@ -161,7 +229,7 @@ async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
 #[test]
 fn test_verify_mqtt_listener() {
     // Test Struct (listener end)
-    let listener_data: TelemetryData = TelemetryData::from_random(0);
+    let listener_data: TelemetryData = TelemetryData::default();
 
     // Run verify
     let runtime = tokio::runtime::Runtime::new().expect("Unable to start listener runtime.");

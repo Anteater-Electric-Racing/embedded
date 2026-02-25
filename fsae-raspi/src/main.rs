@@ -4,7 +4,6 @@ mod mqtt;
 mod send;
 #[cfg(test)]
 mod test;
-
 use can::read_can;
 use mqtt::mqttd;
 
