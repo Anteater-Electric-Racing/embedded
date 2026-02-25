@@ -1,4 +1,4 @@
-//! This module enables the recieving and decoding of telemetry
+//! This module enables the receiving and decoding of telemetry
 //! data from the motor controller over CAN ISO-TP and sets up test
 //! functions for transmitting test packets over vCAN.
 //!
@@ -7,33 +7,43 @@
 //! - ISO-TP socket setup for receiving and sending frames
 //! - Parsing of the MCU telemetry packet into typed data
 //! - Definitions of all enums representing MCU and motor state machines
-//! - 'TelemetryData' structure, which contains the fully decoded packet
+//! - `TelemetryData` structure, which contains the fully decoded packet
 //! - Test function to send and verify dummy telemetry over vcan0
 //!
-//! Code runs use relies on 'can0', while tests can run against vcan0
-//! using the virtual can network setup on Github actions workflow (test.yml)
+//! Production code relies on `can0`, while tests can run against vcan0
+//! using the virtual CAN network setup in the GitHub Actions workflow (test.yml).
 
 use crate::send::{send_message, Reading};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
+use tracing::{error, info, warn};
 
 const CAN_INTERFACE: &str = "can0";
 
 macro_rules! define_enum {
     ($name:ident, $($variant:ident = $value:expr),*) => {
-        #[derive(Serialize, Deserialize, PartialEq, Clone)]
+        #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
+        #[repr(u8)]
         #[allow(clippy::enum_variant_names)]
         pub enum $name {
-            $($variant = $value),*
+            $($variant = $value,)*
+            Unknown = 255,
         }
 
         impl $name {
-            pub fn from_byte(byte: u8) -> Self {
+            pub fn from_byte(byte: u8) -> Option<Self> {
                 match byte {
-                    $($value => Self::$variant),*,
-                    _ => panic!("Invalid value for {}", stringify!($name)),
+                    $($value => Some(Self::$variant),)*
+                    _ => {
+                        tracing::warn!(
+                            "Unknown {} value: {}",
+                            stringify!($name),
+                            byte
+                        );
+                        None
+                    }
                 }
             }
         }
@@ -83,13 +93,10 @@ define_enum!(
 
 /// Telemetry data record produced by the motor controller.
 ///
-/// Structure from the ISO-TP frame received over
-/// CAN. It contains driver inputs, motor state information, controller status,
+/// Parsed from the 58-byte ISO-TP frame received over CAN.
+/// Contains driver inputs, motor state information, controller status,
 /// temperatures, electrical measurements, fault flags, and debug channels.
-///
-/// Fields match up with the telemetryData packet in
-/// test_send_telemetry_over_isotp().
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TelemetryData {
     pub apps_travel: f32,
     pub motor_speed: f32,
@@ -125,118 +132,167 @@ fn parse_bool(byte: u8) -> bool {
     byte != 0
 }
 
-/// Continuously reads ISO-TP packets from 'can0', parses the MCU
-/// telemetry frame, converts it into a TelemetryData struct, and forwards it
-/// via 'send_message()'.
+/// Parses a 58-byte CAN packet into a [`TelemetryData`] struct.
 ///
-/// Loop retries socket creation on failure and logs malformed packets.
+/// Returns `Err` if the packet length is wrong or any enum byte is invalid.
+pub fn parse_telemetry(packet: &[u8]) -> Result<TelemetryData, String> {
+    if packet.len() != 58 {
+        return Err(format!("Expected 58 bytes, got {}", packet.len()));
+    }
+
+    Ok(TelemetryData {
+        apps_travel: f32::from_le_bytes(packet[0..4].try_into().unwrap()),
+        motor_speed: f32::from_le_bytes(packet[4..8].try_into().unwrap()),
+        motor_torque: f32::from_le_bytes(packet[8..12].try_into().unwrap()),
+        max_motor_torque: f32::from_le_bytes(packet[12..16].try_into().unwrap()),
+        motor_direction: MotorRotateDirection::from_byte(packet[16])
+            .ok_or_else(|| format!("Invalid motor_direction byte: {}", packet[16]))?,
+        motor_state: MotorState::from_byte(packet[17])
+            .ok_or_else(|| format!("Invalid motor_state byte: {}", packet[17]))?,
+        mcu_main_state: MCUMainState::from_byte(packet[18])
+            .ok_or_else(|| format!("Invalid mcu_main_state byte: {}", packet[18]))?,
+        mcu_work_mode: MCUWorkMode::from_byte(packet[19])
+            .ok_or_else(|| format!("Invalid mcu_work_mode byte: {}", packet[19]))?,
+        mcu_voltage: f32::from_le_bytes(packet[20..24].try_into().unwrap()),
+        mcu_current: f32::from_le_bytes(packet[24..28].try_into().unwrap()),
+        motor_temp: i32::from_le_bytes(packet[28..32].try_into().unwrap()),
+        mcu_temp: i32::from_le_bytes(packet[32..36].try_into().unwrap()),
+        dc_main_wire_over_volt_fault: parse_bool(packet[36]),
+        dc_main_wire_over_curr_fault: parse_bool(packet[37]),
+        motor_over_spd_fault: parse_bool(packet[38]),
+        motor_phase_curr_fault: parse_bool(packet[39]),
+        motor_stall_fault: parse_bool(packet[40]),
+        mcu_warning_level: MCUWarningLevel::from_byte(packet[41])
+            .ok_or_else(|| format!("Invalid mcu_warning_level byte: {}", packet[41]))?,
+        debug_0: f32::from_le_bytes(packet[42..46].try_into().unwrap()),
+        debug_1: f32::from_le_bytes(packet[46..50].try_into().unwrap()),
+        debug_2: f32::from_le_bytes(packet[50..54].try_into().unwrap()),
+        debug_3: f32::from_le_bytes(packet[54..58].try_into().unwrap()),
+    })
+}
+
+/// Serializes a [`TelemetryData`] struct into the raw 58-byte CAN packet
+/// format. Mirrors the layout expected by [`parse_telemetry`].
+#[cfg(test)]
+pub fn telemetry_to_raw_bytes(data: &TelemetryData) -> [u8; 58] {
+    let mut buf = [0u8; 58];
+    buf[0..4].copy_from_slice(&data.apps_travel.to_le_bytes());
+    buf[4..8].copy_from_slice(&data.motor_speed.to_le_bytes());
+    buf[8..12].copy_from_slice(&data.motor_torque.to_le_bytes());
+    buf[12..16].copy_from_slice(&data.max_motor_torque.to_le_bytes());
+    buf[16] = data.motor_direction as u8;
+    buf[17] = data.motor_state as u8;
+    buf[18] = data.mcu_main_state as u8;
+    buf[19] = data.mcu_work_mode as u8;
+    buf[20..24].copy_from_slice(&data.mcu_voltage.to_le_bytes());
+    buf[24..28].copy_from_slice(&data.mcu_current.to_le_bytes());
+    buf[28..32].copy_from_slice(&data.motor_temp.to_le_bytes());
+    buf[32..36].copy_from_slice(&data.mcu_temp.to_le_bytes());
+    buf[36] = data.dc_main_wire_over_volt_fault as u8;
+    buf[37] = data.dc_main_wire_over_curr_fault as u8;
+    buf[38] = data.motor_over_spd_fault as u8;
+    buf[39] = data.motor_phase_curr_fault as u8;
+    buf[40] = data.motor_stall_fault as u8;
+    buf[41] = data.mcu_warning_level as u8;
+    buf[42..46].copy_from_slice(&data.debug_0.to_le_bytes());
+    buf[46..50].copy_from_slice(&data.debug_1.to_le_bytes());
+    buf[50..54].copy_from_slice(&data.debug_2.to_le_bytes());
+    buf[54..58].copy_from_slice(&data.debug_3.to_le_bytes());
+    buf
+}
+
+/// Reads ISO-TP packets from `can0` in a loop, parses each into
+/// [`TelemetryData`], and forwards via [`send_message`].
 ///
-/// Expected packet length of 58 bytes.
-pub async fn read_can() {
-    #[cfg(not(debug_assertions))]
+/// Retries socket creation on failure; logs malformed packets.
+#[cfg(not(debug_assertions))]
+async fn read_can_hardware() {
     loop {
         let socket = match IsoTpSocket::open(
             CAN_INTERFACE,
             StandardId::new(0x666).expect("Invalid src id"),
-            StandardId::new(0x777).expect("Invalid src id"),
+            StandardId::new(0x777).expect("Invalid dst id"),
         ) {
             Ok(socket) => socket,
             Err(e) => {
-                println!("Failed to open socket: {}", e);
+                error!(%e, "Failed to open CAN socket");
                 sleep(Duration::from_secs(1)).await;
                 continue;
             }
         };
 
         while let Ok(packet) = socket.read_packet().await {
-            if packet.len() != 58 {
-                println!("Invalid packet length {}: {:?}", packet.len(), packet);
-                continue;
+            match parse_telemetry(&packet) {
+                Ok(data) => send_message(data).await,
+                Err(e) => warn!(error = %e, "Malformed telemetry packet"),
             }
-            send_message(TelemetryData {
-                apps_travel: f32::from_le_bytes(packet[0..4].try_into().unwrap()),
-                motor_speed: f32::from_le_bytes(packet[4..8].try_into().unwrap()),
-                motor_torque: f32::from_le_bytes(packet[8..12].try_into().unwrap()),
-                max_motor_torque: f32::from_le_bytes(packet[12..16].try_into().unwrap()),
-                motor_direction: MotorRotateDirection::from_byte(packet[16]),
-                motor_state: MotorState::from_byte(packet[17]),
-                mcu_main_state: MCUMainState::from_byte(packet[18]),
-                mcu_work_mode: MCUWorkMode::from_byte(packet[19]),
-                mcu_voltage: f32::from_le_bytes(packet[20..24].try_into().unwrap()),
-                mcu_current: f32::from_le_bytes(packet[24..28].try_into().unwrap()),
-                motor_temp: i32::from_le_bytes(packet[28..32].try_into().unwrap()),
-                mcu_temp: i32::from_le_bytes(packet[32..36].try_into().unwrap()),
-                dc_main_wire_over_volt_fault: parse_bool(packet[36]),
-                dc_main_wire_over_curr_fault: parse_bool(packet[37]),
-                motor_over_spd_fault: parse_bool(packet[38]),
-                motor_phase_curr_fault: parse_bool(packet[39]),
-                motor_stall_fault: parse_bool(packet[40]),
-                mcu_warning_level: MCUWarningLevel::from_byte(packet[41]),
-                debug_0: f32::from_le_bytes(packet[42..46].try_into().unwrap()),
-                debug_1: f32::from_le_bytes(packet[46..50].try_into().unwrap()),
-                debug_2: f32::from_le_bytes(packet[50..54].try_into().unwrap()),
-                debug_3: f32::from_le_bytes(packet[54..58].try_into().unwrap()),
-            })
-            .await;
-        }
-    }
-    #[cfg(debug_assertions)]
-    {
-        println!("Debug mode: generating synthetic telemetry data on 100ms interval");
-        let mut tick: u64 = 0;
-
-        loop {
-            let t = tick as f32 * 0.1;
-
-            let cycle = (t * 0.05).sin().max(0.0); // 0.0–1.0 envelope
-
-            let synthetic = TelemetryData {
-                apps_travel: cycle * 95.0,
-                motor_speed: cycle * 4500.0,
-                motor_torque: cycle * 110.0,
-                max_motor_torque: 120.0,
-                motor_direction: if cycle > 0.01 {
-                    MotorRotateDirection::DirectionForward
-                } else {
-                    MotorRotateDirection::DirectionStandby
-                },
-                motor_state: if cycle > 0.01 {
-                    MotorState::MotorStateDriving
-                } else {
-                    MotorState::MotorStateIdle
-                },
-                mcu_main_state: MCUMainState::StateRun,
-                mcu_work_mode: MCUWorkMode::WorkModeTorque,
-                mcu_voltage: 300.0 + 20.0 * (t * 0.2).sin(),
-                mcu_current: cycle * 150.0 + 5.0 * (t * 0.7).sin(),
-                motor_temp: 35 + (cycle * 45.0) as i32,
-                mcu_temp: 30 + (cycle * 30.0) as i32,
-                dc_main_wire_over_volt_fault: false,
-                dc_main_wire_over_curr_fault: false,
-                motor_over_spd_fault: false,
-                motor_phase_curr_fault: false,
-                motor_stall_fault: false,
-                mcu_warning_level: MCUWarningLevel::ErrorNone,
-                debug_0: t.sin(),
-                debug_1: t.cos(),
-                debug_2: (t * 2.0).sin(),
-                debug_3: (t * 2.0).cos(),
-            };
-
-            send_message(synthetic).await;
-
-            tick += 1;
-            sleep(Duration::from_millis(100)).await;
         }
     }
 }
 
-/// Sends a 'TelemetryData' instance over ISO-TP on 'vcan0'.
+/// Generates synthetic telemetry on a 100 ms interval (debug builds only).
+#[cfg(debug_assertions)]
+async fn read_can_synthetic() {
+    info!("Debug mode: generating synthetic telemetry data on 100ms interval");
+    let mut tick: u64 = 0;
+
+    loop {
+        let t = tick as f32 * 0.1;
+        let cycle = (t * 0.05).sin().max(0.0);
+
+        let synthetic = TelemetryData {
+            apps_travel: cycle * 95.0,
+            motor_speed: cycle * 4500.0,
+            motor_torque: cycle * 110.0,
+            max_motor_torque: 120.0,
+            motor_direction: if cycle > 0.01 {
+                MotorRotateDirection::DirectionForward
+            } else {
+                MotorRotateDirection::DirectionStandby
+            },
+            motor_state: if cycle > 0.01 {
+                MotorState::MotorStateDriving
+            } else {
+                MotorState::MotorStateIdle
+            },
+            mcu_main_state: MCUMainState::StateRun,
+            mcu_work_mode: MCUWorkMode::WorkModeTorque,
+            mcu_voltage: 300.0 + 20.0 * (t * 0.2).sin(),
+            mcu_current: cycle * 150.0 + 5.0 * (t * 0.7).sin(),
+            motor_temp: 35 + (cycle * 45.0) as i32,
+            mcu_temp: 30 + (cycle * 30.0) as i32,
+            dc_main_wire_over_volt_fault: false,
+            dc_main_wire_over_curr_fault: false,
+            motor_over_spd_fault: false,
+            motor_phase_curr_fault: false,
+            motor_stall_fault: false,
+            mcu_warning_level: MCUWarningLevel::ErrorNone,
+            debug_0: t.sin(),
+            debug_1: t.cos(),
+            debug_2: (t * 2.0).sin(),
+            debug_3: (t * 2.0).cos(),
+        };
+
+        send_message(synthetic).await;
+
+        tick += 1;
+        sleep(Duration::from_millis(100)).await;
+    }
+}
+
+/// Entry point: dispatches to the hardware or synthetic reader depending
+/// on the build profile.
+pub async fn read_can() {
+    #[cfg(not(debug_assertions))]
+    read_can_hardware().await;
+
+    #[cfg(debug_assertions)]
+    read_can_synthetic().await;
+}
+
+/// Sends a raw 58-byte [`TelemetryData`] packet over ISO-TP on `vcan0`.
 ///
-/// This function is intended for testing and is only compiled in 'cfg(test)'
-/// mode. The struct is serialized using bincode and written as a single
-/// ISO-TP packet.
-///
+/// Only compiled in `cfg(test)` mode.
 /// Requires a virtual CAN interface.
 #[cfg(test)]
 async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn std::error::Error>> {
@@ -246,26 +302,72 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn s
         StandardId::new(0x321).ok_or("Invalid destination ID")?,
     )?;
 
-    let payload = bincode::serialize(data)?;
-
+    let payload = telemetry_to_raw_bytes(data);
     socket.write_packet(&payload).await?;
 
-    println!("TelemetryData sent over iso-tp ({} bytes)", payload.len());
+    info!(bytes = payload.len(), "TelemetryData sent over ISO-TP");
     Ok(())
 }
 
-/// Test verifying ISO-TP transmission by sending and verifying dummy `TelemetryData` packet over ISO-TP
+/// Verifies that [`parse_telemetry`] round-trips through
+/// [`telemetry_to_raw_bytes`] without any CAN hardware.
+#[test]
+fn test_parse_telemetry_roundtrip() {
+    let original = TelemetryData {
+        apps_travel: 72.5,
+        motor_speed: 3200.0,
+        motor_torque: 85.4,
+        max_motor_torque: 120.0,
+        motor_direction: MotorRotateDirection::DirectionForward,
+        motor_state: MotorState::MotorStateDriving,
+        mcu_main_state: MCUMainState::StateRun,
+        mcu_work_mode: MCUWorkMode::WorkModeTorque,
+        mcu_voltage: 13.8,
+        mcu_current: 2.4,
+        motor_temp: 75,
+        mcu_temp: 68,
+        dc_main_wire_over_volt_fault: false,
+        dc_main_wire_over_curr_fault: true,
+        motor_over_spd_fault: false,
+        motor_phase_curr_fault: false,
+        motor_stall_fault: false,
+        mcu_warning_level: MCUWarningLevel::ErrorNone,
+        debug_0: 1.0,
+        debug_1: 2.0,
+        debug_2: 3.0,
+        debug_3: 4.0,
+    };
+
+    let raw = telemetry_to_raw_bytes(&original);
+    let parsed = parse_telemetry(&raw).expect("parse_telemetry failed");
+    assert_eq!(original, parsed);
+}
+
+/// Rejects a packet that is too short.
+#[test]
+fn test_parse_telemetry_bad_length() {
+    let short = [0u8; 10];
+    assert!(parse_telemetry(&short).is_err());
+}
+
+/// Rejects a packet containing an invalid enum byte.
+#[test]
+fn test_parse_telemetry_invalid_enum() {
+    let mut raw = [0u8; 58];
+    // motor_direction at byte 16 — set to an invalid discriminant
+    raw[16] = 200;
+    assert!(parse_telemetry(&raw).is_err());
+}
+
+/// Sends a dummy telemetry packet over ISO-TP on `vcan0` and verifies delivery.
 ///
-/// Requires a virtual CAN interface configured with:
-/// ''' bash
+/// Requires:
+/// ```bash
 /// sudo modprobe vcan
 /// sudo ip link add dev vcan0 type vcan
 /// sudo ip link set up vcan0
-/// '''
-/// ^^ vCAN commands automatically setup and verify
-///    'test_send_telemetry_over_isotp' function
-//     on test.yml Github actions workflow
-
+/// ```
+/// These commands are run automatically in the GitHub Actions workflow (test.yml).
 #[tokio::test]
 async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn std::error::Error>> {
     let data = TelemetryData {

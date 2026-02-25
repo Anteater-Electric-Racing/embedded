@@ -1,18 +1,7 @@
 use rumqttd::Broker;
+use tracing::error;
 
 pub fn mqttd() {
-    let builder = tracing_subscriber::fmt()
-        .pretty()
-        .with_line_number(false)
-        .with_file(false)
-        .with_thread_ids(false)
-        .with_thread_names(false)
-        .with_env_filter("rumqttd=warn");
-
-    builder
-        .try_init()
-        .expect("initialized subscriber successfully");
-
     let config = match config::Config::builder()
         .add_source(config::File::from_str(
             include_str!("../rumqttd.toml"),
@@ -22,7 +11,7 @@ pub fn mqttd() {
     {
         Ok(config) => config,
         Err(e) => {
-            eprintln!("Failed to load config: {:?}", e);
+            error!(?e, "Failed to load MQTT broker config");
             return;
         }
     };
@@ -30,13 +19,13 @@ pub fn mqttd() {
     let config = match config.try_deserialize() {
         Ok(config) => config,
         Err(e) => {
-            eprintln!("Failed to deserialize config: {:?}", e);
+            error!(?e, "Failed to deserialize MQTT broker config");
             return;
         }
     };
 
     let mut broker = Broker::new(config);
     if let Err(e) = broker.start() {
-        eprintln!("Failed to start broker: {:?}", e);
+        error!(?e, "Failed to start MQTT broker");
     }
 }

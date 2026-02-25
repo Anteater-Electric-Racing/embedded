@@ -1,5 +1,20 @@
 use crate::send::Reading;
 
+/// Escapes special characters in a line-protocol field key.
+fn escape_field_key(s: &str) -> String {
+    s.replace(',', r"\,")
+        .replace('=', r"\=")
+        .replace(' ', r"\ ")
+}
+
+/// Escapes special characters in a line-protocol string field value.
+fn escape_string_value(s: &str) -> String {
+    s.replace('\\', r"\\").replace('"', r#"\""#)
+}
+
+/// Converts any [`Reading`] into an InfluxDB line-protocol string.
+///
+/// Format: `<measurement> <field1>=<val1>,<field2>=<val2> <timestamp_ns>`
 pub fn to_line_protocol<T: Reading>(message: &T) -> String {
     let mut line_protocol = T::topic().to_string();
 
@@ -16,7 +31,9 @@ pub fn to_line_protocol<T: Reading>(message: &T) -> String {
                         n.to_string()
                     }
                 }
-                serde_json::Value::String(s) => format!("\"{}\"", s),
+                serde_json::Value::String(s) => {
+                    format!("\"{}\"", escape_string_value(&s))
+                }
                 serde_json::Value::Bool(b) => if b { "true" } else { "false" }.to_string(),
                 _ => continue,
             };
@@ -26,7 +43,7 @@ pub fn to_line_protocol<T: Reading>(message: &T) -> String {
             }
             first_field = false;
 
-            line_protocol.push_str(&format!("{}={}", key, field_value));
+            line_protocol.push_str(&format!("{}={}", escape_field_key(&key), field_value));
         }
     }
 

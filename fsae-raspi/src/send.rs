@@ -1,7 +1,9 @@
 use reqwest::Client;
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
+use std::env;
 use tokio::time::Duration;
+use tracing::{error, info};
 
 use crate::influxdb::to_line_protocol;
 use tokio::sync::OnceCell;
@@ -15,6 +17,12 @@ pub const MQTT_PORT: u16 = 1883;
 
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
+}
+
+/// Returns the InfluxDB API token from the `INFLUXDB_TOKEN` environment
+/// variable, or panics with a descriptive message if unset.
+fn influx_token() -> String {
+    env::var("INFLUXDB_TOKEN").expect("INFLUXDB_TOKEN environment variable must be set")
 }
 
 static INFLUX_CLIENT: OnceCell<Client> = OnceCell::const_new();
@@ -40,7 +48,7 @@ async fn get_mqtt_client() -> &'static AsyncClient {
             tokio::spawn(async move {
                 loop {
                     if let Err(e) = eventloop.poll().await {
-                        eprintln!("MQTT eventloop error: {}", e);
+                        error!(%e, "MQTT eventloop error");
                         tokio::time::sleep(Duration::from_secs(1)).await;
                     }
                 }
@@ -51,35 +59,45 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         .await
 }
 
+/// Publishes `message` to both MQTT and InfluxDB **concurrently**.
 pub async fn send_message<T: Reading>(message: T) {
     let json = match serde_json::to_string(&message) {
         Ok(j) => j,
         Err(e) => {
-            eprintln!("Failed to serialize: {}", e);
+            error!(%e, "Failed to serialize message");
             return;
         }
     };
 
-    if let Err(e) = get_mqtt_client()
-        .await
-        .publish(T::topic(), QoS::AtLeastOnce, false, json)
-        .await
-    {
-        eprintln!("Failed to publish to MQTT: {}", e);
-    }
-
     let line_protocol = to_line_protocol(&message);
-    let url = format!(
-        "{}/api/v3/write_lp?db={}&precision=nanosecond",
-        INFLUXDB_URL, INFLUXDB_DATABASE
-    );
-    if let Err(e) = get_influx_client().await
-        .post(&url)
-        .header("Authorization", "Bearer apiv3_TQdSxXbtRc8qbzb4ejQOa-ir9-deb4fSVe5Lc-RgvQZqPKikusEJtZpQmEJakPtxZvst8wW4B20KB8iSGLC-Tg")
-        .body(line_protocol)
-        .send()
-        .await
-    {
-        eprintln!("Failed to write to InfluxDB: {}", e);
-    }
+
+    let mqtt_fut = async {
+        if let Err(e) = get_mqtt_client()
+            .await
+            .publish(T::topic(), QoS::AtLeastOnce, false, json)
+            .await
+        {
+            error!(%e, "Failed to publish to MQTT");
+        }
+    };
+
+    let influx_fut = async {
+        let url = format!(
+            "{}/api/v3/write_lp?db={}&precision=nanosecond",
+            INFLUXDB_URL, INFLUXDB_DATABASE
+        );
+        if let Err(e) = get_influx_client()
+            .await
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", influx_token()))
+            .header("Content-Type", "text/plain")
+            .body(line_protocol)
+            .send()
+            .await
+        {
+            error!(%e, "Failed to write to InfluxDB");
+        }
+    };
+
+    tokio::join!(mqtt_fut, influx_fut);
 }
