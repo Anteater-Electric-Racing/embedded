@@ -21,6 +21,9 @@ use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 use tracing::{error, info, warn};
 
 const CAN_INTERFACE: &str = "can0";
+const CAN_SRC_ID: u32 = 0x666;
+const CAN_DST_ID: u32 = 0x777;
+const CAN_PACKET_SIZE: usize = 46;
 
 macro_rules! define_enum {
     ($name:ident, $($variant:ident = $value:expr),*) => {
@@ -93,7 +96,7 @@ define_enum!(
 
 /// Telemetry data record produced by the motor controller.
 ///
-/// Parsed from the 58-byte ISO-TP frame received over CAN.
+/// Parsed from the CAN_PACKET_SIZE-byte ISO-TP frame received over CAN.
 /// Contains driver inputs, motor state information, controller status,
 /// temperatures, electrical measurements, fault flags, and debug channels.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -116,10 +119,15 @@ pub struct TelemetryData {
     pub motor_phase_curr_fault: bool,
     pub motor_stall_fault: bool,
     pub mcu_warning_level: MCUWarningLevel,
-    pub debug_0: f32,
-    pub debug_1: f32,
-    pub debug_2: f32,
-    pub debug_3: f32,
+    pub fault_map: u32,
+    pub over_current_fault: bool,
+    pub under_voltage_fault: bool,
+    pub over_temperature_fault: bool,
+    pub apps_fault: bool,
+    pub bse_fault: bool,
+    pub bpps_fault: bool,
+    pub apps_break_plausibility_fault: bool,
+    pub low_battery_voltage_fault: bool,
 }
 
 impl Reading for TelemetryData {
@@ -132,13 +140,18 @@ fn parse_bool(byte: u8) -> bool {
     byte != 0
 }
 
-/// Parses a 58-byte CAN packet into a [`TelemetryData`] struct.
+/// Parses a CAN_PACKET_SIZE-byte CAN packet into a [`TelemetryData`] struct.
 ///
 /// Returns `Err` if the packet length is wrong or any enum byte is invalid.
 pub fn parse_telemetry(packet: &[u8]) -> Result<TelemetryData, String> {
-    if packet.len() != 58 {
-        return Err(format!("Expected 58 bytes, got {}", packet.len()));
+    if packet.len() != CAN_PACKET_SIZE {
+        return Err(format!(
+            "Expected {} bytes, got {}",
+            CAN_PACKET_SIZE,
+            packet.len()
+        ));
     }
+    let fault: u32 = u32::from_le_bytes(packet[42..CAN_PACKET_SIZE].try_into().unwrap());
 
     Ok(TelemetryData {
         apps_travel: f32::from_le_bytes(packet[0..4].try_into().unwrap()),
@@ -164,18 +177,23 @@ pub fn parse_telemetry(packet: &[u8]) -> Result<TelemetryData, String> {
         motor_stall_fault: parse_bool(packet[40]),
         mcu_warning_level: MCUWarningLevel::from_byte(packet[41])
             .ok_or_else(|| format!("Invalid mcu_warning_level byte: {}", packet[41]))?,
-        debug_0: f32::from_le_bytes(packet[42..46].try_into().unwrap()),
-        debug_1: f32::from_le_bytes(packet[46..50].try_into().unwrap()),
-        debug_2: f32::from_le_bytes(packet[50..54].try_into().unwrap()),
-        debug_3: f32::from_le_bytes(packet[54..58].try_into().unwrap()),
+        fault_map: fault,
+        over_current_fault: (fault & 0x1 << 0) != 0,
+        under_voltage_fault: (fault & 0x1 << 1) != 0,
+        over_temperature_fault: (fault & 0x1 << 2) != 0,
+        apps_fault: (fault & 0x1 << 3) != 0,
+        bse_fault: (fault & 0x1 << 4) != 0,
+        bpps_fault: (fault & 0x1 << 5) != 0,
+        apps_break_plausibility_fault: (fault & 0x1 << 6) != 0,
+        low_battery_voltage_fault: (fault & 0x1 << 7) != 0,
     })
 }
 
-/// Serializes a [`TelemetryData`] struct into the raw 58-byte CAN packet
+/// Serializes a [`TelemetryData`] struct into the raw CAN_PACKET_SIZE-byte CAN packet
 /// format. Mirrors the layout expected by [`parse_telemetry`].
 #[cfg(test)]
-pub fn telemetry_to_raw_bytes(data: &TelemetryData) -> [u8; 58] {
-    let mut buf = [0u8; 58];
+pub fn telemetry_to_raw_bytes(data: &TelemetryData) -> [u8; CAN_PACKET_SIZE] {
+    let mut buf = [0u8; CAN_PACKET_SIZE];
     buf[0..4].copy_from_slice(&data.apps_travel.to_le_bytes());
     buf[4..8].copy_from_slice(&data.motor_speed.to_le_bytes());
     buf[8..12].copy_from_slice(&data.motor_torque.to_le_bytes());
@@ -194,10 +212,7 @@ pub fn telemetry_to_raw_bytes(data: &TelemetryData) -> [u8; 58] {
     buf[39] = data.motor_phase_curr_fault as u8;
     buf[40] = data.motor_stall_fault as u8;
     buf[41] = data.mcu_warning_level as u8;
-    buf[42..46].copy_from_slice(&data.debug_0.to_le_bytes());
-    buf[46..50].copy_from_slice(&data.debug_1.to_le_bytes());
-    buf[50..54].copy_from_slice(&data.debug_2.to_le_bytes());
-    buf[54..58].copy_from_slice(&data.debug_3.to_le_bytes());
+    buf[42..46].copy_from_slice(&data.fault_map.to_le_bytes());
     buf
 }
 
@@ -210,8 +225,8 @@ async fn read_can_hardware() {
     loop {
         let socket = match IsoTpSocket::open(
             CAN_INTERFACE,
-            StandardId::new(0x666).expect("Invalid src id"),
-            StandardId::new(0x777).expect("Invalid dst id"),
+            StandardId::new(CAN_SRC_ID).expect("Invalid src id"),
+            StandardId::new(CAN_DST_ID).expect("Invalid dst id"),
         ) {
             Ok(socket) => socket,
             Err(e) => {
@@ -239,6 +254,7 @@ async fn read_can_synthetic() {
     loop {
         let t = tick as f32 * 0.1;
         let cycle = (t * 0.05).sin().max(0.0);
+        let fault = (t.sin() * 1000.0) as u32;
 
         let synthetic = TelemetryData {
             apps_travel: cycle * 95.0,
@@ -267,10 +283,15 @@ async fn read_can_synthetic() {
             motor_phase_curr_fault: false,
             motor_stall_fault: false,
             mcu_warning_level: MCUWarningLevel::ErrorNone,
-            debug_0: t.sin(),
-            debug_1: t.cos(),
-            debug_2: (t * 2.0).sin(),
-            debug_3: (t * 2.0).cos(),
+            fault_map: fault,
+            over_current_fault: (fault & 0x1 << 0) != 0,
+            under_voltage_fault: (fault & 0x1 << 1) != 0,
+            over_temperature_fault: (fault & 0x1 << 2) != 0,
+            apps_fault: (fault & 0x1 << 3) != 0,
+            bse_fault: (fault & 0x1 << 4) != 0,
+            bpps_fault: (fault & 0x1 << 5) != 0,
+            apps_break_plausibility_fault: (fault & 0x1 << 6) != 0,
+            low_battery_voltage_fault: (fault & 0x1 << 7) != 0,
         };
 
         send_message(synthetic).await;
@@ -290,7 +311,7 @@ pub async fn read_can() {
     read_can_synthetic().await;
 }
 
-/// Sends a raw 58-byte [`TelemetryData`] packet over ISO-TP on `vcan0`.
+/// Sends a raw CAN_PACKET_SIZE-byte [`TelemetryData`] packet over ISO-TP on `vcan0`.
 ///
 /// Only compiled in `cfg(test)` mode.
 /// Requires a virtual CAN interface.
@@ -313,6 +334,7 @@ async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn s
 /// [`telemetry_to_raw_bytes`] without any CAN hardware.
 #[test]
 fn test_parse_telemetry_roundtrip() {
+    let fault = 12345;
     let original = TelemetryData {
         apps_travel: 72.5,
         motor_speed: 3200.0,
@@ -332,10 +354,15 @@ fn test_parse_telemetry_roundtrip() {
         motor_phase_curr_fault: false,
         motor_stall_fault: false,
         mcu_warning_level: MCUWarningLevel::ErrorNone,
-        debug_0: 1.0,
-        debug_1: 2.0,
-        debug_2: 3.0,
-        debug_3: 4.0,
+        fault_map: fault,
+        over_current_fault: (fault & 0x1 << 0) != 0,
+        under_voltage_fault: (fault & 0x1 << 1) != 0,
+        over_temperature_fault: (fault & 0x1 << 2) != 0,
+        apps_fault: (fault & 0x1 << 3) != 0,
+        bse_fault: (fault & 0x1 << 4) != 0,
+        bpps_fault: (fault & 0x1 << 5) != 0,
+        apps_break_plausibility_fault: (fault & 0x1 << 6) != 0,
+        low_battery_voltage_fault: (fault & 0x1 << 7) != 0,
     };
 
     let raw = telemetry_to_raw_bytes(&original);
@@ -353,7 +380,7 @@ fn test_parse_telemetry_bad_length() {
 /// Rejects a packet containing an invalid enum byte.
 #[test]
 fn test_parse_telemetry_invalid_enum() {
-    let mut raw = [0u8; 58];
+    let mut raw = [0u8; CAN_PACKET_SIZE];
     // motor_direction at byte 16 — set to an invalid discriminant
     raw[16] = 200;
     assert!(parse_telemetry(&raw).is_err());
@@ -370,6 +397,7 @@ fn test_parse_telemetry_invalid_enum() {
 /// These commands are run automatically in the GitHub Actions workflow (test.yml).
 #[tokio::test]
 async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn std::error::Error>> {
+    let fault = 12345;
     let data = TelemetryData {
         apps_travel: 72.5,
         motor_speed: 3200.0,
@@ -389,10 +417,15 @@ async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn std::error::Erro
         motor_phase_curr_fault: false,
         motor_stall_fault: false,
         mcu_warning_level: MCUWarningLevel::ErrorNone,
-        debug_0: 0.0,
-        debug_1: 0.0,
-        debug_2: 0.0,
-        debug_3: 0.0,
+        fault_map: fault,
+        over_current_fault: (fault & 0x1 << 0) != 0,
+        under_voltage_fault: (fault & 0x1 << 1) != 0,
+        over_temperature_fault: (fault & 0x1 << 2) != 0,
+        apps_fault: (fault & 0x1 << 3) != 0,
+        bse_fault: (fault & 0x1 << 4) != 0,
+        bpps_fault: (fault & 0x1 << 5) != 0,
+        apps_break_plausibility_fault: (fault & 0x1 << 6) != 0,
+        low_battery_voltage_fault: (fault & 0x1 << 7) != 0,
     };
 
     send_telemetry_over_isotp(&data).await?;
