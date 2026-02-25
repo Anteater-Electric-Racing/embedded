@@ -81,30 +81,7 @@ pub async fn verify_influx_write<T: Reading + for<'de> serde::Deserialize<'de> +
 /// Requires a running InfluxDB instance  
 #[test]
 fn test_verify_influx_write() {
-    let test_packet = TelemetryData {
-        apps_travel: 1.0,
-        motor_speed: 1.0,
-        motor_torque: 1.0,
-        max_motor_torque: 1.0,
-        motor_direction: MotorRotateDirection::DirectionForward,
-        motor_state: MotorState::MotorStateDriving,
-        mcu_main_state: MCUMainState::StateRun,
-        mcu_work_mode: MCUWorkMode::WorkModeStandby,
-        mcu_voltage: 1.0,
-        mcu_current: 1.0,
-        motor_temp: 1,
-        mcu_temp: 1,
-        dc_main_wire_over_volt_fault: false,
-        dc_main_wire_over_curr_fault: false,
-        motor_over_spd_fault: false,
-        motor_phase_curr_fault: false,
-        motor_stall_fault: false,
-        mcu_warning_level: MCUWarningLevel::ErrorNone,
-        debug_0: 0.0,
-        debug_1: 0.0,
-        debug_2: 0.0,
-        debug_3: 0.0,
-    };
+    let test_packet = TelemetryData::from_random(0);
 
     println!("Sending TelemetryData test packet to influxdb3");
     tokio::runtime::Runtime::new().unwrap().block_on(async {
@@ -184,30 +161,7 @@ async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
 #[test]
 fn test_verify_mqtt_listener() {
     // Test Struct (listener end)
-    let listener_data: TelemetryData = TelemetryData {
-        apps_travel: 0.0,
-        motor_speed: 0.0,
-        motor_torque: 0.0,
-        max_motor_torque: 0.0,
-        motor_direction: MotorRotateDirection::DirectionForward,
-        motor_state: MotorState::MotorStateIdle,
-        mcu_main_state: MCUMainState::StatePowerOff,
-        mcu_work_mode: MCUWorkMode::WorkModeStandby,
-        mcu_voltage: 0.0,
-        mcu_current: 0.0,
-        motor_temp: 0,
-        mcu_temp: 0,
-        dc_main_wire_over_volt_fault: false,
-        dc_main_wire_over_curr_fault: false,
-        motor_over_spd_fault: false,
-        motor_phase_curr_fault: false,
-        motor_stall_fault: false,
-        mcu_warning_level: MCUWarningLevel::ErrorNone,
-        debug_0: 0.0,
-        debug_1: 0.0,
-        debug_2: 0.0,
-        debug_3: 0.0,
-    };
+    let listener_data: TelemetryData = TelemetryData::from_random(0);
 
     // Run verify
     let runtime = tokio::runtime::Runtime::new().expect("Unable to start listener runtime.");
