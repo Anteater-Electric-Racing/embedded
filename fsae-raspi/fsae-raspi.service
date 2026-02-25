@@ -1,11 +1,11 @@
 [Unit]
 Description=FSAE Raspi Service
-After=network.target
+After=network.target influxdb3.service
 
 [Service]
-User=fsae
-WorkingDirectory=/home/fsae/embedded
-ExecStart=/home/fsae/.cargo/bin/cargo run --bin fsae-raspi --release
+User=__USER__
+WorkingDirectory=__HOME__/embedded
+ExecStart=__HOME__/.cargo/bin/cargo run --bin fsae-raspi --release
 Restart=always
 RestartSec=10
 

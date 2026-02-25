@@ -1,14 +1,13 @@
 use reqwest::Client;
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
-use std::env;
 use tokio::time::Duration;
-use tracing::{error, info};
+use tracing::error;
 
 use crate::influxdb::to_line_protocol;
 use tokio::sync::OnceCell;
 
-pub const INFLUXDB_URL: &str = "http://0.0.0.0:8181";
+pub const INFLUXDB_URL: &str = "http://127.0.0.1:8181";
 pub const INFLUXDB_DATABASE: &str = "fsae";
 
 pub const MQTT_ID: &str = "fsae";
@@ -17,12 +16,6 @@ pub const MQTT_PORT: u16 = 1883;
 
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
-}
-
-/// Returns the InfluxDB API token from the `INFLUXDB_TOKEN` environment
-/// variable, or panics with a descriptive message if unset.
-fn influx_token() -> String {
-    env::var("INFLUXDB_TOKEN").expect("INFLUXDB_TOKEN environment variable must be set")
 }
 
 static INFLUX_CLIENT: OnceCell<Client> = OnceCell::const_new();
@@ -59,7 +52,6 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         .await
 }
 
-/// Publishes `message` to both MQTT and InfluxDB **concurrently**.
 pub async fn send_message<T: Reading>(message: T) {
     let json = match serde_json::to_string(&message) {
         Ok(j) => j,
@@ -89,7 +81,6 @@ pub async fn send_message<T: Reading>(message: T) {
         if let Err(e) = get_influx_client()
             .await
             .post(&url)
-            .header("Authorization", format!("Bearer {}", influx_token()))
             .header("Content-Type", "text/plain")
             .body(line_protocol)
             .send()

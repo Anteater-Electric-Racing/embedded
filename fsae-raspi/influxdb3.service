@@ -1,0 +1,15 @@
+[Unit]
+Description=InfluxDB3
+After=network.target
+
+[Service]
+User=__USER__
+ExecStart=/usr/local/bin/influxdb3 serve \
+    --object-store file \
+    --data-dir __HOME__/.influxdb3 \
+    --without-auth
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
