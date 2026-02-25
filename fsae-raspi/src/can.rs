@@ -249,7 +249,7 @@ impl TelemetryData {
 
     pub fn from_random(seed: u64) -> Self {
         let mut rng = SmallRng::seed_from_u64(seed);
-
+        let fault_map: u32 = rng.random_range(0..=0xFFFF);
         TelemetryData {
             apps_travel: rng.random_range(0.0..=100.0),
             motor_speed: rng.random_range(0.0..=12000.0),
@@ -295,15 +295,15 @@ impl TelemetryData {
                 2 => MCUWarningLevel::ErrorMedium,
                 _ => MCUWarningLevel::ErrorHigh,
             },
-            fault_map: rng.random_range(0..=0xFFFF),
-            over_current_fault: rng.random_bool(0.05),
-            under_voltage_fault: rng.random_bool(0.05),
-            over_temperature_fault: rng.random_bool(0.05),
-            apps_fault: rng.random_bool(0.01),
-            bse_fault: rng.random_bool(0.01),
-            bpps_fault: rng.random_bool(0.01),
-            apps_break_plausibility_fault: rng.random_bool(0.01),
-            low_battery_voltage_fault: rng.random_bool(0.01),
+            fault_map: fault_map,
+            over_current_fault: (fault_map & (1 << 0)) != 0,
+            under_voltage_fault: (fault_map & (1 << 1)) != 0,
+            over_temperature_fault: (fault_map & (1 << 2)) != 0,
+            apps_fault: (fault_map & (1 << 3)) != 0,
+            bse_fault: (fault_map & (1 << 4)) != 0,
+            bpps_fault: (fault_map & (1 << 5)) != 0,
+            apps_break_plausibility_fault: (fault_map & (1 << 6)) != 0,
+            low_battery_voltage_fault: (fault_map & (1 << 7)) != 0,
         }
     }
 }
