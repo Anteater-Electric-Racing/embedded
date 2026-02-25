@@ -127,10 +127,12 @@ pub async fn verify_influx_write<T: Reading + for<'de> serde::Deserialize<'de> +
 
     let resp = client
         .post(&url)
-        .header("Authorization", "Bearer apiv3_TQdSxXbtRc8qbzb4ejQOa-ir9-deb4fSVe5Lc-RgvQZqPKikusEJtZpQmEJakPtxZvst8wW4B20KB8iSGLC-Tg")
+        .header("Content-Type", "text/plain")
         .body(body.to_string())
         .send()
-        .await?.text().await?;
+        .await?
+        .text()
+        .await?;
 
     let resp_array: Vec<T> = serde_json::from_str(&resp)?;
     let resp_struct = resp_array
@@ -154,6 +156,7 @@ fn test_verify_influx_write() {
     println!("Sending TelemetryData test packet to influxdb3");
     tokio::runtime::Runtime::new().unwrap().block_on(async {
         send_message(test_packet.clone()).await;
+        tokio::time::sleep(Duration::from_millis(500)).await;
         println!("finished sending, now verifying...");
         match verify_influx_write(test_packet).await {
             Ok(result) => println!("InfluxDB verification result: {}", result),

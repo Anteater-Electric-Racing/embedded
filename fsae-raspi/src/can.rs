@@ -164,6 +164,7 @@ pub struct TelemetryData {
     pub motor_phase_curr_fault: bool,
     pub motor_stall_fault: bool,
     pub mcu_warning_level: MCUWarningLevel,
+    #[serde(flatten)]
     pub fault_map: FaultMap,
 }
 
@@ -195,11 +196,7 @@ async fn read_can_hardware() {
         while let Ok(packet) = socket.read_packet().await {
             match TelemetryData::from_bytes((packet.as_ref(), 0)) {
                 Ok(((remaining, _), _)) if !remaining.is_empty() => {
-                    warn!(
-                        expected = packet.len() - remaining.len(),
-                        actual = packet.len(),
-                        "Telemetry packet has trailing bytes"
-                    );
+                    warn!("Telemetry packet has {} trailing bytes", remaining.len(),);
                 }
                 Ok((_, data)) => send_message(data).await,
                 Err(e) => warn!(error = %e, "Malformed telemetry packet"),
@@ -208,7 +205,7 @@ async fn read_can_hardware() {
     }
 }
 
-/// Generates synthetic telemetry on a 100 ms interval (debug builds only).
+/// Generates synthetic telemetry (debug builds only).
 async fn read_can_synthetic() {
     use std::time::Instant;
 
