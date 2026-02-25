@@ -53,6 +53,7 @@ async fn get_mqtt_client() -> &'static AsyncClient {
 }
 
 pub async fn send_message<T: Reading>(message: T) {
+    println!("Sending message");
     let json = match serde_json::to_string(&message) {
         Ok(j) => j,
         Err(e) => {

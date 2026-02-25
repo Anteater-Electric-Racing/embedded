@@ -222,7 +222,6 @@ async fn read_can_hardware() {
         };
 
         while let Ok(packet) = socket.read_packet().await {
-            print!("received CAN packet: {:02X?}", packet);
             match parse_telemetry(&packet) {
                 Ok(data) => send_message(data).await,
                 Err(e) => warn!(error = %e, "Malformed telemetry packet"),
