@@ -4,6 +4,8 @@ mod mqtt;
 mod send;
 #[cfg(test)]
 mod test;
+use std::thread;
+
 use can::read_can;
 use mqtt::mqttd;
 
@@ -20,9 +22,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .try_init()
         .expect("initialised tracing subscriber");
 
-    tokio::spawn(read_can());
+    thread::spawn(mqttd);
 
-    mqttd();
+    read_can().await;
 
     Ok(())
 }
