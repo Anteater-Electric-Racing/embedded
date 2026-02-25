@@ -21,8 +21,8 @@ use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 use tracing::{error, info, warn};
 
 const CAN_INTERFACE: &str = "can0";
-const CAN_SRC_ID: u32 = 0x666;
-const CAN_DST_ID: u32 = 0x777;
+const CAN_SRC_ID: u16 = 0x666;
+const CAN_DST_ID: u16 = 0x777;
 const CAN_PACKET_SIZE: usize = 46;
 
 macro_rules! define_enum {
