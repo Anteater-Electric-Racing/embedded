@@ -60,36 +60,36 @@ pub async fn send_message<T: Reading>(message: T) {
             return;
         }
     };
-
     let line_protocol = to_line_protocol(&message);
+    let topic = T::topic();
 
-    let mqtt_fut = async {
-        if let Err(e) = get_mqtt_client()
-            .await
-            .publish(T::topic(), QoS::AtLeastOnce, false, json)
-            .await
-        {
-            error!(%e, "Failed to publish to MQTT");
-        }
-    };
-
-    let influx_fut = async {
-        let url = format!(
-            "{}/api/v3/write_lp?db={}&precision=nanosecond",
-            INFLUXDB_URL, INFLUXDB_DATABASE
+    tokio::spawn(async move {
+        tokio::join!(
+            async {
+                if let Err(e) = get_mqtt_client()
+                    .await
+                    .publish(topic, QoS::AtLeastOnce, false, json)
+                    .await
+                {
+                    error!(%e, "Failed to publish to MQTT");
+                }
+            },
+            async {
+                let url = format!(
+                    "{}/api/v3/write_lp?db={}&precision=nanosecond",
+                    INFLUXDB_URL, INFLUXDB_DATABASE
+                );
+                if let Err(e) = get_influx_client()
+                    .await
+                    .post(&url)
+                    .header("Content-Type", "text/plain")
+                    .body(line_protocol)
+                    .send()
+                    .await
+                {
+                    error!(%e, "Failed to write to InfluxDB");
+                }
+            }
         );
-        if let Err(e) = get_influx_client()
-            .await
-            .post(&url)
-            .header("Content-Type", "text/plain")
-            .body(line_protocol)
-            .send()
-            .await
-        {
-            error!(%e, "Failed to write to InfluxDB");
-        }
-    };
-
-    tokio::spawn(mqtt_fut);
-    tokio::spawn(influx_fut);
+    });
 }

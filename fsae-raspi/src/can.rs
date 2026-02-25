@@ -14,7 +14,7 @@
 //! using the virtual CAN network setup in the GitHub Actions workflow (test.yml).
 
 use crate::send::{send_message, Reading};
-use rand::{rng, rngs::SmallRng, Rng, SeedableRng};
+use rand::{rng, rngs::SmallRng, Rng, RngExt, SeedableRng};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
@@ -183,14 +183,6 @@ impl TelemetryData {
                 bytes.len()
             ));
         }
-        print!("Raw bytes: [");
-        for (i, byte) in bytes.iter().enumerate() {
-            if i > 0 {
-                print!(", ");
-            }
-            print!("{:#04x}", byte);
-        }
-        println!("]");
         let fault: u32 = u32::from_be_bytes(bytes[42..46].try_into().unwrap());
 
         Ok(TelemetryData {
@@ -256,16 +248,62 @@ impl TelemetryData {
     }
 
     pub fn from_random(seed: u64) -> Self {
-        let mut rng: SmallRng = SmallRng::seed_from_u64(seed);
-        let mut raw = [0u8; CAN_PACKET_SIZE];
-        rng.fill_bytes(&mut raw);
-        if let Ok(random) = TelemetryData::from_bytes(&raw) {
-            random
-        } else {
-            warn!(
-                "Generated random bytes did not parse into valid TelemetryData, returning default"
-            );
-            TelemetryData::default()
+        let mut rng = SmallRng::seed_from_u64(seed);
+
+        TelemetryData {
+            apps_travel: rng.random_range(0.0..=100.0),
+            motor_speed: rng.random_range(0.0..=12000.0),
+            motor_torque: rng.random_range(-300.0..=300.0),
+            max_motor_torque: rng.random_range(0.0..=300.0),
+            motor_direction: match rng.random_range(0..=3) {
+                0 => MotorRotateDirection::DirectionStandby,
+                1 => MotorRotateDirection::DirectionForward,
+                2 => MotorRotateDirection::DirectionBackward,
+                _ => MotorRotateDirection::DirectionError,
+            },
+            motor_state: match rng.random_range(0..=4) {
+                0 => MotorState::MotorStateOff,
+                1 => MotorState::MotorStatePrecharging,
+                2 => MotorState::MotorStateIdle,
+                3 => MotorState::MotorStateDriving,
+                _ => MotorState::MotorStateFault,
+            },
+            mcu_main_state: match rng.random_range(0..=4) {
+                0 => MCUMainState::StateStandby,
+                1 => MCUMainState::StatePrecharge,
+                2 => MCUMainState::StatePowerReady,
+                3 => MCUMainState::StateRun,
+                _ => MCUMainState::StatePowerOff,
+            },
+            mcu_work_mode: match rng.random_range(0..=2) {
+                0 => MCUWorkMode::WorkModeStandby,
+                1 => MCUWorkMode::WorkModeTorque,
+                _ => MCUWorkMode::WorkModeSpeed,
+            },
+            mcu_voltage: rng.random_range(200.0..=450.0),
+            mcu_current: rng.random_range(-300.0..=300.0),
+            motor_temp: rng.random_range(-40..=180),
+            mcu_temp: rng.random_range(-40..=120),
+            dc_main_wire_over_volt_fault: rng.random_bool(0.1),
+            dc_main_wire_over_curr_fault: rng.random_bool(0.1),
+            motor_over_spd_fault: rng.random_bool(0.05),
+            motor_phase_curr_fault: rng.random_bool(0.05),
+            motor_stall_fault: rng.random_bool(0.02),
+            mcu_warning_level: match rng.random_range(0..=3) {
+                0 => MCUWarningLevel::ErrorNone,
+                1 => MCUWarningLevel::ErrorLow,
+                2 => MCUWarningLevel::ErrorMedium,
+                _ => MCUWarningLevel::ErrorHigh,
+            },
+            fault_map: rng.random_range(0..=0xFFFF),
+            over_current_fault: rng.random_bool(0.05),
+            under_voltage_fault: rng.random_bool(0.05),
+            over_temperature_fault: rng.random_bool(0.05),
+            apps_fault: rng.random_bool(0.01),
+            bse_fault: rng.random_bool(0.01),
+            bpps_fault: rng.random_bool(0.01),
+            apps_break_plausibility_fault: rng.random_bool(0.01),
+            low_battery_voltage_fault: rng.random_bool(0.01),
         }
     }
 }
@@ -302,12 +340,21 @@ async fn read_can_hardware() {
 /// Generates synthetic telemetry on a 100 ms interval (debug builds only).
 #[cfg(debug_assertions)]
 async fn read_can_synthetic() {
-    let mut tick: u64 = 0;
+    use std::time::Instant;
+
+    let mut count: u64 = 0;
+    let mut last = Instant::now();
 
     loop {
-        let synthetic = TelemetryData::from_random(0);
+        send_message(TelemetryData::from_random(0)).await;
+        count += 1;
 
-        send_message(synthetic).await;
+        let elapsed = last.elapsed();
+        if elapsed >= Duration::from_secs(1) {
+            info!("{:.0} msg/s", count as f64 / elapsed.as_secs_f64());
+            count = 0;
+            last = Instant::now();
+        }
     }
 }
 

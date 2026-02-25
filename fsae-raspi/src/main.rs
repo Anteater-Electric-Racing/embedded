@@ -17,7 +17,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_file(false)
         .with_thread_ids(false)
         .with_thread_names(false)
-        .with_env_filter("rumqttd=warn")
+        .with_env_filter("info,rumqttd=warn")
         .try_init()
         .expect("initialised tracing subscriber");
 
