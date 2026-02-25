@@ -15,6 +15,7 @@
 #include "vehicle/pcc_receive.h"
 #include "vehicle/rtm_button.h"
 #include "vehicle/telemetry.h"
+#include "vehicle/wheel_encoder.h"
 
 #include "utils/utils.h"
 #include <iostream>
@@ -38,6 +39,7 @@ void setup() { // runs once on bootup
     MCU_Init();
     GPIO_Init();
     PCC_Init();
+    Wheel_Encoder_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
@@ -55,6 +57,7 @@ void threadMain(void *pvParameters) {
     Serial.begin(9600);
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
+
 #if HIMAC_FLAG
     float torqueDemand = 0;
     bool enableStandby = false;
@@ -67,6 +70,7 @@ void threadMain(void *pvParameters) {
 #endif
     while (true) {
         digitalWrite(13, 1);
+        Wheel_Encoder_Update(); // Calculates RPM
         /*
          * Read user input from Serial to control torque demand.
          * 'w' or 'W' to increase torque demand,
