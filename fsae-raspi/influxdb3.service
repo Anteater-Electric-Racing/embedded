@@ -7,7 +7,7 @@ User=__USER__
 ExecStart=/usr/local/bin/influxdb3 serve \
     --object-store file \
     --data-dir __HOME__/.influxdb3 \
-    --without-auth
+    --without-auth \
     --node-id raspi
 Restart=always
 RestartSec=5
