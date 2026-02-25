@@ -90,5 +90,6 @@ pub async fn send_message<T: Reading>(message: T) {
         }
     };
 
-    tokio::join!(mqtt_fut, influx_fut);
+    tokio::spawn(mqtt_fut);
+    tokio::spawn(influx_fut);
 }
