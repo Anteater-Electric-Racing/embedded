@@ -8,6 +8,20 @@ fi
 
 REAL_USER="${SUDO_USER:-$(logname)}"
 REAL_HOME=$(eval echo "~$REAL_USER")
+SWAP_FILE="/swapfile"
+SWAP_SIZE="2G"
+
+if [ ! -f "$SWAP_FILE" ]; then
+    echo "==> Creating ${SWAP_SIZE} swap..."
+    fallocate -l "$SWAP_SIZE" "$SWAP_FILE"
+    chmod 600 "$SWAP_FILE"
+    mkswap "$SWAP_FILE"
+    swapon "$SWAP_FILE"
+    grep -q "$SWAP_FILE" /etc/fstab || echo "$SWAP_FILE none swap sw 0 0" >> /etc/fstab
+else
+    echo "==> Swap already exists, skipping."
+    swapon "$SWAP_FILE" 2>/dev/null || true
+fi
 
 echo "==> Installing Rust for $REAL_USER..."
 sudo -u "$REAL_USER" bash -c 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
@@ -17,7 +31,9 @@ sudo -u "$REAL_USER" bash -c "
     cd '$REAL_HOME/Documents' &&
     git clone --depth=1 https://github.com/influxdata/influxdb || true &&
     cd influxdb &&
-    '$REAL_HOME/.cargo/bin/cargo' build --release
+    CARGO_PROFILE_RELEASE_LTO=off \
+    CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 \
+    '$REAL_HOME/.cargo/bin/cargo' build --release --jobs 2
 "
 
 echo "==> Installing InfluxDB3 binary..."
