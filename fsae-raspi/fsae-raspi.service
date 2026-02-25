@@ -4,7 +4,7 @@ After=network.target influxdb3.service
 
 [Service]
 User=__USER__
-WorkingDirectory=__HOME__/embedded
+WorkingDirectory=__HOME__/Documents/embedded
 ExecStart=__HOME__/.cargo/bin/cargo run --bin fsae-raspi --release
 Restart=always
 RestartSec=10
