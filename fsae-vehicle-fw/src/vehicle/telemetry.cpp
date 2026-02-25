@@ -6,6 +6,7 @@
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
+#include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 
 #include "utils/utils.h"
@@ -15,30 +16,31 @@
 TelemetryData telemetryData;
 
 void Telemetry_Init() {
-    telemetryData = {
-        // Fill with reasonable dummy values
-        .APPS_Travel = 0.0F,
-        .motorSpeed = 0.0F,
-        .motorTorque = 0.0F,
-        .maxMotorTorque = 0.0F,
-        .motorDirection = DIRECTION_STANDBY,
-        .motorState = MOTOR_STATE_OFF,
+    telemetryData = {// Fill with reasonable dummy values
+                     .APPS_Travel = 0.0F,
+                     .motorSpeed = 0.0F,
+                     .motorTorque = 0.0F,
+                     .maxMotorTorque = 0.0F,
+                     .motorDirection = DIRECTION_STANDBY,
+                     .motorState = MOTOR_STATE_OFF,
 
-        .mcuMainState = STATE_STANDBY,
-        .mcuWorkMode = WORK_MODE_STANDBY,
+                     .mcuMainState = STATE_STANDBY,
+                     .mcuWorkMode = WORK_MODE_STANDBY,
 
-        .mcuVoltage = 0.0F,
-        .mcuCurrent = 0.0F,
-        .motorTemp = 25,
-        .mcuTemp = 25,
+                     .mcuVoltage = 0.0F,
+                     .mcuCurrent = 0.0F,
+                     .motorTemp = 25,
+                     .mcuTemp = 25,
 
-        .dcMainWireOverVoltFault = false,
-        .dcMainWireOverCurrFault = false,
-        .motorOverSpdFault = false,
-        .motorPhaseCurrFault = false,
-        .motorStallFault = false,
+                     .dcMainWireOverVoltFault = false,
+                     .dcMainWireOverCurrFault = false,
+                     .motorOverSpdFault = false,
+                     .motorPhaseCurrFault = false,
+                     .motorStallFault = false,
 
-        .mcuWarningLevel = ERROR_NONE,
+                     .mcuWarningLevel = ERROR_NONE,
+
+                     .faultMap = 0
 
     };
 }
@@ -73,8 +75,13 @@ void threadTelemetry(void *pvParameters) {
             .motorStallFault = MCU_GetMCU2Data()->motorStallFault,
             .mcuWarningLevel = MCU_GetMCU2Data()->mcuWarningLevel,
 
-        };
+            .faultMap = (int32_t)Faults_GetFaults()};
         taskEXIT_CRITICAL();
+
+        // Serial.print(telemetryData.faultMap);
+        // Serial.print(" | ");
+        // Serial.print(sizeof(TelemetryData));
+        // Serial.print("\r");
 
         uint8_t *serializedData = (uint8_t *)&telemetryData;
         CAN_ISOTP_Send(TELEMETRY_CAN_ID, serializedData, sizeof(TelemetryData));

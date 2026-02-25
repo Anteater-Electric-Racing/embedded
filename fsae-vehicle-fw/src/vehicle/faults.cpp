@@ -39,16 +39,16 @@ void Faults_SetFault(FaultType fault) {
         break;
     }
     case FAULT_APPS: {
-        // #if DEBUG_FLAG
+#if DEBUG_FLAG
         Serial.println("Setting APPS fault");
-        // #endif
+#endif
         faultBitMap |= FAULT_APPS_MASK;
         break;
     }
     case FAULT_BSE: {
-        // #if DEBUG_FLAG
+#if DEBUG_FLAG
         Serial.println("Setting BSE fault");
-        // #endif
+#endif
         faultBitMap |= FAULT_BSE_MASK;
         break;
     }
@@ -57,9 +57,9 @@ void Faults_SetFault(FaultType fault) {
         break;
     }
     case FAULT_APPS_BRAKE_PLAUSIBILITY: {
-        // #if DEBUG_FLAG
+#if DEBUG_FLAG
         Serial.println("Setting APPS Plausibility fault");
-        // #endif
+#endif
         faultBitMap |= FAULT_APPS_BRAKE_PLAUSIBILITY_MASK;
         break;
     }
@@ -125,6 +125,7 @@ void Faults_ClearFault(FaultType fault) {
 // currently having all faults being handled the same but leaving room for
 // future customization
 void Faults_HandleFaults() {
+
 #if DEBUG_FLAG
     Serial.print("Fault bitmap: ");
     Serial.println(faultBitMap);
@@ -148,10 +149,10 @@ void Faults_HandleFaults() {
         Motor_SetFaultState();
     }
     if (faultBitMap & FAULT_APPS_MASK) {
-        Motor_SetFaultState();
+        Motor_ClearToIdleFault();
     }
     if (faultBitMap & FAULT_BSE_MASK) {
-        Motor_SetFaultState();
+        Motor_ClearToIdleFault();
     }
     if (faultBitMap & FAULT_BPPS_MASK) {
         Motor_SetFaultState();

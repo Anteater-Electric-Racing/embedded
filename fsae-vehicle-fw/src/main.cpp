@@ -94,9 +94,7 @@ void threadMain(void *pvParameters) {
         Serial.print(Motor_GetState());
         Serial.print(" | ");
 
-        Serial.print("Current Torque: ");
-        Serial.print("-1");
-        Serial.print(" / ");
+        Serial.print("APPS/BSE: ");
         Serial.print(APPS_GetAPPSReading());
         Serial.print(" / ");
         Serial.print(BSE_GetBSEReading()->bseFront_Reading);
@@ -172,8 +170,8 @@ void threadMain(void *pvParameters) {
         if (MCU_GetMCU2Data()->motorOpenPhaseFault)
             Serial.println("Motor Open Phase Fault, ");
 
-        // IMPLEMENT BETTER SERIAL PROCESSING
-        // (TEENSY does not support ANSI escape codes)
+        // IMPLEMENT BETTER SERIAL PROCESSING(
+        //     TEENSY does not support ANSI escape codes)
 #if BMS_FLAG
         // --- NEW: Orion BMS 2 Telemetry ---
         // Orion BMS Telemetry

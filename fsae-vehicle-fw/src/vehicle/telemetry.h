@@ -64,7 +64,7 @@ typedef struct __attribute__((packed)) {
     // float mcuCurrent; // DC main wire current in A
     //   float motorPhaseCurr; // Motor phase current in A
 
-    float debug[4]; // Debug data
+    int32_t faultMap; // Debug data
 } TelemetryData;
 
 void Telemetry_Init();

@@ -20,7 +20,7 @@ void Motor_UpdateMotor(float torqueDemand);
 void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
                        bool enablePower, bool enableRun, bool enableRegen,
                        bool enableStandby);
-
+float torqueMap(float pedal);
 float Motor_GetTorqueDemand();
 MotorState Motor_GetState();
 void threadMotor(void *pvParameters);

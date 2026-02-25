@@ -35,19 +35,19 @@ static BMS2 bms2 = {0};
 // Map 0: Rain (High precision, late power)
 // Map 1: Endurance (Balanced, predictable)
 // Map 2: Autocross  (More linear + induce level shift)
-const float k_vals[] = {10.0f, 9.0f, 12.0f};
-const float x0_vals[] = {0.7f, 0.35f, 0.3f};
+const float k_vals[] PROGMEM = {10.0f, 9.0f, 12.0f};
+const float x0_vals[] PROGMEM = {0.7f, 0.35f, 0.3f};
 
-float k = k_vals[ACTIVE_MAP];
-float x0 = x0_vals[ACTIVE_MAP];
-
-float k, x0, low_limit, high_limit;
+float k = 0.0f, x0 = 0.0f, low_limit = 0.0f, high_limit = 0.0f;
 
 float targetTorque = 0.0F;
 
 void Motor_Init() {
     motorData.state = MOTOR_STATE_PRECHARGING; // DEFAULT TO PRECHARGE
     motorData.desiredTorque = 0.0F;            // No torque demand at start
+
+    k = k_vals[ACTIVE_MAP];
+    x0 = x0_vals[ACTIVE_MAP];
 
     low_limit = 1.0f / (1.0f + expf(-k * (0.0f - x0)));
     high_limit = 1.0f / (1.0f + expf(-k * (1.0f - x0)));
@@ -161,25 +161,26 @@ void threadMotor(void *pvParameters) {
         memcpy(&bms2_msg, &bms2, sizeof(bms2_msg));
         CAN_Send(mBMS2_ID, bms2_msg);
 
-        static float lastTorqueSent = 0.0f;
-
-        targetTorque = torqueMap(APPS_GetAPPSReading());
+        // static float lastTorqueSent = 0.0f;
 
         // Apply Deadband
-        if (APPS_GetAPPSReading() < 0.03f) {
+        if (APPS_GetAPPSReading() > 0.06f) {
+            targetTorque = torqueMap(APPS_GetAPPSReading());
+        } else {
             targetTorque = 0.0f;
         }
-        // 3. Slew Rate Limiting
-        float torqueDelta = targetTorque - lastTorqueSent;
-        if (torqueDelta > MAX_TORQUE_STEP_UP_PCT) {
-            // Capping the Acceleration
-            targetTorque = lastTorqueSent + MAX_TORQUE_STEP_UP_PCT;
-        } else if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) {
-            // Capping the Deceleration
-            targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
-        }
 
-        lastTorqueSent = targetTorque;
+        // 3. Slew Rate Limiting
+        // float torqueDelta = targetTorque - lastTorqueSent;
+        // if (torqueDelta > MAX_TORQUE_STEP_UP_PCT) {
+        //     // Capping the Acceleration
+        //     targetTorque = lastTorqueSent + MAX_TORQUE_STEP_UP_PCT;
+        // } else if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) {
+        //     // Capping the Deceleration
+        //     targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
+        // }
+
+        // lastTorqueSent = targetTorque;
 
         // float pedalTorque;
         // float p = APPS_GetAPPSReading1();
@@ -197,7 +198,8 @@ void threadMotor(void *pvParameters) {
 
         // // best constants: KLOW = 0.35, KMID = 1.0, K_HIGH = 0.7
 
-        // // Compute mid slope so that p=1.0 -> TmaxCmd (keeps same top-end as
+        // // Compute mid slope so that p=1.0 -> TmaxCmd (keeps same top-end
+        // as
         // // before)
         // float denom =
         //     (K_LOW * p1) + (K_MID * (p2 - p1)) + (K_HIGH * (1.0F - p2));
@@ -218,15 +220,15 @@ void threadMotor(void *pvParameters) {
         // }
 
         // Linear Map Torque
-        //  if (APPS_GetAPPSReading1() > 0.06) {
-        //      pedalTorque = APPS_GetAPPSReading1() * (MOTOR_MAX_TORQUE *
-        //      0.5F);
-        //  } else {
-        //      pedalTorque = 0;
-        //  }
+        // if (APPS_GetAPPSReading1() > 0.06) {
+        //     pedalTorque = APPS_GetAPPSReading1() * (MOTOR_MAX_TORQUE *
+        //     0.2F);
+        // } else {
+        //     pedalTorque = 0;
+        // }
 
 #if !HIMAC_FLAG
-        Motor_UpdateMotor(targetTorque);
+        Motor_UpdateMotor((targetTorque));
 #endif
 
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
@@ -278,9 +280,9 @@ void Motor_UpdateMotor(float torqueDemand) {
             }
             if (torqueDemand <= 0.0F &&
                 MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
-                // If regen is enabled and the torque demand is zero, we need to
-                // set the torque demand to 0 to prevent the motor from applying
-                // torque in the wrong direction
+                // If regen is enabled and the torque demand is zero, we
+                // need to set the torque demand to 0 to prevent the motor
+                // from applying torque in the wrong direction
                 motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
             } else {
                 motorData.desiredTorque = torqueDemand;
@@ -363,9 +365,9 @@ void Motor_UpdateMotor(float torqueDemand, bool enablePrecharge,
 
             if (enableRegen && torqueDemand <= 0.0F &&
                 MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
-                // If regen is enabled and the torque demand is zero, we need to
-                // set the torque demand to 0 to prevent the motor from applying
-                // torque in the wrong direction
+                // If regen is enabled and the torque demand is zero, we
+                // need to set the torque demand to 0 to prevent the motor
+                // from applying torque in the wrong direction
                 motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
             } else {
                 motorData.desiredTorque = torqueDemand;
@@ -399,8 +401,7 @@ float torqueMap(float pedal) {
     // Raw Sigmoid curve
     float raw = 1.0f / (1.0f + expf(-k * (pedal - x0)));
     float normalized_ratio = (raw - low_limit) / (high_limit - low_limit);
-    float target =
-        (normalized_ratio * CAPPED_MOTOR_TORQUE) + TORQUE_SHIFT_OFFSET;
+    float target = (normalized_ratio * CAPPED_MOTOR_TORQUE);
     return target;
 }
 
