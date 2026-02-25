@@ -151,7 +151,14 @@ pub fn parse_telemetry(packet: &[u8]) -> Result<TelemetryData, String> {
             packet.len()
         ));
     }
-    print!("Received packet: {:?}", packet);
+    print!("Raw bytes: [");
+    for (i, byte) in packet.iter().enumerate() {
+        if i > 0 {
+            print!(", ");
+        }
+        print!("{:#04x}", byte);
+    }
+    println!("]");
     let fault: u32 = u32::from_le_bytes(packet[42..46].try_into().unwrap());
 
     Ok(TelemetryData {
