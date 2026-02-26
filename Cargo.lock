@@ -1087,6 +1087,7 @@ dependencies = [
  "rumqttd",
  "serde",
  "serde_json",
+ "serde_repr",
  "taos",
  "tokio",
  "tokio-socketcan-isotp",

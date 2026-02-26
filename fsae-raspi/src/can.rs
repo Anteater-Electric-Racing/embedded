@@ -16,6 +16,7 @@
 use crate::send::{send_message, Reading};
 use deku::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::time::Duration;
 use taos::ColumnView;
 use tokio::time::sleep;
@@ -27,10 +28,20 @@ const CAN_SRC_ID: u16 = 0x666;
 const CAN_DST_ID: u16 = 0x777;
 
 #[derive(
-    Default, Debug, Serialize, Deserialize, PartialEq, Clone, Copy, DekuRead, DekuWrite, DekuSize,
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
 )]
 #[deku(ctx = "endian: deku::ctx::Endian")]
 #[deku(id_type = "u8")]
+#[repr(u8)]
 pub enum MotorState {
     #[deku(id = 0)]
     #[default]
@@ -46,10 +57,20 @@ pub enum MotorState {
 }
 
 #[derive(
-    Default, Debug, Serialize, Deserialize, PartialEq, Clone, Copy, DekuRead, DekuWrite, DekuSize,
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
 )]
 #[deku(ctx = "endian: deku::ctx::Endian")]
 #[deku(id_type = "u8")]
+#[repr(u8)]
 pub enum MotorRotateDirection {
     #[deku(id = 0)]
     #[default]
@@ -63,10 +84,20 @@ pub enum MotorRotateDirection {
 }
 
 #[derive(
-    Default, Debug, Serialize, Deserialize, PartialEq, Clone, Copy, DekuRead, DekuWrite, DekuSize,
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
 )]
 #[deku(ctx = "endian: deku::ctx::Endian")]
 #[deku(id_type = "u8")]
+#[repr(u8)]
 pub enum MCUMainState {
     #[deku(id = 0)]
     #[default]
@@ -82,10 +113,20 @@ pub enum MCUMainState {
 }
 
 #[derive(
-    Default, Debug, Serialize, Deserialize, PartialEq, Clone, Copy, DekuRead, DekuWrite, DekuSize,
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
 )]
 #[deku(ctx = "endian: deku::ctx::Endian")]
 #[deku(id_type = "u8")]
+#[repr(u8)]
 pub enum MCUWorkMode {
     #[deku(id = 0)]
     #[default]
@@ -97,10 +138,20 @@ pub enum MCUWorkMode {
 }
 
 #[derive(
-    Default, Debug, Serialize, Deserialize, PartialEq, Clone, Copy, DekuRead, DekuWrite, DekuSize,
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
 )]
 #[deku(ctx = "endian: deku::ctx::Endian")]
 #[deku(id_type = "u8")]
+#[repr(u8)]
 pub enum MCUWarningLevel {
     #[deku(id = 0)]
     #[default]
