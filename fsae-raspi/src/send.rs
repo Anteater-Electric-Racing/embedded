@@ -72,7 +72,7 @@ fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String>
                 if n.is_f64() {
                     format!("{k}={n}f32")
                 } else {
-                    format!("{k}={n}i")
+                    format!("{k}={n}i32")
                 }
             }
             other => format!("{k}=\"{other}\""),
