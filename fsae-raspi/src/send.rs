@@ -113,13 +113,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     tokio::join!(
         async {
-            if let Err(e) = get_mqtt_client()
-                .await
-                .publish(topic, QoS::AtLeastOnce, false, json)
-                .await
-            {
-                error!(%e, "Failed to publish to MQTT");
-            }
+            // if let Err(e) = get_mqtt_client()
+            //     .await
+            //     .publish(topic, QoS::AtLeastOnce, false, json)
+            //     .await
+            // {
+            //     error!(%e, "Failed to publish to MQTT");
+            // }
         },
         async {
             // let data = SmlDataBuilder::default()
