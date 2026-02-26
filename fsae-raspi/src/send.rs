@@ -91,13 +91,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
     let topic = T::topic();
-    // let line = match to_line_protocol(T::measurement(), &message) {
-    //     Some(l) => l,
-    //     None => {
-    //         error!("Failed to build line protocol");
-    //         return;
-    //     }
-    // };
+    let line = match to_line_protocol(T::measurement(), &message) {
+        Some(l) => l,
+        None => {
+            error!("Failed to build line protocol");
+            return;
+        }
+    };
 
     tokio::join!(
         async {
