@@ -91,7 +91,6 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
             return;
         }
     };
-    info!("Sending message: {json1}");
     let topic = T::topic();
     // let line = match to_line_protocol(T::measurement(), &message) {
     //     Some(l) => l,
