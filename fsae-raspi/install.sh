@@ -27,6 +27,7 @@ echo "==> Installing Rust for $REAL_USER..."
 sudo -u "$REAL_USER" bash -c 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
 
 echo "==> Building InfluxDB3..."
+sudo apt-get install -y protobuf-compiler
 sudo -u "$REAL_USER" bash -c "
     cd '$REAL_HOME/Documents' &&
     git clone --depth=1 https://github.com/influxdata/influxdb || true &&
