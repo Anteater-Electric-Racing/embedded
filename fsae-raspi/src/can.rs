@@ -17,6 +17,7 @@ use crate::send::{send_message, Reading};
 use deku::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use taos::ColumnView;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 use tracing::{error, info, warn};
@@ -173,23 +174,43 @@ impl Reading for TelemetryData {
         "telemetry"
     }
 
-    fn insert_sql(&self) -> String {
-        format!(
-            "INSERT INTO {}.telemetry VALUES (NOW, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {:?}, {}, {}, {}, {}, {}, {}, {}, {})",
-            crate::send::TAOS_DATABASE,
-            self.apps_travel, self.motor_speed, self.motor_torque, self.max_motor_torque,
-            self.motor_direction as u8, self.motor_state as u8,
-            self.mcu_main_state as u8, self.mcu_work_mode as u8,
-            self.mcu_voltage, self.mcu_current,
-            self.motor_temp, self.mcu_temp,
-            self.dc_main_wire_over_volt_fault as u8, self.dc_main_wire_over_curr_fault as u8,
-            self.motor_over_spd_fault as u8, self.motor_phase_curr_fault as u8,
-            self.motor_stall_fault as u8, self.mcu_warning_level,
-            self.fault_map.over_current as u8, self.fault_map.under_voltage as u8,
-            self.fault_map.over_temperature as u8, self.fault_map.apps as u8,
-            self.fault_map.bse as u8, self.fault_map.bpps as u8,
-            self.fault_map.apps_brake_plaus as u8, self.fault_map.low_battery_voltage as u8,
-        )
+    fn table() -> &'static str {
+        "fsae.telemetry"
+    }
+
+    fn stmt_sql() -> &'static str {
+        "INSERT INTO fsae.telemetry VALUES (NOW, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    }
+
+    fn column_views(&self) -> Vec<ColumnView> {
+        vec![
+            ColumnView::from_floats(vec![self.apps_travel]),
+            ColumnView::from_floats(vec![self.motor_speed]),
+            ColumnView::from_floats(vec![self.motor_torque]),
+            ColumnView::from_floats(vec![self.max_motor_torque]),
+            ColumnView::from_unsigned_tiny_ints(vec![self.motor_direction as u8]),
+            ColumnView::from_unsigned_tiny_ints(vec![self.motor_state as u8]),
+            ColumnView::from_unsigned_tiny_ints(vec![self.mcu_main_state as u8]),
+            ColumnView::from_unsigned_tiny_ints(vec![self.mcu_work_mode as u8]),
+            ColumnView::from_floats(vec![self.mcu_voltage]),
+            ColumnView::from_floats(vec![self.mcu_current]),
+            ColumnView::from_ints(vec![self.motor_temp]),
+            ColumnView::from_ints(vec![self.mcu_temp]),
+            ColumnView::from_bools(vec![self.dc_main_wire_over_volt_fault]),
+            ColumnView::from_bools(vec![self.dc_main_wire_over_curr_fault]),
+            ColumnView::from_bools(vec![self.motor_over_spd_fault]),
+            ColumnView::from_bools(vec![self.motor_phase_curr_fault]),
+            ColumnView::from_bools(vec![self.motor_stall_fault]),
+            ColumnView::from_unsigned_tiny_ints(vec![self.mcu_warning_level as u8]),
+            ColumnView::from_bools(vec![self.fault_map.over_current]),
+            ColumnView::from_bools(vec![self.fault_map.under_voltage]),
+            ColumnView::from_bools(vec![self.fault_map.over_temperature]),
+            ColumnView::from_bools(vec![self.fault_map.apps]),
+            ColumnView::from_bools(vec![self.fault_map.bse]),
+            ColumnView::from_bools(vec![self.fault_map.bpps]),
+            ColumnView::from_bools(vec![self.fault_map.apps_brake_plaus]),
+            ColumnView::from_bools(vec![self.fault_map.low_battery_voltage]),
+        ]
     }
 }
 
