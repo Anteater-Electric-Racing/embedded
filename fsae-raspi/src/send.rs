@@ -55,7 +55,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                     let mut id: u64 = i << 32;
                     while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
                         let batch_size = buffer.len();
-                        if batch_size > 50 {
+                        if batch_size > 5000 {
                             tracing::warn!(
                                 batch_size,
                                 "Large TDEngine batch — ingest channel may be overloaded"
