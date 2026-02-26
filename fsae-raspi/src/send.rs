@@ -26,7 +26,7 @@ static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 async fn get_tdengine_sender() -> &'static Sender<String> {
     TDENGINE
         .get_or_init(|| async {
-            let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+            let (tx, mut rx) = tokio::sync::mpsc::channel(10000);
 
             let builder =
                 TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
