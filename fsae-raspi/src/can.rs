@@ -174,10 +174,6 @@ impl Reading for TelemetryData {
         "telemetry"
     }
 
-    fn table() -> &'static str {
-        "fsae.telemetry"
-    }
-
     fn stmt_sql() -> &'static str {
         "INSERT INTO fsae.telemetry VALUES (NOW, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     }

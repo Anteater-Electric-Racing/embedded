@@ -13,7 +13,6 @@ pub const MQTT_PORT: u16 = 1883;
 
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
-    fn table() -> &'static str;
     fn stmt_sql() -> &'static str;
     fn column_views(&self) -> Vec<ColumnView>;
 }
@@ -23,7 +22,7 @@ static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 
 async fn get_taos_client() -> &'static Taos {
     TAOS.get_or_init(|| async {
-        match TaosBuilder::from_dsn(TAOS_URL) {
+        let taos = match TaosBuilder::from_dsn(TAOS_URL) {
             Ok(builder) => match builder.build().await {
                 Ok(taos) => taos,
                 Err(e) => {
@@ -35,7 +34,17 @@ async fn get_taos_client() -> &'static Taos {
                 error!(%e, "Failed to create TaosBuilder from DSN");
                 panic!("Failed to create TaosBuilder from DSN: {e}");
             }
+        };
+        if let Err(e) = taos
+            .exec(format!("CREATE DATABASE IF NOT EXISTS {}", TAOS_DATABASE))
+            .await
+        {
+            error!(%e, "Failed to create database");
         }
+        if let Err(e) = taos.exec(format!("USE {}", TAOS_DATABASE)).await {
+            error!(%e, "Failed to use database");
+        }
+        taos
     })
     .await
 }
