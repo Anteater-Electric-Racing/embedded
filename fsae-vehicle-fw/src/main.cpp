@@ -15,6 +15,7 @@
 #include "vehicle/pcc_receive.h"
 #include "vehicle/rtm_button.h"
 #include "vehicle/telemetry.h"
+#include "vehicle/thermal.h"
 
 #include "utils/utils.h"
 #include <iostream>
@@ -38,6 +39,7 @@ void setup() { // runs once on bootup
     MCU_Init();
     GPIO_Init();
     PCC_Init();
+    thermal_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
@@ -73,9 +75,12 @@ void threadMain(void *pvParameters) {
         /*============LOW PRIORITY GPIO UPDATES============*/
         digitalWrite(13, HIGH); // orange led on teensy
 
+        thermal_MCULoop();
+
         if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
             BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
             digitalWrite(BRAKE_LIGHT_PIN, HIGH);
+
         } else {
             digitalWrite(BRAKE_LIGHT_PIN, LOW);
         }
@@ -109,6 +114,7 @@ void threadMain(void *pvParameters) {
 
         //  Telemetry: Read battery current, phase current, motor speed,
         //  temperature(s)
+
         Serial.print(" | ");
         Serial.print("B Volt: ");
         Serial.print(MCU_GetMCU3Data()->mcuVoltage);

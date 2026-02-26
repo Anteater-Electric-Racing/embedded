@@ -3,24 +3,33 @@
 
 #define DUTY_CYCLE_MAX 255
 #define ANALOG_WRITE_FREQUENCY 25000 // 25 kHz for Koolance
-#define ANALOG_WRITE_RESOLUTION 8    // 8-bit resolution (0-255)
+#define FAN_WRITE_FREQ 500
+#define ANALOG_WRITE_RESOLUTION 8 // 8-bit resolution (0-255)
 
-#define PUMP_PIN 12  // Define the PWM pin for the pump
-#define PUMP2_PIN 11 // Define PWM pin for pump 2
+#define PUMP1_PIN 29 // Define the PWM pin for the pump
+#define PUMP2_PIN 28 // Define PWM pin for pump 2
 #define FAN_PIN 7
 
-#define TEMP_THRESHOLD 40 // Temperature threshold in degrees Celsius
+#define PUMP_THRESHOLD 35 // Temperature threshold in degrees Celsius
+#define FAN_THRESHOLD 42  // Temperature threshold in degrees Celsius
 
 void thermal_Init() {
-    pinMode(PUMP_PIN, OUTPUT);
-    analogWriteFrequency(PUMP_PIN,
+    pinMode(PUMP1_PIN, OUTPUT);
+    pinMode(PUMP2_PIN, OUTPUT);
+    analogWriteFrequency(PUMP1_PIN,
+                         ANALOG_WRITE_FREQUENCY);   // 25 kHz for Koolance
+    analogWriteResolution(ANALOG_WRITE_RESOLUTION); // 0-255
+
+    analogWriteFrequency(PUMP2_PIN,
                          ANALOG_WRITE_FREQUENCY);   // 25 kHz for Koolance
     analogWriteResolution(ANALOG_WRITE_RESOLUTION); // 0-255
 
     pinMode(FAN_PIN, OUTPUT);
     analogWriteFrequency(FAN_PIN,
-                         ANALOG_WRITE_FREQUENCY);   // 25 kHz for Koolance
+                         FAN_WRITE_FREQ);           // 25 kHz for Koolance
     analogWriteResolution(ANALOG_WRITE_RESOLUTION); // 0-255
+
+    thermal_forceOff();
 }
 
 /*open loop  control */
@@ -29,41 +38,36 @@ void thermal_Init() {
  *
  */
 
-void thermal_MCULoop() {
-    /*
-    closed loop control
-
-    setpoint 40C MCU temp (mtr temp barely went up last time)
-    control variable: PUMP speed based on input from MCU temp
-    */
+void thermal_forceOn() {
+    analogWrite(PUMP1_PIN, DUTY_CYCLE_MAX * 0.9);
+    analogWrite(PUMP2_PIN, DUTY_CYCLE_MAX * 0.9);
+    analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.9);
 }
 
-void thermal_Update(uint32_t rawReading1, uint32_t rawReading2,
-                    uint32_t rawReading3, uint32_t rawReading4) {
-    // Assuming rawReading1 and rawReading2 are the temperature readings from
-    // the sensors Convert raw readings to temperature in degrees Celsius
-    int32_t temp1 = (rawReading1);
-    int32_t temp2 = (rawReading2);
-    // int32_t temp3 = (rawReading3);
-    // int32_t temp4 = (rawReading4);
-    // Check if the MCU temperature exceeds the threshold
-    if (temp1 > TEMP_THRESHOLD || temp2 > TEMP_THRESHOLD) {
-        // If the MCU temperature exceeds the threshold, turn on the pump and
-        // fan
-        analogWrite(PUMP_PIN,
-                    DUTY_CYCLE_MAX * 0.9); // Set pump to full duty cycle
-        analogWrite(FAN_PIN,
-                    DUTY_CYCLE_MAX * 0.9); // Set fan to full duty cycle
-    } else {
-        // If the MCU temperature is below the threshold, turn off the pump and
-        // fan
-        analogWrite(PUMP_PIN, 0); // Set pump to 0 duty cycle
-        analogWrite(FAN_PIN, 0);  // Set fan to 0 duty cycle
+void thermal_forceOff() {
+    analogWrite(PUMP1_PIN, 0);
+    analogWrite(PUMP2_PIN, 0);
+    analogWrite(FAN_PIN, 0);
+}
+
+/*implement */
+void thermal_MCULoop() {
+    if (MCU_GetMCU2Data()->mcuTemp <= 0 || MCU_GetMCU2Data()->mcuTemp > 100) {
+        thermal_forceOn();
+        return;
     }
-    // Debugging output
-    // Serial.print("Temp1: ");
-    // Serial.print(temp1);
-    // Serial.print(" C | Temp2: ");
-    // Serial.print(temp2);
-    // Serial.println(" C");
+
+    if (MCU_GetMCU2Data()->mcuTemp > PUMP_THRESHOLD) {
+        analogWrite(PUMP1_PIN, DUTY_CYCLE_MAX * 0.9);
+        analogWrite(PUMP2_PIN, DUTY_CYCLE_MAX * 0.9);
+    } else if (MCU_GetMCU2Data()->mcuTemp < PUMP_THRESHOLD - 5) {
+        analogWrite(PUMP1_PIN, 0);
+        analogWrite(PUMP2_PIN, 0);
+    }
+
+    if (MCU_GetMCU2Data()->mcuTemp > FAN_THRESHOLD) {
+        analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.9);
+    } else if (MCU_GetMCU2Data()->mcuTemp < FAN_THRESHOLD - 5) {
+        analogWrite(FAN_PIN, 0);
+    }
 }
