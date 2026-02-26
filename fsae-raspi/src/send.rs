@@ -1,5 +1,6 @@
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
+use std::fmt::Write;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
 use taos::{AsyncQueryable, AsyncTBuilder, Taos, TaosBuilder};
 use tokio::sync::OnceCell;
@@ -15,7 +16,7 @@ pub const MQTT_PORT: u16 = 1883;
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
     fn measurement() -> &'static str;
-    fn to_line_protocol(&self) -> String;
+    // fn to_line_protocol(&self) -> String;
 }
 
 static TAOS: OnceCell<Taos> = OnceCell::const_new();
@@ -62,26 +63,36 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         .await
 }
 
-// fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
-//     let map = serde_json::to_value(value).ok()?;
-//     let fields = map
-//         .as_object()?
-//         .iter()
-//         .map(|(k, v)| match v {
-//             serde_json::Value::Bool(b) => format!("{k}={b}"),
-//             serde_json::Value::Number(n) => {
-//                 if n.is_f64() {
-//                     format!("{k}={n}f32")
-//                 } else {
-//                     format!("{k}={n}i32")
-//                 }
-//             }
-//             other => format!("{k}=\"{other}\""),
-//         })
-//         .collect::<Vec<_>>()
-//         .join(",");
-//     Some(format!("{measurement} {fields}"))
-// }
+fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
+    let map = serde_json::to_value(value).ok()?;
+    let obj = map.as_object()?;
+
+    let mut buf = String::with_capacity(128);
+    buf.push_str(measurement);
+    buf.push(' ');
+
+    let mut first = true;
+    for (k, v) in obj {
+        if !first {
+            buf.push(',');
+        }
+        first = false;
+
+        match v {
+            serde_json::Value::Bool(b) => write!(buf, "{k}={b}").unwrap(),
+            serde_json::Value::Number(n) => {
+                if n.is_f64() {
+                    write!(buf, "{k}={n}f32").unwrap();
+                } else {
+                    write!(buf, "{k}={n}i32").unwrap();
+                }
+            }
+            other => write!(buf, "{k}=\"{other}\"").unwrap(),
+        }
+    }
+
+    Some(buf)
+}
 
 pub async fn send_message<T: Reading + Send + 'static>(message: T) {
     let json1 = match serde_json::to_string(&message) {
@@ -92,14 +103,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
     let topic = T::topic();
-    // let line = match to_line_protocol(T::measurement(), &message) {
-    //     Some(l) => l,
-    //     None => {
-    //         error!("Failed to build line protocol");
-    //         return;
-    //     }
-    // };
-    let line = message.to_line_protocol();
+    let line = match to_line_protocol(T::measurement(), &message) {
+        Some(l) => l,
+        None => {
+            error!("Failed to build line protocol");
+            return;
+        }
+    };
 
     tokio::join!(
         async {
