@@ -3,7 +3,10 @@
 #pragma once
 
 /*
-    Test BMS limits, get full throttle working
+    TODO: better serial monitor (python script or executable (constantly
+   running)) needs all fields (not being sent on telemetry as well)
+
+    Cooling control loop based on MCU and Motor Temp
 
 
     TODO Fixes:

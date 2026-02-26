@@ -5,10 +5,11 @@
 #define ANALOG_WRITE_FREQUENCY 25000 // 25 kHz for Koolance
 #define ANALOG_WRITE_RESOLUTION 8    // 8-bit resolution (0-255)
 
-#define PUMP_PIN 12 // Define the PWM pin for the pump
+#define PUMP_PIN 12  // Define the PWM pin for the pump
+#define PUMP2_PIN 11 // Define PWM pin for pump 2
 #define FAN_PIN 7
 
-#define TEMP_THRESHOLD 30 // Temperature threshold in degrees Celsius
+#define TEMP_THRESHOLD 40 // Temperature threshold in degrees Celsius
 
 void thermal_Init() {
     pinMode(PUMP_PIN, OUTPUT);
@@ -27,6 +28,16 @@ void thermal_Init() {
  * faults to add: (temp out of bounds??)
  *
  */
+
+void thermal_MCULoop() {
+    /*
+    closed loop control
+
+    setpoint 40C MCU temp (mtr temp barely went up last time)
+    control variable: PUMP speed based on input from MCU temp
+    */
+}
+
 void thermal_Update(uint32_t rawReading1, uint32_t rawReading2,
                     uint32_t rawReading3, uint32_t rawReading4) {
     // Assuming rawReading1 and rawReading2 are the temperature readings from
