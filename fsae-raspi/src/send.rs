@@ -68,7 +68,13 @@ fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String>
         .iter()
         .map(|(k, v)| match v {
             serde_json::Value::Bool(b) => format!("{k}={b}"),
-            serde_json::Value::Number(n) => format!("{k}={n}"),
+            serde_json::Value::Number(n) => {
+                if n.is_f64() {
+                    format!("{k}={n}f32")
+                } else {
+                    format!("{k}={n}i")
+                }
+            }
             other => format!("{k}=\"{other}\""),
         })
         .collect::<Vec<_>>()
