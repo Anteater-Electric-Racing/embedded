@@ -83,44 +83,45 @@ fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String>
 }
 
 pub async fn send_message<T: Reading + Send + 'static>(message: T) {
-    let json = match serde_json::to_string(&message) {
+    let json1 = match serde_json::to_string(&message) {
         Ok(j) => j,
         Err(e) => {
             error!(%e, "Failed to serialize message");
             return;
         }
     };
+    let json2 = json1.clone();
     let topic = T::topic();
-    let line = match to_line_protocol(T::measurement(), &message) {
-        Some(l) => l,
-        None => {
-            error!("Failed to build line protocol");
-            return;
-        }
-    };
+    // let line = match to_line_protocol(T::measurement(), &message) {
+    //     Some(l) => l,
+    //     None => {
+    //         error!("Failed to build line protocol");
+    //         return;
+    //     }
+    // };
 
     tokio::join!(
         async {
             if let Err(e) = get_mqtt_client()
                 .await
-                .publish(topic, QoS::AtLeastOnce, false, json)
+                .publish(topic, QoS::AtLeastOnce, false, json1)
                 .await
             {
                 error!(%e, "Failed to publish to MQTT");
             }
         },
         async {
-            // let data = SmlDataBuilder::default()
-            //     .protocol(SchemalessProtocol::Line)
-            //     .precision(SchemalessPrecision::Millisecond)
-            //     .data(vec![line])
-            //     .ttl(1000)
-            //     .req_id(100u64)
-            //     .build()
-            //     .unwrap();
-            // if let Err(e) = get_taos_client().await.put(&data).await {
-            //     error!(%e, "Failed to insert into TDengine");
-            // }
+            let data = SmlDataBuilder::default()
+                .protocol(SchemalessProtocol::Json)
+                .precision(SchemalessPrecision::Millisecond)
+                .data(vec![json2])
+                .ttl(1000)
+                .req_id(100u64)
+                .build()
+                .unwrap();
+            if let Err(e) = get_taos_client().await.put(&data).await {
+                error!(%e, "Failed to insert into TDengine");
+            }
         }
     );
 }
