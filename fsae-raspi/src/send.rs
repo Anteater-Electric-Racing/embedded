@@ -28,7 +28,8 @@ static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 async fn get_tdengine_sender() -> &'static Sender<String> {
     TDENGINE
         .get_or_init(|| async {
-            let (tx, mut rx) = tokio::sync::mpsc::channel::<String>(100_000);
+            let (tx, rx) = tokio::sync::mpsc::channel(100000);
+            let rx = Arc::new(Mutex::new(rx));
 
             let builder =
                 TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
@@ -46,31 +47,38 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                 error!(%e, "Failed to use database");
             }
 
-            tokio::spawn(async move {
-                let mut buffer: Vec<String> = Vec::new();
-                let mut id: u64 = 0;
-                while rx.recv_many(&mut buffer, 10_000).await > 0 {
-                    let batch_size = buffer.len();
-                    if batch_size > 5000 {
-                        tracing::warn!(
-                            batch_size,
-                            "Large TDEngine batch — ingest channel may be overloaded"
-                        );
-                    }
-
-                    let data = SmlDataBuilder::default()
-                        .protocol(SchemalessProtocol::Line)
-                        .precision(SchemalessPrecision::Millisecond)
-                        .data(std::mem::take(&mut buffer))
-                        .req_id(id)
-                        .build()
-                        .unwrap();
-                    id += 1;
-                    if let Err(e) = taos.put(&data).await {
-                        error!(%e, "Failed to insert into TDengine");
-                    }
+            for i in 0..4 {
+                let rx = rx.clone();
+                let taos = builder.build().await.unwrap();
+                if let Err(e) = taos.exec(format!("USE {TAOS_DATABASE}")).await {
+                    error!(%e, "Failed to use database");
                 }
-            });
+                tokio::spawn(async move {
+                    let mut buffer: Vec<String> = Vec::new();
+                    let mut id: u64 = i << 32;
+                    while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
+                        let batch_size = buffer.len();
+                        if batch_size > 5000 {
+                            tracing::warn!(
+                                batch_size,
+                                "Large TDEngine batch — ingest channel may be overloaded"
+                            );
+                        }
+
+                        let data = SmlDataBuilder::default()
+                            .protocol(SchemalessProtocol::Line)
+                            .precision(SchemalessPrecision::Millisecond)
+                            .data(std::mem::take(&mut buffer))
+                            .req_id(id)
+                            .build()
+                            .unwrap();
+                        id += 1;
+                        if let Err(e) = taos.put(&data).await {
+                            error!(%e, "Failed to insert into TDengine");
+                        }
+                    }
+                });
+            }
 
             tx
         })
@@ -160,13 +168,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     tokio::join!(
         async {
-            if let Err(e) = get_mqtt_client()
-                .await
-                .publish(topic, QoS::AtMostOnce, false, json)
-                .await
-            {
-                error!(%e, "Failed to publish to MQTT — broker or eventloop may be overloaded");
-            }
+            // if let Err(e) = get_mqtt_client()
+            //     .await
+            //     .publish(topic, QoS::AtMostOnce, false, json)
+            //     .await
+            // {
+            //     error!(%e, "Failed to publish to MQTT — broker or eventloop may be overloaded");
+            // }
         },
         async {
             let sender = get_tdengine_sender().await;
