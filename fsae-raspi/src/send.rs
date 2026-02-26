@@ -47,7 +47,15 @@ async fn get_taos_client() -> &'static Taos {
         }
         if let Err(e) = taos
             .exec(format!(
-                "CREATE TABLE IF NOT EXISTS {} (ts TIMESTAMP, apps_travel FLOAT, motor_speed FLOAT, motor_torque FLOAT, max_motor_torque FLOAT, motor_direction TINYINT UNSIGNED, motor_state TINYINT UNSIGNED, mcu_main_state TINYINT UNSIGNED, mcu_work_mode TINYINT UNSIGNED, mcu_voltage FLOAT, mcu_current FLOAT, motor_temp INT, mcu_temp INT, dc_main_wire_over_volt_fault BOOL, dc_main_wire_over_curr_fault BOOL, motor_over_spd_fault BOOL, motor_phase_curr_fault BOOL, motor_stall_fault BOOL, mcu_warning_level TINYINT UNSIGNED, over_current BOOL, under_voltage BOOL, over_temperature BOOL, apps_fault BOOL, bse_fault BOOL, bpps_fault BOOL, apps_brake_plaus_fault BOOL, low_battery_voltage_fault BOOL)",
+                "CREATE TABLE IF NOT EXISTS {} (ts TIMESTAMP, apps_travel FLOAT, motor_speed FLOAT, \
+ motor_torque FLOAT, max_motor_torque FLOAT, motor_direction TINYINT UNSIGNED, \
+ motor_state TINYINT UNSIGNED, mcu_main_state TINYINT UNSIGNED, mcu_work_mode TINYINT UNSIGNED, \
+ mcu_voltage FLOAT, mcu_current FLOAT, motor_temp INT, mcu_temp INT, \
+ dc_main_wire_over_volt_fault TINYINT, dc_main_wire_over_curr_fault TINYINT, \
+ motor_over_spd_fault TINYINT, motor_phase_curr_fault TINYINT, motor_stall_fault TINYINT, \
+ mcu_warning_level TINYINT UNSIGNED, over_current TINYINT, under_voltage TINYINT, \
+ over_temperature TINYINT, apps_fault TINYINT, bse_fault TINYINT, bpps_fault TINYINT, \
+ apps_brake_plaus_fault TINYINT, low_battery_voltage_fault TINYINT)",
                 TAOS_TABLE
             ))
             .await
