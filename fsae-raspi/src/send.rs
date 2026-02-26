@@ -66,7 +66,7 @@ async fn get_mqtt_client() -> &'static AsyncClient {
 
 fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
     let obj = map.as_object()?;
-    let mut buf = String::with_capacity(512);
+    let mut buf = String::with_capacity(1024);
     buf.push_str(measurement);
     buf.push(' ');
 
