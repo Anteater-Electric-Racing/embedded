@@ -15,6 +15,7 @@ pub const MQTT_PORT: u16 = 1883;
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
     fn measurement() -> &'static str;
+    fn to_line_protocol(&self) -> String;
 }
 
 static TAOS: OnceCell<Taos> = OnceCell::const_new();
@@ -61,26 +62,26 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         .await
 }
 
-fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
-    let map = serde_json::to_value(value).ok()?;
-    let fields = map
-        .as_object()?
-        .iter()
-        .map(|(k, v)| match v {
-            serde_json::Value::Bool(b) => format!("{k}={b}"),
-            serde_json::Value::Number(n) => {
-                if n.is_f64() {
-                    format!("{k}={n}f32")
-                } else {
-                    format!("{k}={n}i32")
-                }
-            }
-            other => format!("{k}=\"{other}\""),
-        })
-        .collect::<Vec<_>>()
-        .join(",");
-    Some(format!("{measurement} {fields}"))
-}
+// fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
+//     let map = serde_json::to_value(value).ok()?;
+//     let fields = map
+//         .as_object()?
+//         .iter()
+//         .map(|(k, v)| match v {
+//             serde_json::Value::Bool(b) => format!("{k}={b}"),
+//             serde_json::Value::Number(n) => {
+//                 if n.is_f64() {
+//                     format!("{k}={n}f32")
+//                 } else {
+//                     format!("{k}={n}i32")
+//                 }
+//             }
+//             other => format!("{k}=\"{other}\""),
+//         })
+//         .collect::<Vec<_>>()
+//         .join(",");
+//     Some(format!("{measurement} {fields}"))
+// }
 
 pub async fn send_message<T: Reading + Send + 'static>(message: T) {
     let json1 = match serde_json::to_string(&message) {
@@ -90,7 +91,6 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
             return;
         }
     };
-    let json2 = json1.clone();
     info!("Sending message: {json1}");
     let topic = T::topic();
     // let line = match to_line_protocol(T::measurement(), &message) {
@@ -100,6 +100,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
     //         return;
     //     }
     // };
+    let line = message.to_line_protocol();
 
     tokio::join!(
         async {
@@ -113,9 +114,9 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         },
         async {
             let data = SmlDataBuilder::default()
-                .protocol(SchemalessProtocol::Json)
+                .protocol(SchemalessProtocol::Line)
                 .precision(SchemalessPrecision::Millisecond)
-                .data(vec![json2])
+                .data(vec![line])
                 .ttl(1000)
                 .req_id(100u64)
                 .build()

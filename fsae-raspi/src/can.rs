@@ -18,7 +18,6 @@ use deku::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::time::Duration;
-use taos::ColumnView;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
 use tracing::{error, info, warn};
@@ -226,6 +225,61 @@ impl Reading for TelemetryData {
     }
     fn measurement() -> &'static str {
         "telemetry"
+    }
+    fn to_line_protocol(&self) -> String {
+        format!(
+            "telemetry \
+             apps_travel={apps_travel}f32,\
+             motor_speed={motor_speed}f32,\
+             motor_torque={motor_torque}f32,\
+             max_motor_torque={max_motor_torque}f32,\
+             motor_direction={motor_direction}i32,\
+             motor_state={motor_state}i32,\
+             mcu_main_state={mcu_main_state}i32,\
+             mcu_work_mode={mcu_work_mode}i32,\
+             mcu_voltage={mcu_voltage}f32,\
+             mcu_current={mcu_current}f32,\
+             motor_temp={motor_temp}i32,\
+             mcu_temp={mcu_temp}i32,\
+             dc_main_wire_over_volt_fault={dc_main_wire_over_volt_fault},\
+             dc_main_wire_over_curr_fault={dc_main_wire_over_curr_fault},\
+             motor_over_spd_fault={motor_over_spd_fault},\
+             motor_phase_curr_fault={motor_phase_curr_fault},\
+             motor_stall_fault={motor_stall_fault},\
+             mcu_warning_level={mcu_warning_level}i32,\
+             over_current={over_current},\
+             under_voltage={under_voltage},\
+             over_temperature={over_temperature},\
+             apps={apps},bse={bse},bpps={bpps},\
+             apps_brake_plaus={apps_brake_plaus},\
+             low_battery_voltage={low_battery_voltage}",
+            apps_travel = self.apps_travel,
+            motor_speed = self.motor_speed,
+            motor_torque = self.motor_torque,
+            max_motor_torque = self.max_motor_torque,
+            motor_direction = self.motor_direction as u8,
+            motor_state = self.motor_state as u8,
+            mcu_main_state = self.mcu_main_state as u8,
+            mcu_work_mode = self.mcu_work_mode as u8,
+            mcu_voltage = self.mcu_voltage,
+            mcu_current = self.mcu_current,
+            motor_temp = self.motor_temp,
+            mcu_temp = self.mcu_temp,
+            dc_main_wire_over_volt_fault = self.dc_main_wire_over_volt_fault,
+            dc_main_wire_over_curr_fault = self.dc_main_wire_over_curr_fault,
+            motor_over_spd_fault = self.motor_over_spd_fault,
+            motor_phase_curr_fault = self.motor_phase_curr_fault,
+            motor_stall_fault = self.motor_stall_fault,
+            mcu_warning_level = self.mcu_warning_level as u8,
+            over_current = self.fault_map.over_current,
+            under_voltage = self.fault_map.under_voltage,
+            over_temperature = self.fault_map.over_temperature,
+            apps = self.fault_map.apps,
+            bse = self.fault_map.bse,
+            bpps = self.fault_map.bpps,
+            apps_brake_plaus = self.fault_map.apps_brake_plaus,
+            low_battery_voltage = self.fault_map.low_battery_voltage,
+        )
     }
 }
 
