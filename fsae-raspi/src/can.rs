@@ -228,9 +228,9 @@ async fn read_can_synthetic() {
 /// Entry point: dispatches to the hardware or synthetic reader depending
 /// on the build profile.
 pub async fn read_can() {
-    if cfg!(not(debug_assertions)) {
-        read_can_hardware().await;
-    } else {
+    if cfg!(feature = "synthetic") {
         read_can_synthetic().await;
+    } else {
+        read_can_hardware().await;
     }
 }

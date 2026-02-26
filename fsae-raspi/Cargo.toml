@@ -16,3 +16,6 @@ rumqttc = "0.25"
 rumqttd = "0.20"
 tracing = "0.1.44"
 deku = "0.20.3"
+
+[features]
+synthetic = []
