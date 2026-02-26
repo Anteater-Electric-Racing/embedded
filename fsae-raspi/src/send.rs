@@ -1,12 +1,11 @@
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
-use std::cell::RefCell;
-use std::fmt::Write;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
-use taos::{AsyncQueryable, AsyncTBuilder, Taos, TaosBuilder};
+use taos::{AsyncQueryable, AsyncTBuilder, TaosBuilder};
+use tokio::sync::mpsc::Sender;
 use tokio::sync::OnceCell;
 use tokio::time::Duration;
-use tracing::{error, info};
+use tracing::error;
 
 pub const TAOS_URL: &str = "taos://localhost:6030";
 pub const TAOS_DATABASE: &str = "fsae";
@@ -20,29 +19,51 @@ pub trait Reading: Serialize {
     // fn to_line_protocol(&self) -> String;
 }
 
-static TAOS: OnceCell<Taos> = OnceCell::const_new();
+static TDENGINE: OnceCell<Sender<String>> = OnceCell::const_new();
 static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 
-async fn get_taos_client() -> &'static Taos {
-    TAOS.get_or_init(|| async {
-        let builder =
-            TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
-        let taos = builder
-            .build()
-            .await
-            .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
-        if let Err(e) = taos
-            .exec(format!("CREATE DATABASE IF NOT EXISTS {TAOS_DATABASE}"))
-            .await
-        {
-            error!(%e, "Failed to create database");
-        }
-        if let Err(e) = taos.exec(format!("USE {TAOS_DATABASE}")).await {
-            error!(%e, "Failed to use database");
-        }
-        taos
-    })
-    .await
+async fn get_tdengine_sender() -> &'static Sender<String> {
+    TDENGINE
+        .get_or_init(|| async {
+            let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+
+            let builder =
+                TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
+            let taos = builder
+                .build()
+                .await
+                .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
+            if let Err(e) = taos
+                .exec(format!("CREATE DATABASE IF NOT EXISTS {TAOS_DATABASE}"))
+                .await
+            {
+                error!(%e, "Failed to create database");
+            }
+            if let Err(e) = taos.exec(format!("USE {TAOS_DATABASE}")).await {
+                error!(%e, "Failed to use database");
+            }
+
+            tokio::spawn(async move {
+                let mut buffer: Vec<String> = Vec::new();
+                let mut i: u64 = 0;
+                while rx.recv_many(&mut buffer, usize::MAX).await > 0 {
+                    let data = SmlDataBuilder::default()
+                        .protocol(SchemalessProtocol::Line)
+                        .precision(SchemalessPrecision::Millisecond)
+                        .data(std::mem::take(&mut buffer))
+                        .req_id(i)
+                        .build()
+                        .unwrap();
+                    i += 1;
+                    if let Err(e) = taos.put(&data).await {
+                        error!(%e, "Failed to insert into TDengine");
+                    }
+                }
+            });
+
+            tx
+        })
+        .await
 }
 
 async fn get_mqtt_client() -> &'static AsyncClient {
@@ -128,26 +149,18 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     tokio::join!(
         async {
-            // if let Err(e) = get_mqtt_client()
-            //     .await
-            //     .publish(topic, QoS::AtLeastOnce, false, json)
-            //     .await
-            // {
-            //     error!(%e, "Failed to publish to MQTT");
-            // }
+            if let Err(e) = get_mqtt_client()
+                .await
+                .publish(topic, QoS::AtLeastOnce, false, json)
+                .await
+            {
+                error!(%e, "Failed to publish to MQTT");
+            }
         },
         async {
-            // let data = SmlDataBuilder::default()
-            //     .protocol(SchemalessProtocol::Line)
-            //     .precision(SchemalessPrecision::Millisecond)
-            //     .data(vec![line])
-            //     .ttl(1000)
-            //     .req_id(100u64)
-            //     .build()
-            //     .unwrap();
-            // if let Err(e) = get_taos_client().await.put(&data).await {
-            //     error!(%e, "Failed to insert into TDengine");
-            // }
+            if let Err(e) = get_tdengine_sender().await.send(line).await {
+                error!(%e, "Failed to publish to TDengine");
+            };
         }
     );
 }
