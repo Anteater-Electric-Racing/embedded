@@ -50,6 +50,9 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
             for i in 0..4 {
                 let rx = rx.clone();
                 let taos = builder.build().await.unwrap();
+                if let Err(e) = taos.exec(format!("USE {TAOS_DATABASE}")).await {
+                    error!(%e, "Failed to use database");
+                }
                 tokio::spawn(async move {
                     let mut buffer: Vec<String> = Vec::new();
                     let mut id: u64 = i << 32;
