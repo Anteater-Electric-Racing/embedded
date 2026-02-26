@@ -2,6 +2,7 @@ use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
 use taos::{AsyncQueryable, AsyncTBuilder, TaosBuilder};
+use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::mpsc::Sender;
 use tokio::sync::OnceCell;
 use tokio::time::Duration;
@@ -47,6 +48,14 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                 let mut buffer: Vec<String> = Vec::new();
                 let mut i: u64 = 0;
                 while rx.recv_many(&mut buffer, usize::MAX).await > 0 {
+                    let batch_size = buffer.len();
+                    if batch_size > 50 {
+                        tracing::warn!(
+                            batch_size,
+                            "Large TDEngine batch — ingest channel may be overloaded"
+                        );
+                    }
+
                     let data = SmlDataBuilder::default()
                         .protocol(SchemalessProtocol::Line)
                         .precision(SchemalessPrecision::Millisecond)
@@ -154,13 +163,31 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
                 .publish(topic, QoS::AtLeastOnce, false, json)
                 .await
             {
-                error!(%e, "Failed to publish to MQTT");
+                error!(%e, "Failed to publish to MQTT — broker or eventloop may be overloaded");
             }
         },
         async {
-            if let Err(e) = get_tdengine_sender().await.send(line).await {
-                error!(%e, "Failed to publish to TDengine");
-            };
+            let sender = get_tdengine_sender().await;
+
+            let remaining = sender.capacity();
+            if remaining < 20 {
+                tracing::warn!(
+                    remaining_capacity = remaining,
+                    "TDEngine ingest channel is nearly full — writer may be falling behind"
+                );
+            }
+
+            match sender.try_send(line) {
+                Ok(()) => {}
+                Err(TrySendError::Full(msg)) => {
+                    tracing::warn!(
+                        "TDEngine ingest channel is full — dropping line protocol message: {msg}"
+                    );
+                }
+                Err(TrySendError::Closed(_)) => {
+                    error!("TDEngine ingest channel is closed — writer task has exited");
+                }
+            }
         }
     );
 }
