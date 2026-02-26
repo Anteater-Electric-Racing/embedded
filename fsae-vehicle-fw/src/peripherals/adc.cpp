@@ -101,10 +101,7 @@ void threadADC( void *pvParameters ){
         }
 
          //Converts to the bit-RES values from raw voltage, which supposedly teensy can't read? UPDATED: Used ADC_VALUE_TO_VOLTAGE macro from utils.h to do the conversion from output to controller
-        const float shockVoltage1   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX1]);
-        const float shockVoltage2   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX2]);
-        const float shockVoltage3   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX3]);
-        const float shockVoltage4   = ADC_VALUE_TO_VOLTAGE(adc0Reads[SHOCK_TRAVEL_INDEX4]);
+
 
 
         const float steerAngleVoltage   = ADC_VALUE_TO_VOLTAGE(adc0Reads[STEERING_ANGLE_INDEX]);
@@ -113,10 +110,6 @@ void threadADC( void *pvParameters ){
         //Converts those bit-RES values into the actual human-read values;
 
         //Get the 4 shock travels in mm
-        sensorData.shockTravel1_mm = constrain((shockVoltage1 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
-        sensorData.shockTravel2_mm = constrain((shockVoltage2 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
-        sensorData.shockTravel3_mm = constrain((shockVoltage3 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
-        sensorData.shockTravel4_mm = constrain((shockVoltage4 / 5.0f) * SHOCK_TRAVEL_MAX_MM, 0.0f, SHOCK_TRAVEL_MAX_MM);
         //Updated to account for the mid range (0 degrees or 0 torque) to be at center of voltage range instead of the minimum
         sensorData.steeringAngle_deg = constrain((steerAngleVoltage / 5.0f) * STEERING_ANGLE_MAX_DEG - (STEERING_ANGLE_MAX_DEG* 0.5f), -STEERING_ANGLE_MAX_DEG * 0.5f, STEERING_ANGLE_MAX_DEG * 0.5f);
         sensorData.steeringTorque_Nm = constrain((torqueVoltage / 5.0f) * TORQUE_SENSOR_MAX_NM - (TORQUE_SENSOR_MAX_NM * 0.5f), -TORQUE_SENSOR_MAX_NM * 0.5f, TORQUE_SENSOR_MAX_NM* 0.5f);
