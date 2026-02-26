@@ -4,7 +4,7 @@ use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataB
 use taos::{AsyncQueryable, AsyncTBuilder, Taos, TaosBuilder};
 use tokio::sync::OnceCell;
 use tokio::time::Duration;
-use tracing::error;
+use tracing::{error, info};
 
 pub const TAOS_URL: &str = "taos://localhost:6030";
 pub const TAOS_DATABASE: &str = "fsae";
@@ -91,6 +91,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
     let json2 = json1.clone();
+    info!("Sending message: {json1}");
     let topic = T::topic();
     // let line = match to_line_protocol(T::measurement(), &message) {
     //     Some(l) => l,
