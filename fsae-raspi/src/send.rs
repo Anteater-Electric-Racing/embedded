@@ -90,32 +90,30 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
     let sql = T::stmt_sql();
     let cols = message.column_views();
 
-    tokio::spawn(async move {
-        tokio::join!(
-            async {
-                if let Err(e) = get_mqtt_client()
-                    .await
-                    .publish(topic, QoS::AtLeastOnce, false, json)
-                    .await
-                {
-                    error!(%e, "Failed to publish to MQTT");
-                }
-            },
-            async {
-                let taos = get_taos_client().await;
-                let result: Result<(), Box<dyn std::error::Error>> = async {
-                    let mut stmt = Stmt::init(taos).await?;
-                    stmt.prepare(sql).await?;
-                    stmt.bind(&cols).await?;
-                    stmt.add_batch().await?;
-                    stmt.execute().await?;
-                    Ok(())
-                }
-                .await;
-                if let Err(e) = result {
-                    error!(%e, "Failed to insert to TDengine");
-                }
+    tokio::join!(
+        async {
+            if let Err(e) = get_mqtt_client()
+                .await
+                .publish(topic, QoS::AtLeastOnce, false, json)
+                .await
+            {
+                error!(%e, "Failed to publish to MQTT");
             }
-        );
-    });
+        },
+        async {
+            let taos = get_taos_client().await;
+            let result: Result<(), Box<dyn std::error::Error>> = async {
+                let mut stmt = Stmt::init(taos).await?;
+                stmt.prepare(sql).await?;
+                stmt.bind(&cols).await?;
+                stmt.add_batch().await?;
+                stmt.execute().await?;
+                Ok(())
+            }
+            .await;
+            if let Err(e) = result {
+                error!(%e, "Failed to insert to TDengine");
+            }
+        }
+    );
 }
