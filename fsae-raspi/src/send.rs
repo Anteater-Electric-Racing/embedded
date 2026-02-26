@@ -89,7 +89,6 @@ fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Op
         }
     }
 
-    info!("String capacity: {}%", buf.capacity());
     Some(buf)
 }
 
