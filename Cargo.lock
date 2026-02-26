@@ -1083,6 +1083,7 @@ version = "0.1.0"
 dependencies = [
  "config 0.15.19",
  "deku",
+ "itoa",
  "rumqttc",
  "rumqttd",
  "serde",
@@ -1093,6 +1094,7 @@ dependencies = [
  "tokio-socketcan-isotp",
  "tracing",
  "tracing-subscriber",
+ "zmij",
 ]
 
 [[package]]

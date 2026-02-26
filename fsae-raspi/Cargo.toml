@@ -16,6 +16,8 @@ tracing = "0.1.44"
 deku = "0.20.3"
 taos = "0.12.3"
 serde_repr = "0.1.20"
+zmij = "1.0.21"
+itoa = "1.0.17"
 
 [features]
 synthetic = []
