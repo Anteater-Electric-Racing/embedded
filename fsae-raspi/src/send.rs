@@ -91,13 +91,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
     let topic = T::topic();
-    let line = match to_line_protocol(T::measurement(), &message) {
-        Some(l) => l,
-        None => {
-            error!("Failed to build line protocol");
-            return;
-        }
-    };
+    // let line = match to_line_protocol(T::measurement(), &message) {
+    //     Some(l) => l,
+    //     None => {
+    //         error!("Failed to build line protocol");
+    //         return;
+    //     }
+    // };
 
     tokio::join!(
         async {
@@ -110,17 +110,17 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
             }
         },
         async {
-            let data = SmlDataBuilder::default()
-                .protocol(SchemalessProtocol::Line)
-                .precision(SchemalessPrecision::Millisecond)
-                .data(vec![line])
-                .ttl(1000)
-                .req_id(100u64)
-                .build()
-                .unwrap();
-            if let Err(e) = get_taos_client().await.put(&data).await {
-                error!(%e, "Failed to insert into TDengine");
-            }
+            // let data = SmlDataBuilder::default()
+            //     .protocol(SchemalessProtocol::Line)
+            //     .precision(SchemalessPrecision::Millisecond)
+            //     .data(vec![line])
+            //     .ttl(1000)
+            //     .req_id(100u64)
+            //     .build()
+            //     .unwrap();
+            // if let Err(e) = get_taos_client().await.put(&data).await {
+            //     error!(%e, "Failed to insert into TDengine");
+            // }
         }
     );
 }
