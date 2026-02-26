@@ -26,7 +26,7 @@
 #[cfg(test)]
 use crate::{
     can::TelemetryData,
-    send::{send_message, Reading, INFLUXDB_DATABASE, INFLUXDB_URL, MQTT_HOST, MQTT_PORT},
+    send::{send_message, Reading, MQTT_HOST, MQTT_PORT, TAOS_DATABASE, TAOS_URL},
 };
 use deku::prelude::*;
 #[cfg(test)]
@@ -118,10 +118,10 @@ pub async fn verify_influx_write<T: Reading + for<'de> serde::Deserialize<'de> +
 
     let query = format!("SELECT * FROM {} ORDER BY time DESC LIMIT 1", T::topic());
 
-    let url = format!("{}/api/v3/query_sql", INFLUXDB_URL);
+    let url = format!("{}/api/v3/query_sql", TAOS_URL);
 
     let body = serde_json::json!({
-        "db": INFLUXDB_DATABASE,
+        "db": TAOS_DATABASE,
         "q": query
     });
 

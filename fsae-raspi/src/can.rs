@@ -172,6 +172,25 @@ impl Reading for TelemetryData {
     fn topic() -> &'static str {
         "telemetry"
     }
+
+    fn insert_sql(&self) -> String {
+        format!(
+            "INSERT INTO {}.telemetry VALUES (NOW, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {:?}, {}, {}, {}, {}, {}, {}, {}, {})",
+            crate::send::TAOS_DATABASE,
+            self.apps_travel, self.motor_speed, self.motor_torque, self.max_motor_torque,
+            self.motor_direction as u8, self.motor_state as u8,
+            self.mcu_main_state as u8, self.mcu_work_mode as u8,
+            self.mcu_voltage, self.mcu_current,
+            self.motor_temp, self.mcu_temp,
+            self.dc_main_wire_over_volt_fault as u8, self.dc_main_wire_over_curr_fault as u8,
+            self.motor_over_spd_fault as u8, self.motor_phase_curr_fault as u8,
+            self.motor_stall_fault as u8, self.mcu_warning_level,
+            self.fault_map.over_current as u8, self.fault_map.under_voltage as u8,
+            self.fault_map.over_temperature as u8, self.fault_map.apps as u8,
+            self.fault_map.bse as u8, self.fault_map.bpps as u8,
+            self.fault_map.apps_brake_plaus as u8, self.fault_map.low_battery_voltage as u8,
+        )
+    }
 }
 
 /// Reads ISO-TP packets from `can0` in a loop, parses each into
