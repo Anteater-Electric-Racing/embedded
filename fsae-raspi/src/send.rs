@@ -1,21 +1,20 @@
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
-use taos::{AsyncBindable, AsyncQueryable, AsyncTBuilder, ColumnView, Stmt, Taos, TaosBuilder};
+use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
+use taos::{AsyncQueryable, AsyncTBuilder, Taos, TaosBuilder};
 use tokio::sync::OnceCell;
 use tokio::time::Duration;
 use tracing::error;
 
 pub const TAOS_URL: &str = "taos://localhost:6030";
 pub const TAOS_DATABASE: &str = "fsae";
-pub const TAOS_TABLE: &str = "telemetry";
 pub const MQTT_ID: &str = "fsae";
 pub const MQTT_HOST: &str = "127.0.0.1";
 pub const MQTT_PORT: u16 = 1883;
 
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
-    fn stmt_sql() -> &'static str;
-    fn column_views(&self) -> Vec<ColumnView>;
+    fn measurement() -> &'static str;
 }
 
 static TAOS: OnceCell<Taos> = OnceCell::const_new();
@@ -23,44 +22,20 @@ static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 
 async fn get_taos_client() -> &'static Taos {
     TAOS.get_or_init(|| async {
-        let taos = match TaosBuilder::from_dsn(TAOS_URL) {
-            Ok(builder) => match builder.build().await {
-                Ok(taos) => taos,
-                Err(e) => {
-                    error!(%e, "Failed to build Taos client");
-                    panic!("Failed to build Taos client: {e}");
-                }
-            },
-            Err(e) => {
-                error!(%e, "Failed to create TaosBuilder from DSN");
-                panic!("Failed to create TaosBuilder from DSN: {e}");
-            }
-        };
+        let builder =
+            TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
+        let taos = builder
+            .build()
+            .await
+            .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
         if let Err(e) = taos
-            .exec(format!("CREATE DATABASE IF NOT EXISTS {}", TAOS_DATABASE))
+            .exec(format!("CREATE DATABASE IF NOT EXISTS {TAOS_DATABASE}"))
             .await
         {
             error!(%e, "Failed to create database");
         }
-        if let Err(e) = taos.exec(format!("USE {}", TAOS_DATABASE)).await {
+        if let Err(e) = taos.exec(format!("USE {TAOS_DATABASE}")).await {
             error!(%e, "Failed to use database");
-        }
-        if let Err(e) = taos
-            .exec(format!(
-                "CREATE TABLE IF NOT EXISTS {} (ts TIMESTAMP, apps_travel FLOAT, motor_speed FLOAT, \
- motor_torque FLOAT, max_motor_torque FLOAT, motor_direction TINYINT UNSIGNED, \
- motor_state TINYINT UNSIGNED, mcu_main_state TINYINT UNSIGNED, mcu_work_mode TINYINT UNSIGNED, \
- mcu_voltage FLOAT, mcu_current FLOAT, motor_temp INT, mcu_temp INT, \
- dc_main_wire_over_volt_fault TINYINT, dc_main_wire_over_curr_fault TINYINT, \
- motor_over_spd_fault TINYINT, motor_phase_curr_fault TINYINT, motor_stall_fault TINYINT, \
- mcu_warning_level TINYINT UNSIGNED, over_current TINYINT, under_voltage TINYINT, \
- over_temperature TINYINT, apps_fault TINYINT, bse_fault TINYINT, bpps_fault TINYINT, \
- apps_brake_plaus_fault TINYINT, low_battery_voltage_fault TINYINT)",
-                TAOS_TABLE
-            ))
-            .await
-        {
-            error!(%e, "Failed to create table");
         }
         taos
     })
@@ -70,9 +45,9 @@ async fn get_taos_client() -> &'static Taos {
 async fn get_mqtt_client() -> &'static AsyncClient {
     MQTT_CLIENT
         .get_or_init(|| async {
-            let mut mqttoptions = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
-            mqttoptions.set_keep_alive(Duration::from_secs(5));
-            let (mqtt_client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
+            let mut opts = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
+            opts.set_keep_alive(Duration::from_secs(5));
+            let (client, mut eventloop) = AsyncClient::new(opts, 10);
             tokio::spawn(async move {
                 loop {
                     if let Err(e) = eventloop.poll().await {
@@ -81,9 +56,24 @@ async fn get_mqtt_client() -> &'static AsyncClient {
                     }
                 }
             });
-            mqtt_client
+            client
         })
         .await
+}
+
+fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
+    let map = serde_json::to_value(value).ok()?;
+    let fields = map
+        .as_object()?
+        .iter()
+        .map(|(k, v)| match v {
+            serde_json::Value::Bool(b) => format!("{k}={b}"),
+            serde_json::Value::Number(n) => format!("{k}={n}"),
+            other => format!("{k}=\"{other}\""),
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    Some(format!("{measurement} {fields}"))
 }
 
 pub async fn send_message<T: Reading + Send + 'static>(message: T) {
@@ -95,8 +85,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
     let topic = T::topic();
-    let sql = T::stmt_sql();
-    let cols = message.column_views();
+    let line = match to_line_protocol(T::measurement(), &message) {
+        Some(l) => l,
+        None => {
+            error!("Failed to build line protocol");
+            return;
+        }
+    };
 
     tokio::join!(
         async {
@@ -109,18 +104,16 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
             }
         },
         async {
-            let taos = get_taos_client().await;
-            let result: Result<(), Box<dyn std::error::Error>> = async {
-                let mut stmt = Stmt::init(taos).await?;
-                stmt.prepare(sql).await?;
-                stmt.bind(&cols).await?;
-                stmt.add_batch().await?;
-                stmt.execute().await?;
-                Ok(())
-            }
-            .await;
-            if let Err(e) = result {
-                error!(%e, "Failed to insert to TDengine");
+            let data = SmlDataBuilder::default()
+                .protocol(SchemalessProtocol::Line)
+                .precision(SchemalessPrecision::Millisecond)
+                .data(vec![line])
+                .ttl(1000)
+                .req_id(100u64)
+                .build()
+                .unwrap();
+            if let Err(e) = get_taos_client().await.put(&data).await {
+                error!(%e, "Failed to insert into TDengine");
             }
         }
     );

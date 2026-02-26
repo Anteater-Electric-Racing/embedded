@@ -173,40 +173,8 @@ impl Reading for TelemetryData {
     fn topic() -> &'static str {
         "telemetry"
     }
-
-    fn stmt_sql() -> &'static str {
-        "INSERT INTO fsae.telemetry VALUES (NOW, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    }
-
-    fn column_views(&self) -> Vec<ColumnView> {
-        vec![
-            ColumnView::from_floats(vec![self.apps_travel]),
-            ColumnView::from_floats(vec![self.motor_speed]),
-            ColumnView::from_floats(vec![self.motor_torque]),
-            ColumnView::from_floats(vec![self.max_motor_torque]),
-            ColumnView::from_unsigned_tiny_ints(vec![self.motor_direction as u8]),
-            ColumnView::from_unsigned_tiny_ints(vec![self.motor_state as u8]),
-            ColumnView::from_unsigned_tiny_ints(vec![self.mcu_main_state as u8]),
-            ColumnView::from_unsigned_tiny_ints(vec![self.mcu_work_mode as u8]),
-            ColumnView::from_floats(vec![self.mcu_voltage]),
-            ColumnView::from_floats(vec![self.mcu_current]),
-            ColumnView::from_ints(vec![self.motor_temp]),
-            ColumnView::from_ints(vec![self.mcu_temp]),
-            ColumnView::from_tiny_ints(vec![self.dc_main_wire_over_volt_fault as i8]),
-            ColumnView::from_tiny_ints(vec![self.dc_main_wire_over_curr_fault as i8]),
-            ColumnView::from_tiny_ints(vec![self.motor_over_spd_fault as i8]),
-            ColumnView::from_tiny_ints(vec![self.motor_phase_curr_fault as i8]),
-            ColumnView::from_tiny_ints(vec![self.motor_stall_fault as i8]),
-            ColumnView::from_unsigned_tiny_ints(vec![self.mcu_warning_level as u8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.over_current as i8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.under_voltage as i8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.over_temperature as i8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.apps as i8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.bse as i8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.bpps as i8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.apps_brake_plaus as i8]),
-            ColumnView::from_tiny_ints(vec![self.fault_map.low_battery_voltage as i8]),
-        ]
+    fn measurement() -> &'static str {
+        "telemetry"
     }
 }
 
