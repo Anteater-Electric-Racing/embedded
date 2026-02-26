@@ -1,5 +1,6 @@
 use rumqttc::{AsyncClient, MqttOptions, QoS};
 use serde::Serialize;
+use std::cell::RefCell;
 use std::fmt::Write;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
 use taos::{AsyncQueryable, AsyncTBuilder, Taos, TaosBuilder};
@@ -63,11 +64,9 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         .await
 }
 
-fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
-    let map = serde_json::to_value(value).ok()?;
+fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
     let obj = map.as_object()?;
-
-    let mut buf = String::with_capacity(128);
+    let mut buf = String::with_capacity(512);
     buf.push_str(measurement);
     buf.push(' ');
 
@@ -77,7 +76,6 @@ fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String>
             buf.push(',');
         }
         first = false;
-
         match v {
             serde_json::Value::Bool(b) => write!(buf, "{k}={b}").unwrap(),
             serde_json::Value::Number(n) => {
@@ -90,20 +88,21 @@ fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String>
             other => write!(buf, "{k}=\"{other}\"").unwrap(),
         }
     }
-
     Some(buf)
 }
 
 pub async fn send_message<T: Reading + Send + 'static>(message: T) {
-    let json1 = match serde_json::to_string(&message) {
-        Ok(j) => j,
+    let value = match serde_json::to_value(&message) {
+        Ok(v) => v,
         Err(e) => {
             error!(%e, "Failed to serialize message");
             return;
         }
     };
+
+    let json = value.to_string();
     let topic = T::topic();
-    let line = match to_line_protocol(T::measurement(), &message) {
+    let line = match to_line_protocol_from_value(T::measurement(), &value) {
         Some(l) => l,
         None => {
             error!("Failed to build line protocol");
@@ -115,7 +114,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         async {
             if let Err(e) = get_mqtt_client()
                 .await
-                .publish(topic, QoS::AtLeastOnce, false, json1)
+                .publish(topic, QoS::AtLeastOnce, false, json)
                 .await
             {
                 error!(%e, "Failed to publish to MQTT");

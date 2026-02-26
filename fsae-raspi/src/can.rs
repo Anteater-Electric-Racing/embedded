@@ -163,30 +163,6 @@ pub enum MCUWarningLevel {
     ErrorHigh,
 }
 
-#[derive(
-    Default, Debug, Clone, PartialEq, Serialize, Deserialize, DekuRead, DekuWrite, DekuSize,
-)]
-#[deku(ctx = "endian: deku::ctx::Endian")]
-#[deku(bit_order = "lsb")]
-pub struct FaultMap {
-    #[deku(bits = 1)]
-    pub over_current: bool, // bit 0
-    #[deku(bits = 1)]
-    pub under_voltage: bool, // bit 1
-    #[deku(bits = 1)]
-    pub over_temperature: bool, // bit 2
-    #[deku(bits = 1)]
-    pub apps: bool, // bit 3
-    #[deku(bits = 1)]
-    pub bse: bool, // bit 4
-    #[deku(bits = 1)]
-    pub bpps: bool, // bit 5
-    #[deku(bits = 1)]
-    pub apps_brake_plaus: bool, // bit 6
-    #[deku(bits = 1, pad_bits_after = "24")]
-    pub low_battery_voltage: bool, // bit 7
-}
-
 /// Telemetry data record produced by the motor controller.
 ///
 /// Parsed from the CAN_PACKET_SIZE-byte ISO-TP frame received over CAN.
@@ -215,8 +191,22 @@ pub struct TelemetryData {
     pub motor_phase_curr_fault: bool,
     pub motor_stall_fault: bool,
     pub mcu_warning_level: MCUWarningLevel,
-    #[serde(flatten)]
-    pub fault_map: FaultMap,
+    #[deku(bits = 1)]
+    pub over_current: bool,
+    #[deku(bits = 1)]
+    pub under_voltage: bool,
+    #[deku(bits = 1)]
+    pub over_temperature: bool,
+    #[deku(bits = 1)]
+    pub apps: bool,
+    #[deku(bits = 1)]
+    pub bse: bool,
+    #[deku(bits = 1)]
+    pub bpps: bool,
+    #[deku(bits = 1)]
+    pub apps_brake_plaus: bool,
+    #[deku(bits = 1, pad_bits_after = "24")]
+    pub low_battery_voltage: bool,
 }
 
 impl Reading for TelemetryData {
