@@ -168,13 +168,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     tokio::join!(
         async {
-            // if let Err(e) = get_mqtt_client()
-            //     .await
-            //     .publish(topic, QoS::AtMostOnce, false, json)
-            //     .await
-            // {
-            //     error!(%e, "Failed to publish to MQTT — broker or eventloop may be overloaded");
-            // }
+            if let Err(e) = get_mqtt_client()
+                .await
+                .publish(topic, QoS::AtMostOnce, false, json)
+                .await
+            {
+                error!(%e, "Failed to publish to MQTT — broker or eventloop may be overloaded");
+            }
         },
         async {
             let sender = get_tdengine_sender().await;
