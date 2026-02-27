@@ -259,7 +259,7 @@ async fn read_can_synthetic() {
     let mut interval = tokio::time::interval(Duration::from_millis(1));
     loop {
         interval.tick().await;
-        // send_message(TelemetryData::default()).await;
+        send_message(TelemetryData::default()).await;
         count += 1;
 
         let elapsed = last.elapsed();

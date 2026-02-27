@@ -18,7 +18,6 @@ pub const MQTT_PORT: u16 = 1883;
 
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
-    fn measurement() -> &'static str;
 }
 
 static TDENGINE: OnceCell<Sender<String>> = OnceCell::const_new();
@@ -153,7 +152,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     let sender = get_tdengine_sender().await;
     if sender.capacity() > 0 {
-        let line = match to_line_protocol_from_value(T::measurement(), &value) {
+        let line = match to_line_protocol_from_value(T::topic(), &value) {
             Some(l) => l,
             None => {
                 error!("Failed to build line protocol");
