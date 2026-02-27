@@ -1,4 +1,4 @@
-use rumqttc::{AsyncClient, MqttOptions, QoS};
+use rumqttc::{AsyncClient, ClientError, MqttOptions, QoS};
 use serde::Serialize;
 use std::sync::Arc;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
@@ -168,12 +168,15 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     tokio::join!(
         async {
-            if let Err(e) = get_mqtt_client()
+            match get_mqtt_client()
                 .await
-                .publish(topic, QoS::AtMostOnce, false, json)
-                .await
+                .try_publish(topic, QoS::AtMostOnce, false, json)
             {
-                error!(%e, "Failed to publish to MQTT — broker or eventloop may be overloaded");
+                Ok(()) => {}
+                Err(ClientError::TryRequest(_)) => {
+                    tracing::warn!("MQTT channel full — dropping message");
+                }
+                Err(e) => error!(%e, "MQTT publish error"),
             }
         },
         async {
