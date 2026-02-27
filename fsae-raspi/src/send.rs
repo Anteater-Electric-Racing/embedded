@@ -1,6 +1,5 @@
 use rumqttc::{AsyncClient, ClientError, MqttOptions, QoS};
 use serde::Serialize;
-use std::fmt::Write;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
 use taos::{AsyncQueryable, AsyncTBuilder, TaosBuilder};
 use tokio::sync::mpsc::error::TrySendError;
@@ -9,8 +8,7 @@ use tokio::sync::OnceCell;
 use tokio::time::Duration;
 use tracing::error;
 
-pub const TAOS_URL: &str = "taos://localhost:6030/fsae";
-pub const TAOS_DATABASE: &str = "fsae";
+pub const TAOS_URL: &str = "taos+ws://localhost:6041/fsae";
 pub const MQTT_ID: &str = "fsae";
 pub const MQTT_HOST: &str = "127.0.0.1";
 pub const MQTT_PORT: u16 = 1883;
@@ -33,10 +31,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                 .build()
                 .await
                 .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
-            if let Err(e) = taos
-                .exec(format!("CREATE DATABASE IF NOT EXISTS {TAOS_DATABASE}"))
-                .await
-            {
+            if let Err(e) = taos.exec("CREATE DATABASE IF NOT EXISTS fsae").await {
                 error!(%e, "Failed to create database");
             }
 
@@ -51,11 +46,10 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                         .req_id(id)
                         .build()
                         .unwrap();
-                    id += 1;
+                    id = id.wrapping_add(1);
                     if let Err(e) = taos.put(&data).await {
                         error!(%e, "Failed to insert into TDengine");
                     }
-                    buffer.clear();
                 }
             });
 
@@ -81,6 +75,7 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         })
         .await
 }
+
 #[inline]
 fn push_field(buf: &mut String, k: &str, v: &serde_json::Value) {
     buf.push_str(k);
@@ -91,7 +86,7 @@ fn push_field(buf: &mut String, k: &str, v: &serde_json::Value) {
         }
         serde_json::Value::Number(n) => {
             if let Some(f) = n.as_f64() {
-                buf.push_str(zmij::Buffer::new().format(f));
+                buf.push_str(ryu::Buffer::new().format(f));
                 buf.push_str("f32");
             } else if let Some(i) = n.as_i64() {
                 buf.push_str(itoa::Buffer::new().format(i));

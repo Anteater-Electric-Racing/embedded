@@ -1086,6 +1086,7 @@ dependencies = [
  "itoa",
  "rumqttc",
  "rumqttd",
+ "ryu",
  "serde",
  "serde_json",
  "serde_repr",
@@ -1094,7 +1095,6 @@ dependencies = [
  "tokio-socketcan-isotp",
  "tracing",
  "tracing-subscriber",
- "zmij",
 ]
 
 [[package]]
