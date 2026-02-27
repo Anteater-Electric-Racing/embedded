@@ -1,5 +1,6 @@
 use rumqttc::{AsyncClient, ClientError, MqttOptions, QoS};
 use serde::Serialize;
+use std::fmt::Write;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
 use taos::{AsyncQueryable, AsyncTBuilder, TaosBuilder};
 use tokio::sync::mpsc::error::TrySendError;
@@ -124,25 +125,32 @@ async fn get_mqtt_client() -> &'static AsyncClient {
 
 //     Some(buf)
 // }
-fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
-    let map = serde_json::to_value(value).ok()?;
-    let fields = map
-        .as_object()?
-        .iter()
-        .map(|(k, v)| match v {
-            serde_json::Value::Bool(b) => format!("{k}={b}"),
+fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
+    let obj = map.as_object()?;
+    let mut buf = String::with_capacity(552);
+    buf.push_str(measurement);
+    buf.push(' ');
+
+    let mut first = true;
+    for (k, v) in obj {
+        if !first {
+            buf.push(',');
+        }
+        first = false;
+        match v {
+            serde_json::Value::Bool(b) => write!(buf, "{k}={b}").unwrap(),
             serde_json::Value::Number(n) => {
                 if n.is_f64() {
-                    format!("{k}={n}f32")
+                    write!(buf, "{k}={n}f32").unwrap();
                 } else {
-                    format!("{k}={n}i32")
+                    write!(buf, "{k}={n}i32").unwrap();
                 }
             }
-            other => format!("{k}=\"{other}\""),
-        })
-        .collect::<Vec<_>>()
-        .join(",");
-    Some(format!("{measurement} {fields}"))
+            other => write!(buf, "{k}=\"{other}\"").unwrap(),
+        }
+    }
+
+    Some(buf)
 }
 
 pub async fn send_message<T: Reading + Send + 'static>(message: T) {
@@ -169,7 +177,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
     }
     match get_tdengine_sender()
         .await
-        .try_send(to_line_protocol(topic, &message).unwrap())
+        .try_send(to_line_protocol_from_value(topic, &value).unwrap())
     {
         Ok(()) => {}
         Err(TrySendError::Full(_)) => {
