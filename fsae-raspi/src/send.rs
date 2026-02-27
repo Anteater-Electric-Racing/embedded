@@ -1,11 +1,9 @@
 use rumqttc::{AsyncClient, ClientError, MqttOptions, QoS};
 use serde::Serialize;
-use std::sync::Arc;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
 use taos::{AsyncQueryable, AsyncTBuilder, TaosBuilder};
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::mpsc::Sender;
-use tokio::sync::Mutex;
 use tokio::sync::OnceCell;
 use tokio::time::Duration;
 use tracing::error;
@@ -26,8 +24,7 @@ static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 async fn get_tdengine_sender() -> &'static Sender<String> {
     TDENGINE
         .get_or_init(|| async {
-            let (tx, rx) = tokio::sync::mpsc::channel(100000);
-            let rx = Arc::new(Mutex::new(rx));
+            let (tx, mut rx) = tokio::sync::mpsc::channel(100_000);
 
             let builder =
                 TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
@@ -45,10 +42,10 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                 error!(%e, "Failed to use database");
             }
 
-            let mut buffer: Vec<String> = Vec::new();
-            let mut id: u64 = 0;
             tokio::spawn(async move {
-                while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
+                let mut buffer: Vec<String> = Vec::new();
+                let mut id: u64 = 0;
+                while rx.recv_many(&mut buffer, 10_000).await > 0 {
                     let data = SmlDataBuilder::default()
                         .protocol(SchemalessProtocol::Line)
                         .precision(SchemalessPrecision::Millisecond)
@@ -85,48 +82,67 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         })
         .await
 }
+// #[inline]
+// fn push_field(buf: &mut String, k: &str, v: &serde_json::Value) {
+//     buf.push_str(k);
+//     buf.push('=');
+//     match v {
+//         serde_json::Value::Bool(b) => {
+//             buf.push_str(if *b { "true" } else { "false" });
+//         }
+//         serde_json::Value::Number(n) => {
+//             if let Some(f) = n.as_f64() {
+//                 buf.push_str(zmij::Buffer::new().format(f));
+//                 buf.push_str("f32");
+//             } else if let Some(i) = n.as_i64() {
+//                 buf.push_str(itoa::Buffer::new().format(i));
+//                 buf.push_str("i32");
+//             }
+//         }
+//         other => {
+//             buf.push('"');
+//             buf.push_str(&other.to_string());
+//             buf.push('"');
+//         }
+//     }
+// }
 
-#[inline]
-fn push_field(buf: &mut String, k: &str, v: &serde_json::Value) {
-    buf.push_str(k);
-    buf.push('=');
-    match v {
-        serde_json::Value::Bool(b) => {
-            buf.push_str(if *b { "true" } else { "false" });
-        }
-        serde_json::Value::Number(n) => {
-            if let Some(f) = n.as_f64() {
-                buf.push_str(zmij::Buffer::new().format(f));
-                buf.push_str("f32");
-            } else if let Some(i) = n.as_i64() {
-                buf.push_str(itoa::Buffer::new().format(i));
-                buf.push_str("i32");
+// fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
+//     let obj = map.as_object()?;
+//     let mut buf = String::with_capacity(measurement.len() + 1 + obj.len() * 30);
+//     buf.push_str(measurement);
+//     buf.push(' ');
+
+//     let mut iter = obj.iter();
+//     if let Some((k, v)) = iter.next() {
+//         push_field(&mut buf, k, v);
+//     }
+//     for (k, v) in iter {
+//         buf.push(',');
+//         push_field(&mut buf, k, v);
+//     }
+
+//     Some(buf)
+// }
+fn to_line_protocol(measurement: &str, value: &impl Serialize) -> Option<String> {
+    let map = serde_json::to_value(value).ok()?;
+    let fields = map
+        .as_object()?
+        .iter()
+        .map(|(k, v)| match v {
+            serde_json::Value::Bool(b) => format!("{k}={b}"),
+            serde_json::Value::Number(n) => {
+                if n.is_f64() {
+                    format!("{k}={n}f32")
+                } else {
+                    format!("{k}={n}i32")
+                }
             }
-        }
-        other => {
-            buf.push('"');
-            buf.push_str(&other.to_string());
-            buf.push('"');
-        }
-    }
-}
-
-fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
-    let obj = map.as_object()?;
-    let mut buf = String::with_capacity(measurement.len() + 1 + obj.len() * 30);
-    buf.push_str(measurement);
-    buf.push(' ');
-
-    let mut iter = obj.iter();
-    if let Some((k, v)) = iter.next() {
-        push_field(&mut buf, k, v);
-    }
-    for (k, v) in iter {
-        buf.push(',');
-        push_field(&mut buf, k, v);
-    }
-
-    Some(buf)
+            other => format!("{k}=\"{other}\""),
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    Some(format!("{measurement} {fields}"))
 }
 
 pub async fn send_message<T: Reading + Send + 'static>(message: T) {
@@ -151,18 +167,14 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
         Err(e) => error!(%e, "MQTT publish error"),
     }
-
-    let sender = get_tdengine_sender().await;
-    if sender.capacity() > 0 {
-        let line = match to_line_protocol_from_value(T::topic(), &value) {
-            Some(l) => l,
-            None => {
-                error!("Failed to build line protocol");
-                return;
-            }
-        };
-        if let Err(e) = sender.try_send(line) {
-            error!(%e, "Failed to send to TDengine channel");
+    match get_tdengine_sender()
+        .await
+        .try_send(to_line_protocol(topic, &message).unwrap())
+    {
+        Ok(()) => {}
+        Err(TrySendError::Full(_)) => {
+            tracing::warn!("TDengine channel full — dropping message");
         }
+        Err(e) => error!(%e, "Failed to send to TDengine channel"),
     }
 }
