@@ -83,71 +83,44 @@ async fn get_mqtt_client() -> &'static AsyncClient {
         })
         .await
 }
-// #[inline]
-// fn push_field(buf: &mut String, k: &str, v: &serde_json::Value) {
-//     buf.push_str(k);
-//     buf.push('=');
-//     match v {
-//         serde_json::Value::Bool(b) => {
-//             buf.push_str(if *b { "true" } else { "false" });
-//         }
-//         serde_json::Value::Number(n) => {
-//             if let Some(f) = n.as_f64() {
-//                 buf.push_str(zmij::Buffer::new().format(f));
-//                 buf.push_str("f32");
-//             } else if let Some(i) = n.as_i64() {
-//                 buf.push_str(itoa::Buffer::new().format(i));
-//                 buf.push_str("i32");
-//             }
-//         }
-//         other => {
-//             buf.push('"');
-//             buf.push_str(&other.to_string());
-//             buf.push('"');
-//         }
-//     }
-// }
+#[inline]
+fn push_field(buf: &mut String, k: &str, v: &serde_json::Value) {
+    buf.push_str(k);
+    buf.push('=');
+    match v {
+        serde_json::Value::Bool(b) => {
+            buf.push_str(if *b { "true" } else { "false" });
+        }
+        serde_json::Value::Number(n) => {
+            if let Some(f) = n.as_f64() {
+                buf.push_str(zmij::Buffer::new().format(f));
+                buf.push_str("f32");
+            } else if let Some(i) = n.as_i64() {
+                buf.push_str(itoa::Buffer::new().format(i));
+                buf.push_str("i32");
+            }
+        }
+        other => {
+            buf.push('"');
+            buf.push_str(&other.to_string());
+            buf.push('"');
+        }
+    }
+}
 
-// fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
-//     let obj = map.as_object()?;
-//     let mut buf = String::with_capacity(measurement.len() + 1 + obj.len() * 30);
-//     buf.push_str(measurement);
-//     buf.push(' ');
-
-//     let mut iter = obj.iter();
-//     if let Some((k, v)) = iter.next() {
-//         push_field(&mut buf, k, v);
-//     }
-//     for (k, v) in iter {
-//         buf.push(',');
-//         push_field(&mut buf, k, v);
-//     }
-
-//     Some(buf)
-// }
 fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
     let obj = map.as_object()?;
-    let mut buf = String::with_capacity(552);
+    let mut buf = String::with_capacity(measurement.len() + 1 + obj.len() * 30);
     buf.push_str(measurement);
     buf.push(' ');
 
-    let mut first = true;
-    for (k, v) in obj {
-        if !first {
-            buf.push(',');
-        }
-        first = false;
-        match v {
-            serde_json::Value::Bool(b) => write!(buf, "{k}={b}").unwrap(),
-            serde_json::Value::Number(n) => {
-                if n.is_f64() {
-                    write!(buf, "{k}={n}f32").unwrap();
-                } else {
-                    write!(buf, "{k}={n}i32").unwrap();
-                }
-            }
-            other => write!(buf, "{k}=\"{other}\"").unwrap(),
-        }
+    let mut iter = obj.iter();
+    if let Some((k, v)) = iter.next() {
+        push_field(&mut buf, k, v);
+    }
+    for (k, v) in iter {
+        buf.push(',');
+        push_field(&mut buf, k, v);
     }
 
     Some(buf)
@@ -175,14 +148,15 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
         Err(e) => error!(%e, "MQTT publish error"),
     }
-    match get_tdengine_sender()
-        .await
-        .try_send(to_line_protocol_from_value(topic, &value).unwrap())
-    {
-        Ok(()) => {}
-        Err(TrySendError::Full(_)) => {
-            tracing::warn!("TDengine channel full — dropping message");
-        }
-        Err(e) => error!(%e, "Failed to send to TDengine channel"),
-    }
+    let x = to_line_protocol_from_value(topic, &value).unwrap();
+    // match get_tdengine_sender()
+    //     .await
+    //     .try_send(to_line_protocol_from_value(topic, &value).unwrap())
+    // {
+    //     Ok(()) => {}
+    //     Err(TrySendError::Full(_)) => {
+    //         tracing::warn!("TDengine channel full — dropping message");
+    //     }
+    //     Err(e) => error!(%e, "Failed to send to TDengine channel"),
+    // }
 }
