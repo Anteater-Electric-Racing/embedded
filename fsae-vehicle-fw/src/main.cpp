@@ -76,11 +76,11 @@ void threadMain(void *pvParameters) {
         digitalWrite(13, HIGH); // orange led on teensy
 
         thermal_MCULoop();
+        // thermal_forceOn();
 
         if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
             BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
             digitalWrite(BRAKE_LIGHT_PIN, HIGH);
-
         } else {
             digitalWrite(BRAKE_LIGHT_PIN, LOW);
         }
