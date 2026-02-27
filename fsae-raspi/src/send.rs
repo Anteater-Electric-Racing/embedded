@@ -50,7 +50,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                     let data = SmlDataBuilder::default()
                         .protocol(SchemalessProtocol::Line)
                         .precision(SchemalessPrecision::Millisecond)
-                        .data(std::mem::take(&mut buffer))
+                        .data(buffer.clone())
                         .req_id(id)
                         .build()
                         .unwrap();
