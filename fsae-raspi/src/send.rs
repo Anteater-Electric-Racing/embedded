@@ -153,15 +153,15 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     let sender = get_tdengine_sender().await;
     if sender.capacity() > 0 {
-        // let line = match to_line_protocol_from_value(T::measurement(), &value) {
-        //     Some(l) => l,
-        //     None => {
-        //         error!("Failed to build line protocol");
-        //         return;
-        //     }
-        // };
-        // if let Err(e) = sender.try_send(line) {
-        //     error!(%e, "Failed to send to TDengine channel");
-        // }
+        let line = match to_line_protocol_from_value(T::measurement(), &value) {
+            Some(l) => l,
+            None => {
+                error!("Failed to build line protocol");
+                return;
+            }
+        };
+        if let Err(e) = sender.try_send(line) {
+            error!(%e, "Failed to send to TDengine channel");
+        }
     }
 }
