@@ -9,7 +9,7 @@ use tokio::sync::OnceCell;
 use tokio::time::Duration;
 use tracing::error;
 
-pub const TAOS_URL: &str = "taos://localhost:6030";
+pub const TAOS_URL: &str = "taos://localhost:6030/fsae";
 pub const TAOS_DATABASE: &str = "fsae";
 pub const MQTT_ID: &str = "fsae";
 pub const MQTT_HOST: &str = "127.0.0.1";
@@ -39,9 +39,6 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
             {
                 error!(%e, "Failed to create database");
             }
-            if let Err(e) = taos.exec(format!("USE {TAOS_DATABASE}")).await {
-                error!(%e, "Failed to use database");
-            }
 
             tokio::spawn(async move {
                 let mut buffer: Vec<String> = Vec::new();
@@ -50,7 +47,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                     let data = SmlDataBuilder::default()
                         .protocol(SchemalessProtocol::Line)
                         .precision(SchemalessPrecision::Millisecond)
-                        .data(buffer.clone())
+                        .data(std::mem::take(&mut buffer))
                         .req_id(id)
                         .build()
                         .unwrap();
