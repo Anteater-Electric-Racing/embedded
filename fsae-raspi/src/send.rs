@@ -31,7 +31,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
             let builder =
                 TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
 
-            for _ in 0..20 {
+            for _ in 0..2 {
                 let rx = rx.clone();
                 let taos = builder
                     .build()
@@ -43,7 +43,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                 tokio::spawn(async move {
                     let mut buffer: Vec<String> = Vec::new();
                     let mut id: u64 = 0;
-                    while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
+                    while rx.lock().await.recv_many(&mut buffer, usize::MAX).await > 0 {
                         let data = SmlDataBuilder::default()
                             .protocol(SchemalessProtocol::Line)
                             .precision(SchemalessPrecision::Millisecond)
