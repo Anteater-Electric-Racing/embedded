@@ -16,6 +16,7 @@
 #include "vehicle/rtm_button.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/thermal.h"
+#include "vehicle/shockTravel.h"
 
 #include "utils/utils.h"
 #include <iostream>
@@ -32,6 +33,7 @@ void setup() { // runs once on bootup
     ADC_Init();
     CAN_Init();
     APPS_Init();
+    Shock_Init();
     BSE_Init();
     Faults_Init();
     Telemetry_Init();
@@ -69,8 +71,8 @@ void threadMain(void *pvParameters) {
 
     int toggle = 0;
 #endif
-
     while (true) {
+#if SERIALMONITOR_FLAG
 
         /*============LOW PRIORITY GPIO UPDATES============*/
         digitalWrite(13, HIGH); // orange led on teensy
@@ -178,6 +180,7 @@ void threadMain(void *pvParameters) {
 
         // IMPLEMENT BETTER SERIAL PROCESSING(
         //     TEENSY does not support ANSI escape codes)
+#endif
 #if BMS_FLAG
         // --- NEW: Orion BMS 2 Telemetry ---
         // Orion BMS Telemetry
@@ -204,7 +207,6 @@ void threadMain(void *pvParameters) {
 
         Serial.print("\r");
 #endif
-
 #if HIMAC_FLAG
         /*
          * Read user input from Serial to control torque demand.
@@ -408,6 +410,7 @@ void threadMain(void *pvParameters) {
 #endif
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(100)); // Delay for 100ms
     }
+
 }
 
 void loop() {}
