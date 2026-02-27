@@ -166,7 +166,7 @@ pub async fn verify_tdengine_write<
                     }
                 }
                 _ => {
-                    if expected_val.to_string() != row_val.to_string() {
+                    if *expected_val != *row_val {
                         return Ok(false);
                     }
                 }
@@ -265,7 +265,7 @@ async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
 /// Requires a reachable MQTT broker at `MQTT_HOST:MQTT_PORT`
 #[test]
 fn test_verify_mqtt_listener() {
-    std::thread::spawn(|| mqttd());
+    std::thread::spawn(mqttd);
     std::thread::sleep(std::time::Duration::from_millis(500));
 
     // Test Struct (listener end)
