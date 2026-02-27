@@ -46,29 +46,20 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                 error!(%e, "Failed to use database");
             }
 
-            for i in 0..4 {
-                let rx = rx.clone();
-                let taos = builder.build().await.unwrap();
-                if let Err(e) = taos.exec(format!("USE {TAOS_DATABASE}")).await {
-                    error!(%e, "Failed to use database");
+            let mut buffer: Vec<String> = Vec::new();
+            let mut id: u64 = 0;
+            while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
+                let data = SmlDataBuilder::default()
+                    .protocol(SchemalessProtocol::Line)
+                    .precision(SchemalessPrecision::Millisecond)
+                    .data(std::mem::take(&mut buffer))
+                    .req_id(id)
+                    .build()
+                    .unwrap();
+                id += 1;
+                if let Err(e) = taos.put(&data).await {
+                    error!(%e, "Failed to insert into TDengine");
                 }
-                tokio::spawn(async move {
-                    let mut buffer: Vec<String> = Vec::new();
-                    let mut id: u64 = i << 32;
-                    while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
-                        let data = SmlDataBuilder::default()
-                            .protocol(SchemalessProtocol::Line)
-                            .precision(SchemalessPrecision::Millisecond)
-                            .data(std::mem::take(&mut buffer))
-                            .req_id(id)
-                            .build()
-                            .unwrap();
-                        id += 1;
-                        if let Err(e) = taos.put(&data).await {
-                            error!(%e, "Failed to insert into TDengine");
-                        }
-                    }
-                });
             }
 
             tx
