@@ -19,6 +19,9 @@ serde_repr = "0.1.20"
 itoa = "1.0.17"
 ryu = "1.0.23"
 
+[dev-dependencies]
+reqwest = "0.13.2"
+
 [features]
 synthetic = []
 
