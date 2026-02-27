@@ -50,7 +50,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                             .data(std::mem::take(&mut buffer))
                             .req_id(id)
                             .build()
-                            .unwrap();
+                            .unwrap_or_else(|e| panic!("Failed to build SML data: {e}"));
                         id = id.wrapping_add(1);
                         if let Err(e) = taos.put(&data).await {
                             error!(%e, "Failed to insert into TDengine");
@@ -149,8 +149,13 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
     }
     match get_tdengine_sender()
         .await
-        .try_send(to_line_protocol_from_value(topic, &value).unwrap())
-    {
+        .try_send(match to_line_protocol_from_value(topic, &value) {
+            Some(line) => line,
+            None => {
+                error!("Failed to convert to line protocol");
+                return;
+            }
+        }) {
         Ok(()) => {}
         Err(TrySendError::Full(_)) => {
             tracing::warn!("TDengine channel full — dropping message");
