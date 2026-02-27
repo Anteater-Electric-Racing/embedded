@@ -44,15 +44,15 @@ const CAN_DST_ID: u16 = 0x777;
 pub enum MotorState {
     #[deku(id = 0)]
     #[default]
-    MotorStateOff,
+    Off,
     #[deku(id = 1)]
-    MotorStatePrecharging,
+    Precharging,
     #[deku(id = 2)]
-    MotorStateIdle,
+    Idle,
     #[deku(id = 3)]
-    MotorStateDriving,
+    Driving,
     #[deku(id = 4)]
-    MotorStateFault,
+    Fault,
 }
 
 #[derive(
@@ -73,13 +73,13 @@ pub enum MotorState {
 pub enum MotorRotateDirection {
     #[deku(id = 0)]
     #[default]
-    DirectionStandby,
+    Standby,
     #[deku(id = 1)]
-    DirectionForward,
+    Forward,
     #[deku(id = 2)]
-    DirectionBackward,
+    Backward,
     #[deku(id = 3)]
-    DirectionError,
+    Error,
 }
 
 #[derive(
@@ -100,15 +100,15 @@ pub enum MotorRotateDirection {
 pub enum MCUMainState {
     #[deku(id = 0)]
     #[default]
-    StateStandby,
+    Standby,
     #[deku(id = 1)]
-    StatePrecharge,
+    Precharge,
     #[deku(id = 2)]
-    StatePowerReady,
+    PowerReady,
     #[deku(id = 3)]
-    StateRun,
+    Run,
     #[deku(id = 4)]
-    StatePowerOff,
+    PowerOff,
 }
 
 #[derive(
@@ -129,11 +129,11 @@ pub enum MCUMainState {
 pub enum MCUWorkMode {
     #[deku(id = 0)]
     #[default]
-    WorkModeStandby,
+    Standby,
     #[deku(id = 1)]
-    WorkModeTorque,
+    Torque,
     #[deku(id = 2)]
-    WorkModeSpeed,
+    Speed,
 }
 
 #[derive(
@@ -154,13 +154,13 @@ pub enum MCUWorkMode {
 pub enum MCUWarningLevel {
     #[deku(id = 0)]
     #[default]
-    ErrorNone,
+    None,
     #[deku(id = 1)]
-    ErrorLow,
+    Low,
     #[deku(id = 2)]
-    ErrorMedium,
+    Medium,
     #[deku(id = 3)]
-    ErrorHigh,
+    High,
 }
 
 /// Telemetry data record produced by the motor controller.
