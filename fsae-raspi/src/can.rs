@@ -213,9 +213,6 @@ impl Reading for TelemetryData {
     fn topic() -> &'static str {
         "telemetry"
     }
-    fn measurement() -> &'static str {
-        "telemetry"
-    }
 }
 
 /// Reads ISO-TP packets from `can0` in a loop, parses each into
