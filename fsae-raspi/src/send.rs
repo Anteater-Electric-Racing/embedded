@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use rumqttc::{AsyncClient, ClientError, MqttOptions, QoS};
 use serde::Serialize;
 use taos::taos_query::common::{SchemalessPrecision, SchemalessProtocol, SmlDataBuilder};
 use taos::{AsyncQueryable, AsyncTBuilder, TaosBuilder};
 use tokio::sync::mpsc::error::TrySendError;
 use tokio::sync::mpsc::Sender;
-use tokio::sync::OnceCell;
+use tokio::sync::{Mutex, OnceCell};
 use tokio::time::Duration;
 use tracing::error;
 
@@ -23,35 +25,39 @@ static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 async fn get_tdengine_sender() -> &'static Sender<String> {
     TDENGINE
         .get_or_init(|| async {
-            let (tx, mut rx) = tokio::sync::mpsc::channel(100_000);
+            let (tx, rx) = tokio::sync::mpsc::channel(100_000);
+            let rx = Arc::new(Mutex::new(rx));
 
             let builder =
                 TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
-            let taos = builder
-                .build()
-                .await
-                .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
-            if let Err(e) = taos.exec("CREATE DATABASE IF NOT EXISTS fsae").await {
-                error!(%e, "Failed to create database");
-            }
 
-            tokio::spawn(async move {
-                let mut buffer: Vec<String> = Vec::new();
-                let mut id: u64 = 0;
-                while rx.recv_many(&mut buffer, 10_000).await > 0 {
-                    let data = SmlDataBuilder::default()
-                        .protocol(SchemalessProtocol::Line)
-                        .precision(SchemalessPrecision::Millisecond)
-                        .data(std::mem::take(&mut buffer))
-                        .req_id(id)
-                        .build()
-                        .unwrap();
-                    id = id.wrapping_add(1);
-                    if let Err(e) = taos.put(&data).await {
-                        error!(%e, "Failed to insert into TDengine");
-                    }
+            for i in 0..4 {
+                let rx = rx.clone();
+                let taos = builder
+                    .build()
+                    .await
+                    .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
+                if let Err(e) = taos.exec("CREATE DATABASE IF NOT EXISTS fsae").await {
+                    error!(%e, "Failed to create database");
                 }
-            });
+                tokio::spawn(async move {
+                    let mut buffer: Vec<String> = Vec::new();
+                    let mut id: u64 = 0;
+                    while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
+                        let data = SmlDataBuilder::default()
+                            .protocol(SchemalessProtocol::Line)
+                            .precision(SchemalessPrecision::Millisecond)
+                            .data(std::mem::take(&mut buffer))
+                            .req_id(id)
+                            .build()
+                            .unwrap();
+                        id = id.wrapping_add(1);
+                        if let Err(e) = taos.put(&data).await {
+                            error!(%e, "Failed to insert into TDengine");
+                        }
+                    }
+                });
+            }
 
             tx
         })
