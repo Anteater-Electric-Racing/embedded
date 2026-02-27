@@ -9,16 +9,10 @@ use mqtt::mqttd;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialise tracing before spawning any tasks.
     tracing_subscriber::fmt()
         .pretty()
-        .with_line_number(false)
-        .with_file(false)
-        .with_thread_ids(false)
-        .with_thread_names(false)
-        .with_env_filter("info,rumqttd=warn")
-        .try_init()
-        .expect("initialised tracing subscriber");
+        .with_env_filter("info")
+        .init();
 
     tokio::spawn(read_can());
 
