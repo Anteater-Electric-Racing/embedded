@@ -31,7 +31,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
             let builder =
                 TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
 
-            for i in 0..4 {
+            for _ in 0..20 {
                 let rx = rx.clone();
                 let taos = builder
                     .build()
