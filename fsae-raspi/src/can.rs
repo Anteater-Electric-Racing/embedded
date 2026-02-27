@@ -253,9 +253,9 @@ async fn read_can_synthetic() {
     let mut count: u64 = 0;
     let mut last = Instant::now();
 
-    // let mut interval = tokio::time::interval(Duration::from_millis(1));
+    let mut interval = tokio::time::interval(Duration::from_millis(1));
     loop {
-        // interval.tick().await;
+        interval.tick().await;
         send_message(TelemetryData::default()).await;
         count += 1;
 
