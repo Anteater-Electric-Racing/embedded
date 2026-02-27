@@ -19,7 +19,6 @@ pub const MQTT_PORT: u16 = 1883;
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
     fn measurement() -> &'static str;
-    fn to_line_protocol(&self) -> String;
 }
 
 static TDENGINE: OnceCell<Sender<String>> = OnceCell::const_new();
