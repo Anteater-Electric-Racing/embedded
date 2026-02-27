@@ -21,3 +21,6 @@ itoa = "1.0.17"
 
 [features]
 synthetic = []
+
+[profile.release]
+debug = 1
