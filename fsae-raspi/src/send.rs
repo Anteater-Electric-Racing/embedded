@@ -47,17 +47,17 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                 let mut buffer: Vec<String> = Vec::new();
                 let mut id: u64 = 0;
                 while rx.recv_many(&mut buffer, 10_000).await > 0 {
-                    let data = SmlDataBuilder::default()
-                        .protocol(SchemalessProtocol::Line)
-                        .precision(SchemalessPrecision::Millisecond)
-                        .data(buffer.clone())
-                        .req_id(id)
-                        .build()
-                        .unwrap();
-                    id += 1;
-                    if let Err(e) = taos.put(&data).await {
-                        error!(%e, "Failed to insert into TDengine");
-                    }
+                    // let data = SmlDataBuilder::default()
+                    //     .protocol(SchemalessProtocol::Line)
+                    //     .precision(SchemalessPrecision::Millisecond)
+                    //     .data(buffer.clone())
+                    //     .req_id(id)
+                    //     .build()
+                    //     .unwrap();
+                    // id += 1;
+                    // if let Err(e) = taos.put(&data).await {
+                    //     error!(%e, "Failed to insert into TDengine");
+                    // }
                 }
             });
 
