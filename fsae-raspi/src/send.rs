@@ -54,10 +54,10 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                         .req_id(id)
                         .build()
                         .unwrap();
-                    // id += 1;
-                    // if let Err(e) = taos.put(&data).await {
-                    //     error!(%e, "Failed to insert into TDengine");
-                    // }
+                    id += 1;
+                    if let Err(e) = taos.put(&data).await {
+                        error!(%e, "Failed to insert into TDengine");
+                    }
                 }
             });
 
