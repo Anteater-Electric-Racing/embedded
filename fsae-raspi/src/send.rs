@@ -55,9 +55,10 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                         .build()
                         .unwrap();
                     id += 1;
-                    // if let Err(e) = taos.put(&data).await {
-                    //     error!(%e, "Failed to insert into TDengine");
-                    // }
+                    if let Err(e) = taos.put(&data).await {
+                        error!(%e, "Failed to insert into TDengine");
+                    }
+                    buffer.clear();
                 }
             });
 
