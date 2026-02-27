@@ -19,7 +19,7 @@ pub const MQTT_PORT: u16 = 1883;
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
     fn measurement() -> &'static str;
-    // fn to_line_protocol(&self) -> String;
+    fn to_line_protocol(&self) -> String;
 }
 
 static TDENGINE: OnceCell<Sender<String>> = OnceCell::const_new();
@@ -147,31 +147,31 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
 
-    // let json = value.to_string();
-    // let topic = T::topic();
+    let json = value.to_string();
+    let topic = T::topic();
 
-    // match get_mqtt_client()
-    //     .await
-    //     .try_publish(topic, QoS::AtMostOnce, false, json)
-    // {
-    //     Ok(()) => {}
-    //     Err(ClientError::TryRequest(_)) => {
-    //         tracing::warn!("MQTT channel full — dropping message");
-    //     }
-    //     Err(e) => error!(%e, "MQTT publish error"),
-    // }
+    match get_mqtt_client()
+        .await
+        .try_publish(topic, QoS::AtMostOnce, false, json)
+    {
+        Ok(()) => {}
+        Err(ClientError::TryRequest(_)) => {
+            tracing::warn!("MQTT channel full — dropping message");
+        }
+        Err(e) => error!(%e, "MQTT publish error"),
+    }
 
     let sender = get_tdengine_sender().await;
     if sender.capacity() > 0 {
-        let line = match to_line_protocol_from_value(T::measurement(), &value) {
-            Some(l) => l,
-            None => {
-                error!("Failed to build line protocol");
-                return;
-            }
-        };
-        if let Err(e) = sender.try_send(line) {
-            error!(%e, "Failed to send to TDengine channel");
-        }
+        // let line = match to_line_protocol_from_value(T::measurement(), &value) {
+        //     Some(l) => l,
+        //     None => {
+        //         error!("Failed to build line protocol");
+        //         return;
+        //     }
+        // };
+        // if let Err(e) = sender.try_send(line) {
+        //     error!(%e, "Failed to send to TDengine channel");
+        // }
     }
 }
