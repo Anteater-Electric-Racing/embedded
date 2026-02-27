@@ -68,7 +68,7 @@ async fn get_mqtt_client() -> &'static AsyncClient {
     MQTT_CLIENT
         .get_or_init(|| async {
             let opts = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
-            let (client, mut eventloop) = AsyncClient::new(opts, 10);
+            let (client, mut eventloop) = AsyncClient::new(opts, 100_000);
             tokio::spawn(async move {
                 loop {
                     if let Err(e) = eventloop.poll().await {
