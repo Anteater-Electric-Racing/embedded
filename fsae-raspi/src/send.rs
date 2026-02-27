@@ -147,19 +147,19 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
     };
 
-    let json = value.to_string();
-    let topic = T::topic();
+    // let json = value.to_string();
+    // let topic = T::topic();
 
-    match get_mqtt_client()
-        .await
-        .try_publish(topic, QoS::AtMostOnce, false, json)
-    {
-        Ok(()) => {}
-        Err(ClientError::TryRequest(_)) => {
-            tracing::warn!("MQTT channel full — dropping message");
-        }
-        Err(e) => error!(%e, "MQTT publish error"),
-    }
+    // match get_mqtt_client()
+    //     .await
+    //     .try_publish(topic, QoS::AtMostOnce, false, json)
+    // {
+    //     Ok(()) => {}
+    //     Err(ClientError::TryRequest(_)) => {
+    //         tracing::warn!("MQTT channel full — dropping message");
+    //     }
+    //     Err(e) => error!(%e, "MQTT publish error"),
+    // }
 
     let sender = get_tdengine_sender().await;
     if sender.capacity() > 0 {

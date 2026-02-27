@@ -1,12 +1,12 @@
 mod can;
-mod mqtt;
+// mod mqtt;
 mod send;
 #[cfg(test)]
 mod test;
 use std::thread;
 
 use can::read_can;
-use mqtt::mqttd;
+// use mqtt::mqttd;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .try_init()
         .expect("initialised tracing subscriber");
 
-    thread::spawn(mqttd);
+    // thread::spawn(mqttd);
 
     read_can().await;
 
