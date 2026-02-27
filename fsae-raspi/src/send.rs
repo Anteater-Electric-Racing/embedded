@@ -148,15 +148,14 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
         Err(e) => error!(%e, "MQTT publish error"),
     }
-    let x = to_line_protocol_from_value(topic, &value).unwrap();
-    // match get_tdengine_sender()
-    //     .await
-    //     .try_send(to_line_protocol_from_value(topic, &value).unwrap())
-    // {
-    //     Ok(()) => {}
-    //     Err(TrySendError::Full(_)) => {
-    //         tracing::warn!("TDengine channel full — dropping message");
-    //     }
-    //     Err(e) => error!(%e, "Failed to send to TDengine channel"),
-    // }
+    match get_tdengine_sender()
+        .await
+        .try_send(to_line_protocol_from_value(topic, &value).unwrap())
+    {
+        Ok(()) => {}
+        Err(TrySendError::Full(_)) => {
+            tracing::warn!("TDengine channel full — dropping message");
+        }
+        Err(e) => error!(%e, "Failed to send to TDengine channel"),
+    }
 }
