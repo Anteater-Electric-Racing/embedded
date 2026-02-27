@@ -88,8 +88,7 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
 async fn get_mqtt_client() -> &'static AsyncClient {
     MQTT_CLIENT
         .get_or_init(|| async {
-            let mut opts = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
-            opts.set_keep_alive(Duration::from_secs(5));
+            let opts = MqttOptions::new(MQTT_ID, MQTT_HOST, MQTT_PORT);
             let (client, mut eventloop) = AsyncClient::new(opts, 10);
             tokio::spawn(async move {
                 loop {
