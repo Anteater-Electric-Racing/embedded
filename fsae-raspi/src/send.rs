@@ -57,14 +57,6 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                     let mut buffer: Vec<String> = Vec::new();
                     let mut id: u64 = i << 32;
                     while rx.lock().await.recv_many(&mut buffer, 10_000).await > 0 {
-                        let batch_size = buffer.len();
-                        if batch_size > 5000 {
-                            tracing::warn!(
-                                batch_size,
-                                "Large TDEngine batch — ingest channel may be overloaded"
-                            );
-                        }
-
                         let data = SmlDataBuilder::default()
                             .protocol(SchemalessProtocol::Line)
                             .precision(SchemalessPrecision::Millisecond)
@@ -157,49 +149,29 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
 
     let json = value.to_string();
     let topic = T::topic();
-    let line = match to_line_protocol_from_value(T::measurement(), &value) {
-        Some(l) => l,
-        None => {
-            error!("Failed to build line protocol");
-            return;
+
+    match get_mqtt_client()
+        .await
+        .try_publish(topic, QoS::AtMostOnce, false, json)
+    {
+        Ok(()) => {}
+        Err(ClientError::TryRequest(_)) => {
+            tracing::warn!("MQTT channel full — dropping message");
         }
-    };
+        Err(e) => error!(%e, "MQTT publish error"),
+    }
 
-    tokio::join!(
-        async {
-            match get_mqtt_client()
-                .await
-                .try_publish(topic, QoS::AtMostOnce, false, json)
-            {
-                Ok(()) => {}
-                Err(ClientError::TryRequest(_)) => {
-                    tracing::warn!("MQTT channel full — dropping message");
-                }
-                Err(e) => error!(%e, "MQTT publish error"),
+    let sender = get_tdengine_sender().await;
+    if sender.capacity() > 0 {
+        let line = match to_line_protocol_from_value(T::measurement(), &value) {
+            Some(l) => l,
+            None => {
+                error!("Failed to build line protocol");
+                return;
             }
-        },
-        async {
-            let sender = get_tdengine_sender().await;
-
-            let remaining = sender.capacity();
-            if remaining < 20 {
-                tracing::warn!(
-                    remaining_capacity = remaining,
-                    "TDEngine ingest channel is nearly full — writer may be falling behind"
-                );
-            }
-
-            match sender.try_send(line) {
-                Ok(()) => {}
-                Err(TrySendError::Full(msg)) => {
-                    tracing::warn!(
-                        "TDEngine ingest channel is full — dropping line protocol message: {msg}"
-                    );
-                }
-                Err(TrySendError::Closed(_)) => {
-                    error!("TDEngine ingest channel is closed — writer task has exited");
-                }
-            }
+        };
+        if let Err(e) = sender.try_send(line) {
+            error!(%e, "Failed to send to TDengine channel");
         }
-    );
+    }
 }
