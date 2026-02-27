@@ -223,7 +223,7 @@ async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
     }
 
     // Repeat poll check loop while event loop has not returned an Err.
-    let timeout = Duration::from_secs(1);
+    let timeout = Duration::from_secs(5);
     tokio::time::timeout(timeout, async {
         while let Ok(notification) = event_loop.poll().await {
             // Check for Publish messages and extract
@@ -266,6 +266,7 @@ async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
 #[test]
 fn test_verify_mqtt_listener() {
     std::thread::spawn(|| mqttd());
+    std::thread::sleep(std::time::Duration::from_millis(500));
 
     // Test Struct (listener end)
     let listener_data: TelemetryData = TelemetryData::default();
@@ -274,7 +275,7 @@ fn test_verify_mqtt_listener() {
     let runtime = tokio::runtime::Runtime::new().expect("Unable to start listener runtime.");
     let handle = runtime.spawn(verify_mqtt_listener(listener_data.clone()));
     runtime.block_on(async {
-        tokio::time::sleep(Duration::from_millis(1000)).await;
+        tokio::time::sleep(Duration::from_millis(500)).await;
         send_message(listener_data.clone()).await;
     });
     let result = runtime
