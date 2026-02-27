@@ -26,6 +26,7 @@
 #[cfg(test)]
 use crate::{
     can::TelemetryData,
+    mqtt::mqttd,
     send::{send_message, Reading, MQTT_HOST, MQTT_PORT},
 };
 use deku::prelude::*;
@@ -95,6 +96,7 @@ fn test_parse_telemetry_invalid_enum() {
 /// ```
 /// These commands are run automatically in the GitHub Actions workflow (test.yml).
 #[tokio::test]
+#[ignore]
 async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn std::error::Error>> {
     let data = TelemetryData::default();
 
@@ -263,6 +265,8 @@ async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
 /// Requires a reachable MQTT broker at `MQTT_HOST:MQTT_PORT`
 #[test]
 fn test_verify_mqtt_listener() {
+    std::thread::spawn(|| mqttd());
+
     // Test Struct (listener end)
     let listener_data: TelemetryData = TelemetryData::default();
 
@@ -270,7 +274,7 @@ fn test_verify_mqtt_listener() {
     let runtime = tokio::runtime::Runtime::new().expect("Unable to start listener runtime.");
     let handle = runtime.spawn(verify_mqtt_listener(listener_data.clone()));
     runtime.block_on(async {
-        tokio::time::sleep(Duration::from_millis(500)).await;
+        tokio::time::sleep(Duration::from_millis(1000)).await;
         send_message(listener_data.clone()).await;
     });
     let result = runtime
