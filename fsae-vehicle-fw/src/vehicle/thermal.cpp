@@ -13,6 +13,12 @@
 #define PUMP_THRESHOLD 35 // Temperature threshold in degrees Celsius
 #define FAN_THRESHOLD 42  // Temperature threshold in degrees Celsius
 
+void thermal_forceOff() {
+    analogWrite(PUMP1_PIN, 0);
+    analogWrite(PUMP2_PIN, 0);
+    analogWrite(FAN_PIN, 0);
+}
+
 void thermal_Init() {
     pinMode(PUMP1_PIN, OUTPUT);
     pinMode(PUMP2_PIN, OUTPUT);
@@ -42,12 +48,6 @@ void thermal_forceOn() {
     analogWrite(PUMP1_PIN, DUTY_CYCLE_MAX * 0.9);
     analogWrite(PUMP2_PIN, DUTY_CYCLE_MAX * 0.9);
     analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.9);
-}
-
-void thermal_forceOff() {
-    analogWrite(PUMP1_PIN, 0);
-    analogWrite(PUMP2_PIN, 0);
-    analogWrite(FAN_PIN, 0);
 }
 
 /*implement */

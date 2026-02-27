@@ -164,7 +164,7 @@ void threadMotor(void *pvParameters) {
         // static float lastTorqueSent = 0.0f;
 
         // Apply Deadband
-        if (APPS_GetAPPSReading() > 0.06f) {
+        if (APPS_GetAPPSReading() > 0.03f) {
             targetTorque = torqueMap(APPS_GetAPPSReading());
         } else {
             targetTorque = 0.0f;

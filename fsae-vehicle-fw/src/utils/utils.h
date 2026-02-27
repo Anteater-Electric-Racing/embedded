@@ -76,14 +76,14 @@
 #define APPS2_20PCT_ADC 1150.0F
 
 /**KZ Driving MAX (30%)) */
-#define APPS1_FULL_PCT_ADC 550.0F
-#define APPS2_FULL_PCT_ADC 3045.0F
+#define APPS1_FULL_PCT_ADC 485.0F
+#define APPS2_FULL_PCT_ADC 3025.0F
 
 // Measured resting ADC (change these with actual findings this is just safe
 // zone values)
 /**KZ Driving MIN (1+2) */
-#define APPS1_REST_ADC 120.0F
-#define APPS2_REST_ADC 2860.0F
+#define APPS1_REST_ADC 80.0F
+#define APPS2_REST_ADC 2830.0F
 
 // Clamp helper
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
