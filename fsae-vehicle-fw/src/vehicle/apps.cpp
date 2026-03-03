@@ -1,10 +1,16 @@
 // Anteater Electric Racing, 2025
 
 #include <cmath>
+
 #include "utils/utils.h"
+
+#include "peripherals/wdt.h"
+
 #include "apps.h"
+
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
+
 #include <arduino_freertos.h>
 
 typedef struct {
@@ -40,6 +46,9 @@ void APPS_Init() {
 }
 
 void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
+    // update clock for WDT
+    apps_last_run_tick = xTaskGetTickCount();
+
     // Filter incoming values
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);

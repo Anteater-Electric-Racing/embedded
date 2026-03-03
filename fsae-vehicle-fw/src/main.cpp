@@ -5,6 +5,7 @@
 
 #include "peripherals/adc.h"
 #include "peripherals/can.h"
+#include "peripherals/wdt.h"
 
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -12,6 +13,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/ifl100-36.h"
+
 
 #include <iostream>
 #include <unistd.h>
@@ -33,6 +35,7 @@ void setup() { // runs once on bootup
     Telemetry_Init();
     Motor_Init();
     MCU_Init();
+    WDT_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL, THREAD_ADC_PRIORITY, NULL);
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL, THREAD_MOTOR_PRIORITY, NULL);

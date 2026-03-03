@@ -4,9 +4,12 @@
 
 #include "utils/utils.h"
 
+#include "peripherals/wdt.h"
+
 #include "bse.h"
 
 #include "vehicle/faults.h"
+
 #include <arduino_freertos.h>
 
 typedef struct{
@@ -31,6 +34,9 @@ void BSE_Init() {
 }
 
 void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2){
+    // update clock for WDT
+    bse_last_run_tick = xTaskGetTickCount();
+
     // Filter incoming values
     LOWPASS_FILTER(bseReading1, bseRawData.bseRawFront, bseAlpha);
     LOWPASS_FILTER(bseReading2, bseRawData.bseRawRear, bseAlpha);
