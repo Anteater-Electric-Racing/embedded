@@ -14,6 +14,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/pcc_receive.h"
 #include "vehicle/rtm_button.h"
+#include "vehicle/speaker.h"
 #include "vehicle/telemetry.h"
 
 #include "utils/utils.h"
@@ -38,6 +39,7 @@ void setup() { // runs once on bootup
     MCU_Init();
     GPIO_Init();
     PCC_Init();
+    Speaker_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
