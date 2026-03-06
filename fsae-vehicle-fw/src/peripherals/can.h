@@ -12,3 +12,7 @@ void CAN_ISOTP_Send(std::uint32_t id, std::uint8_t *msg, std::uint16_t size);
 
 bool CAN_IsBusHealthy(std::uint8_t bus);
 void CAN_CheckHealth();
+
+
+
+void CAN_RxInterruptHandler(uint32_t id, uint64_t data);

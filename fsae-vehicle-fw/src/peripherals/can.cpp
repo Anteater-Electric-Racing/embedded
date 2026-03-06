@@ -27,6 +27,24 @@ CAN_message_t rx_msg;
 
 #define CAN_TIMEOUT_MS 100
 
+//
+/**
+ * CANBus Setup: KZ
+ *
+ * CAN2 (CAN2 on diagram) --> ORION, CCM, RASPI, PCC
+ * CAN3 (CAN1 on diagram) --> CCM, OMNI, RASPI
+ *
+ * TODO: CAN recieve and send for each bus
+ *
+ */
+
+void CAN_Interrupt_Receive(const CAN_message_t &msg) {
+    uint32_t id = msg.id;
+    uint64_t data = 0;
+    memcpy(&data, msg.buf, 8);
+    CAN_RxInterruptHandler(id, data);
+}
+
 void CAN_Init() {
     // Initialize CAN bus
     can2.begin();
@@ -39,8 +57,9 @@ void CAN_Init() {
     can3.setBaudRate(CAN_BAUD_RATE);
     can3.setTX(DEF);
     can3.setRX(DEF);
-    can3.enableFIFO();
-    // can3.enableFIFOInterrupt();
+    //can3.enableFIFO();
+    can3.enableFIFOInterrupt(); // Enables hardware interrupts
+    can3.onReceive(CAN_Interrupt_Receive); // Upon receiving a message, CAN_Interrupt_Receive is called.
     // can3.setMaxMB(16); // Set maximum message buffers to 16
 
     tp.begin();
