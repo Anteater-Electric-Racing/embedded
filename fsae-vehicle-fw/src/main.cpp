@@ -72,13 +72,12 @@ void threadMain(void *pvParameters) {
     int toggle = 0;
 #endif
     while (true) {
-        // #if SERIALMONITOR_FLAG
 
         /*============LOW PRIORITY GPIO UPDATES============*/
         digitalWrite(13, HIGH); // orange led on teensy
 
-        // thermal_MCULoop();
-        thermal_forceOn();
+        thermal_MCULoop();
+        // thermal_forceOn();
 
         if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
             BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
@@ -87,6 +86,25 @@ void threadMain(void *pvParameters) {
             digitalWrite(BRAKE_LIGHT_PIN, LOW);
         }
 
+#if IMD_FLAG
+
+        Serial.print("IMDHV: ");
+        Serial.print(IMD_GetInfo()->hv_voltage);
+        Serial.print(" | ");
+
+        Serial.print("IMDRes: ");
+        Serial.print(IMD_GetInfo()->resistance);
+        Serial.print(" | ");
+        Serial.print("IMDStatus: ");
+        Serial.print(IMD_GetInfo()->status);
+        Serial.print(" | ");
+        Serial.print("IMDFault: ");
+        Serial.print(IMD_GetInfo()->isolation_fault);
+        Serial.print("\r");
+
+#endif
+
+#if SERIALMONITOR_FLAG
         Serial.print("PP:");
         Serial.print(PCC_GetData()->prechargeProgress);
         Serial.print(" | ");
@@ -180,7 +198,7 @@ void threadMain(void *pvParameters) {
 
         // IMPLEMENT BETTER SERIAL PROCESSING(
         //     TEENSY does not support ANSI escape codes)
-// #endif
+#endif
 #if BMS_FLAG
         // --- NEW: Orion BMS 2 Telemetry ---
         // Orion BMS Telemetry

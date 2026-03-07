@@ -16,7 +16,7 @@
 void thermal_forceOff() {
     analogWrite(PUMP1_PIN, 0);
     analogWrite(PUMP2_PIN, 0);
-    analogWrite(FAN_PIN, 0);
+    analogWrite(FAN_PIN, DUTY_CYCLE_MAX);
 }
 
 void thermal_Init() {
@@ -47,7 +47,7 @@ void thermal_Init() {
 void thermal_forceOn() {
     analogWrite(PUMP1_PIN, DUTY_CYCLE_MAX * 0.9);
     analogWrite(PUMP2_PIN, DUTY_CYCLE_MAX * 0.9);
-    analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.9);
+    analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.1);
 }
 
 /*implement */
@@ -66,8 +66,8 @@ void thermal_MCULoop() {
     }
 
     if (MCU_GetMCU2Data()->mcuTemp > FAN_THRESHOLD) {
-        analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.9);
+        analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.1);
     } else if (MCU_GetMCU2Data()->mcuTemp < FAN_THRESHOLD - 5) {
-        analogWrite(FAN_PIN, 0);
+        analogWrite(FAN_PIN, DUTY_CYCLE_MAX);
     }
 }
