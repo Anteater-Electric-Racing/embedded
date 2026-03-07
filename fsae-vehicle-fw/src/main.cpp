@@ -91,7 +91,6 @@ void threadMain(void *pvParameters) {
         Serial.print("IMDHV: ");
         Serial.print(IMD_GetInfo()->hv_voltage);
         Serial.print(" | ");
-
         Serial.print("IMDRes: ");
         Serial.print(IMD_GetInfo()->resistance);
         Serial.print(" | ");

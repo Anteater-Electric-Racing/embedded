@@ -27,11 +27,11 @@
         - MITAGED --> send proper telemetry packet --> Better serial output
    (read off port and output in more readable form
 */
-#define SERIALMONITOR_FLAG 0
+#define SERIALMONITOR_FLAG 1
 #define DEBUG_FLAG 0
 #define HIMAC_FLAG 0
 #define BMS_FLAG 0 // TO REMOVE
-#define IMD_FLAG 1
+#define IMD_FLAG 0
 
 #define ACTIVE_MAP 1
 
