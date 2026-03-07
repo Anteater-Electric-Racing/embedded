@@ -87,6 +87,7 @@ void MCU_Init() {
 }
 
 static void threadMCU(void *pvParameters) {
+    xLastWakeTime = xTaskGetTickCount();
     while (true) {
         // Read the CAN messages
         CAN_Receive(&rx_id, &rx_data);

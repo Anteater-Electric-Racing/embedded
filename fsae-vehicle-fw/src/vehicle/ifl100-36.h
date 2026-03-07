@@ -285,10 +285,12 @@ typedef struct {
 
 typedef struct __attribute__((packed)) {
     uint16_t R_iso_corrected; // [kOhm] Intel order
-    uint8_t R_iso_status;     // 0xFC: Startup, 0xFD: First Meas, 0xFE: Normal
+    uint8_t R_iso_status;     // 0xFC: Startup, 0xFD: First Meas, 0xFE:
+    // Normal
     uint8_t measurement_cnt;
-    uint16_t status_flags;   // Warnings and Alarms (Bit 0: Error, Bit 4: Iso
-                             // Alarm, etc.)
+    uint16_t status_flags; // Warnings and
+    // Alarms (Bit 0: Error, Bit 4: Iso
+    //                          // Alarm, etc.)
     uint8_t device_activity; // 0: Init, 1: Normal, 2: Self-test
     uint8_t reserved;
 } IMD_General;

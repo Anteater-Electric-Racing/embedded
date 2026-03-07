@@ -13,7 +13,7 @@
 
 #include "peripherals/can.h"
 
-TelemetryData PROGMEM telemetryData;
+TelemetryData telemetryData;
 
 void Telemetry_Init() {
     telemetryData = {// Fill with reasonable dummy values

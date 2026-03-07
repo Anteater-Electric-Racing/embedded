@@ -54,6 +54,7 @@ void Motor_Init() {
 }
 
 void threadMotor(void *pvParameters) {
+    xLastWakeTime = xTaskGetTickCount();
     while (true) {
         // Clear packet contents
         vcu1 = {0};
