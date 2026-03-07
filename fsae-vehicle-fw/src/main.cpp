@@ -14,9 +14,9 @@
 #include "vehicle/motor.h"
 #include "vehicle/pcc_receive.h"
 #include "vehicle/rtm_button.h"
+#include "vehicle/shockTravel.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/thermal.h"
-#include "vehicle/shockTravel.h"
 
 #include "utils/utils.h"
 #include <iostream>
@@ -72,13 +72,13 @@ void threadMain(void *pvParameters) {
     int toggle = 0;
 #endif
     while (true) {
-#if SERIALMONITOR_FLAG
+        // #if SERIALMONITOR_FLAG
 
         /*============LOW PRIORITY GPIO UPDATES============*/
         digitalWrite(13, HIGH); // orange led on teensy
 
-        thermal_MCULoop();
-        // thermal_forceOn();
+        // thermal_MCULoop();
+        thermal_forceOn();
 
         if (BSE_GetBSEReading()->bseFront_Reading > BRAKE_LIGHT_THRESHOLD &&
             BSE_GetBSEReading()->bseRear_Reading > BRAKE_LIGHT_THRESHOLD) {
@@ -180,7 +180,7 @@ void threadMain(void *pvParameters) {
 
         // IMPLEMENT BETTER SERIAL PROCESSING(
         //     TEENSY does not support ANSI escape codes)
-#endif
+// #endif
 #if BMS_FLAG
         // --- NEW: Orion BMS 2 Telemetry ---
         // Orion BMS Telemetry
@@ -410,7 +410,6 @@ void threadMain(void *pvParameters) {
 #endif
         vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(100)); // Delay for 100ms
     }
-
 }
 
 void loop() {}

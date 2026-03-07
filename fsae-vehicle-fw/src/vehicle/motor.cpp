@@ -170,7 +170,7 @@ void threadMotor(void *pvParameters) {
             targetTorque = 0.0f;
         }
 
-        // 3. Slew Rate Limiting
+        // Slew Rate Limiting
         // float torqueDelta = targetTorque - lastTorqueSent;
         // if (torqueDelta > MAX_TORQUE_STEP_UP_PCT) {
         //     // Capping the Acceleration
@@ -231,7 +231,7 @@ void threadMotor(void *pvParameters) {
         Motor_UpdateMotor((targetTorque));
 #endif
 
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(5));
     }
 }
 

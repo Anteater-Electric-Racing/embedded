@@ -3,10 +3,22 @@
 #pragma once
 
 /*
-    TODO: better serial monitor (python script or executable (constantly
-   running)) needs all fields (not being sent on telemetry as well)
+    TODO 3/6 night: better serial monitor (python script with pySerial)
+   (constantly running) needs all necessary fields
 
-    Cooling control loop based on MCU and Motor Temp
+    Cooling PID control loop based on MCU and Motor Temp
+
+    Derating of torque based on temp.
+
+    Power limiting based on BMS current seen (if accurate)
+
+    IMD data check
+
+    Fix torque output read from INVT
+
+    clean up code
+
+    add shocks travel + more to telemetry data packet
 
 
     TODO Fixes:
@@ -15,7 +27,7 @@
         - MITAGED --> send proper telemetry packet --> Better serial output
    (read off port and output in more readable form
 */
-#define SERIALMONITOR_FLAG 0
+#define SERIALMONITOR_FLAG 1
 #define DEBUG_FLAG 0
 #define HIMAC_FLAG 0
 #define BMS_FLAG 0 // TO REMOVE
@@ -29,7 +41,7 @@
 #define THREAD_MAIN_PRIORITY 1
 #define THREAD_MOTOR_STACK_SIZE 256
 #define THREAD_MOTOR_PRIORITY 4
-#define THREAD_CAN_TELEMETRY_STACK_SIZE 512
+#define THREAD_CAN_TELEMETRY_STACK_SIZE 256
 #define THREAD_CAN_TELEMETRY_PRIORITY 1
 #define THREAD_ADC_STACK_SIZE 128
 #define THREAD_ADC_PRIORITY 8
@@ -154,4 +166,4 @@
 #define MAX_REGEN_TORQUE -9.0F // TODO: test with higher value regen
 #define REGEN_BIAS 1           // Scale 0-1 of max regen torque
 
-#define SHOCK_TRAVEL_MAX_MM 76.2f //3 inches
+#define SHOCK_TRAVEL_MAX_MM 76.2f // 3 inches

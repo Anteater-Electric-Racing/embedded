@@ -21,6 +21,23 @@
 #define mBMS1_ID 0x1A0
 #define mBMS2_ID 0x1A1
 
+// double check this
+#define mIMD_GENERAL_ID 0x18FF01F4
+#define mIMD_DETAIL_ID 0x18FF02F4
+#define mIMD_VOLTAGE_ID 0x18FF03F4
+#define mIMD_IT_SYSTEM_ID 0x18FF04F4
+
+// J1939 ID: Priority 6 (0x18) | PGN (0xEF00) | Dest (0xF4) | Source (0x17)
+#define IMD_CMD_ID 0x18EFF417
+
+// Indices from manual section 2.2
+#define IMD_IDX_THRESHOLD_ERROR 0x47
+#define IMD_IDX_STATUS_LOCK 0x6B
+
+// Lock States
+#define IMD_LOCK_UNLOCK 0xFC
+#define IMD_LOCK_LOCK 0xFD
+
 typedef enum {
     DIRECTION_STANDBY = 0,
     DIRECTION_FORWARD = 1,
@@ -266,6 +283,32 @@ typedef struct {
     uint8_t lowCellID;
 } OrionBMSData;
 
+typedef struct __attribute__((packed)) {
+    uint16_t R_iso_corrected; // [kOhm] Intel order
+    uint8_t R_iso_status;     // 0xFC: Startup, 0xFD: First Meas, 0xFE: Normal
+    uint8_t measurement_cnt;
+    uint16_t status_flags;   // Warnings and Alarms (Bit 0: Error, Bit 4: Iso
+                             // Alarm, etc.)
+    uint8_t device_activity; // 0: Init, 1: Normal, 2: Self-test
+    uint8_t reserved;
+} IMD_General;
+
+typedef struct __attribute__((packed)) {
+    uint16_t hv_system;       // Offset 32128, 0.05V/bit
+    uint16_t hv_neg_to_earth; // Offset 32128, 0.05V/bit
+    uint16_t hv_pos_to_earth; // Offset 32128, 0.05V/bit
+    uint8_t measurement_cnt;
+    uint8_t reserved;
+} IMD_Voltage;
+
+// Unified storage for your application
+typedef struct {
+    float resistance; // kOhm
+    float hv_voltage; // Volts
+    uint16_t status;  // Raw flags
+    bool isolation_fault;
+} IMDData;
+
 OrionBMSData *BMS_GetOrionData();
 
 void MCU_Init();
@@ -274,3 +317,4 @@ uint8_t ComputeChecksum(uint8_t *data);
 MCU1Data *MCU_GetMCU1Data();
 MCU2Data *MCU_GetMCU2Data();
 MCU3Data *MCU_GetMCU3Data();
+IMDData *IMD_GetInfo();

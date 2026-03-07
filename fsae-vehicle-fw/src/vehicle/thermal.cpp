@@ -35,7 +35,7 @@ void thermal_Init() {
                          FAN_WRITE_FREQ);           // 25 kHz for Koolance
     analogWriteResolution(ANALOG_WRITE_RESOLUTION); // 0-255
 
-    //thermal_forceOff();
+    // thermal_forceOff();
 }
 
 /*open loop  control */

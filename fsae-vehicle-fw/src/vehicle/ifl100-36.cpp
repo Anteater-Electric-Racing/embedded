@@ -27,6 +27,8 @@ static MCU3Data mcu3Data;
 
 static OrionBMSData bmsData;
 
+static IMDData imdData;
+
 void MCU_Init() {
     // Fill with reasonable dummy values
     mcu1Data = {.motorSpeed = 0.0F,
@@ -73,6 +75,11 @@ void MCU_Init() {
                .chargeLimit = 0.0F,
                .highTemp = 25,
                .lowTemp = 25};
+
+    imdData = {.resistance = 0.0F, // kOhm
+               .hv_voltage = 0.0F, // Volts
+               .status = 0,        // Raw flags
+               .isolation_fault = false};
 
     // Initialize the motor thread
     xTaskCreate(threadMCU, "threadMCU", THREAD_MCU_STACK_SIZE, NULL,
@@ -216,6 +223,31 @@ static void threadMCU(void *pvParameters) {
             taskEXIT_CRITICAL();
             break;
         }
+        case mIMD_GENERAL_ID: {
+            IMD_General raw = {0};
+            memcpy(&raw, &rx_data, sizeof(raw));
+
+            taskENTER_CRITICAL();
+            imdData.resistance = (float)raw.R_iso_corrected;
+            imdData.status = raw.status_flags;
+            // Bit 4 is "Iso alarm" per section 2.3 GET commands note 1)*
+            imdData.isolation_fault =
+                (raw.status_flags & (1 << 4)) ? true : false;
+            taskEXIT_CRITICAL();
+            break;
+        }
+
+        case mIMD_VOLTAGE_ID: {
+            IMD_Voltage raw = {0};
+            memcpy(&raw, &rx_data, sizeof(raw));
+
+            taskENTER_CRITICAL();
+            // formula: (RawValue - Offset) * Resolution
+            // Note: If raw is 32128, voltage is 0V.
+            imdData.hv_voltage = (raw.hv_system - 32128) * 0.05F;
+            taskEXIT_CRITICAL();
+            break;
+        }
         default: {
             break;
         }
@@ -231,6 +263,8 @@ MCU2Data *MCU_GetMCU2Data() { return &mcu2Data; }
 MCU3Data *MCU_GetMCU3Data() { return &mcu3Data; }
 
 OrionBMSData *BMS_GetOrionData() { return &bmsData; }
+
+IMDData *IMD_GetInfo() { return &imdData; }
 
 // checksum = (byte0 + byte1 + byte2 + byte3 + byte4 + byte5 + byte6) XOR 0xFF
 uint8_t ComputeChecksum(uint8_t *data) {
