@@ -49,7 +49,6 @@ void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode,
 
     pccMsg.id = PCC_CAN_ID;
 
-    pccMsg.len = PCC_CAN_ID;
     memcpy(pccMsg.buf, &pccData, sizeof(PCC));
     can2.write(pccMsg);
 
