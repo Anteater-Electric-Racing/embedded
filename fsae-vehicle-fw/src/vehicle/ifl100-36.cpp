@@ -241,7 +241,6 @@ static void threadMCU(void *pvParameters) {
         case mIMD_VOLTAGE_ID: {
             IMD_Voltage raw = {0};
             memcpy(&raw, &rx_data, sizeof(raw));
-
             taskENTER_CRITICAL();
             // formula: (RawValue - Offset) * Resolution
             // Note: If raw is 32128, voltage is 0V.

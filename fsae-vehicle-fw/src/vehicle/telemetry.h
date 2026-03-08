@@ -4,19 +4,32 @@
 #include <stdint.h>
 
 #include "peripherals/adc.h"
+#include "peripherals/can.h"
+#include "shockTravel.h"
+#include "utils/utils.h"
+#include "vehicle/apps.h"
+#include "vehicle/bse.h"
+#include "vehicle/faults.h"
 #include "vehicle/ifl100-36.h"
 #include "vehicle/motor.h"
 
 typedef struct __attribute__((packed)) {
+
+    // Analog Data
     float APPS_Travel; // APPS travel in %
 
-    // float BSEFront_PSI; // front brake pressure in PSI
-    // float BSERear_PSI; // rear brake pressure in PSI
+    float BSEFront; // front brake pressure in PSI
+    float BSERear;  // rear brake pressure in PSI
 
-    // float accumulatorVoltage;
-    // float accumulatorTemp_F;
-
-    // Motor state
+    // BMS Data
+    float packVoltage;
+    float packCurrent;
+    float soc;
+    float dischargeLimit;
+    float chargeLimit;
+    float lowCellVolt;  // Volts (e.g., 3.4215f)
+    float highCellVolt; // Volts
+    float avgCellVolt;  // Volts
 
     // MCU1 data
     float motorSpeed;     // Motor speed in RPM
@@ -41,28 +54,15 @@ typedef struct __attribute__((packed)) {
     bool motorOverSpdFault;       // MCU motor over speed fault
     //  bool phaseCurrSensorFault; // Phase current sensor fault
 
-    bool motorPhaseCurrFault; // MCU motor phase current fault
-    // bool mcuOverHotFault; // MCU overheat fault
-    // bool resolverFault; // Resolver fault
-    //    bool phaseCurrSensorFault; // Phase current sensor fault
-    //    bool motorOverSpdFault; // MCU motor over speed fault
-    //     bool drvMotorOverHotFault; // Driver motor overheat fault
-    //  //   bool dcMainWireOverCurrFault; // DC main wire over voltage fault
-    //     bool drvMotorOverCoolFault; // Driver motor overcool fault
-    //     bool mcuMotorSystemState; // MCU motor system state
-    //     bool mcuTempSensorState; // MCU temperature sensor state
-    //     bool motorTempSensorState; // MCU motor temperature sensor state
-    //     bool dcVoltSensorState; // MCU DC voltage sensor state
-    //     bool dcLowVoltWarning; // MCU DC low voltage warning
-    //     bool mcu12VLowVoltWarning; // MCU 12V low voltage warning
-    bool motorStallFault; // MCU motor stall fault
-    //    bool motorOpenPhaseFault; // MCU motor open phase fault
+    bool motorPhaseCurrFault;        // MCU motor phase current fault
+    bool motorStallFault;            // MCU motor stall fault
     MCUWarningLevel mcuWarningLevel; // MCU warning level
 
-    // MCU3 data
-    // float mcuVoltage; // DC main wire voltage in V
-    // float mcuCurrent; // DC main wire current in A
-    //   float motorPhaseCurr; // Motor phase current in A
+    // Dynamics Data
+    float shocktravel1;
+    float shocktravel2;
+    float shocktravel3;
+    float shocktravel4;
 
     int32_t faultMap; // Debug data
 } TelemetryData;
