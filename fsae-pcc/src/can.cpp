@@ -45,7 +45,7 @@ void CAN_SendPCCMessage(uint8_t state, uint8_t errorCode,
                .tsVoltage = uint16_t(tsVoltage * 100),
                .prechargeProgress = uint16_t(prechargeProgress)};
 
-    //    pccData.accumulatorVoltage = 1;
+    // pccData.accumulatorVoltage = 1;
 
     pccMsg.id = PCC_CAN_ID;
 
