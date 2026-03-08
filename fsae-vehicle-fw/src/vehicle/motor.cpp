@@ -117,17 +117,18 @@ void threadMotor(void *pvParameters) {
 
             /* Switched to reverse */
             vcu1.GearLeverPos_Sts =
-                1;                   // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
+                3;                   // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
             vcu1.AC_Control_Cmd = 1; // 0 = Not active, 1 = Active
             vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
             vcu1.VCU_WorkMode = 0;
             vcu1.VCU_TorqueReq =
                 (uint8_t)((fabsf(motorData.desiredTorque) / MOTOR_MAX_TORQUE) *
                           100); // Torque demand in percentage (0-99.6) 350Nm
-            vcu1.VCU_MotorMode = motorData.desiredTorque >= 0
-                                     ? 1
-                                     : 2; // 0 = Standby, 1 = Drive, 2 =
-                                          // Generate Electricy, 3 = Reserved
+            vcu1.VCU_MotorMode =
+                motorData.desiredTorque; //>= 0
+                                         //? 1
+                                         //: 2; // 0 = Standby, 1 = Drive, 2 =
+                                         // Generate Electricy, 3 = Reserved
             break;
         }
 
@@ -162,26 +163,33 @@ void threadMotor(void *pvParameters) {
         memcpy(&bms2_msg, &bms2, sizeof(bms2_msg));
         CAN_Send(mBMS2_ID, bms2_msg);
 
-        // static float lastTorqueSent = 0.0f;
+        static float lastTorqueSent = 0.0f;
 
+        float torqueDelta = targetTorque - lastTorqueSent;
         // Apply Deadband
         if (APPS_GetAPPSReading() > 0.03f) {
             targetTorque = torqueMap(APPS_GetAPPSReading());
-        } else {
-            targetTorque = 0.0f;
+        } else if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) { //
+            targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
         }
 
+        if (targetTorque <= 0) {
+            targetTorque = 0;
+        }
+        //     // Capping the Deceleration
+        //     targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
+        // }
         // Slew Rate Limiting
-        // float torqueDelta = targetTorque - lastTorqueSent;
+
         // if (torqueDelta > MAX_TORQUE_STEP_UP_PCT) {
         //     // Capping the Acceleration
         //     targetTorque = lastTorqueSent + MAX_TORQUE_STEP_UP_PCT;
-        // } else if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) {
+        // if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) {
         //     // Capping the Deceleration
         //     targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
         // }
 
-        // lastTorqueSent = targetTorque;
+        lastTorqueSent = targetTorque;
 
         // float pedalTorque;
         // float p = APPS_GetAPPSReading1();
@@ -240,9 +248,9 @@ void threadMotor(void *pvParameters) {
 void Motor_UpdateMotor(float torqueDemand) {
 
     Faults_HandleFaults();
-    if (BMS_GetOrionData()->lowCellVolt > LOW_VOLT_LIMIT) {
-        Faults_ClearFault(LOW_BATTERY_VOLTAGE_FAULT);
-    }
+    // if (BMS_GetOrionData()->lowCellVolt > LOW_VOLT_LIMIT) {
+    //     Faults_ClearFault(LOW_BATTERY_VOLTAGE_FAULT);
+    // }
     RTMButton_Update(GPIO_Read(RTM_BUTTON_PIN));
 
     switch (motorData.state) {
@@ -276,9 +284,9 @@ void Motor_UpdateMotor(float torqueDemand) {
     case MOTOR_STATE_DRIVING:
         if (RTMButton_GetState()) {
 
-            if (BMS_GetOrionData()->lowCellVolt < LOW_VOLT_LIMIT) {
-                Faults_SetFault(LOW_BATTERY_VOLTAGE_FAULT);
-            }
+            // if (BMS_GetOrionData()->lowCellVolt < LOW_VOLT_LIMIT) {
+            //     Faults_SetFault(LOW_BATTERY_VOLTAGE_FAULT);
+            // }
             if (torqueDemand <= 0.0F &&
                 MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
                 // If regen is enabled and the torque demand is zero, we

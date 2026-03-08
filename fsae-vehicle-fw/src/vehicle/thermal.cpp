@@ -10,8 +10,8 @@
 #define PUMP2_PIN 28 // Define PWM pin for pump 2
 #define FAN_PIN 7
 
-#define PUMP_THRESHOLD 35 // Temperature threshold in degrees Celsius
-#define FAN_THRESHOLD 42  // Temperature threshold in degrees Celsius
+#define PUMP_THRESHOLD 45 // Temperature threshold in degrees Celsius
+#define FAN_THRESHOLD 50  // Temperature threshold in degrees Celsius
 
 void thermal_forceOff() {
     analogWrite(PUMP1_PIN, 0);
@@ -52,22 +52,29 @@ void thermal_forceOn() {
 
 /*implement */
 void thermal_MCULoop() {
-    if (MCU_GetMCU2Data()->mcuTemp <= 0 || MCU_GetMCU2Data()->mcuTemp > 100) {
+    if ((MCU_GetMCU2Data()->mcuTemp <= 0 || MCU_GetMCU2Data()->motorTemp) <=
+            0 ||
+        (MCU_GetMCU2Data()->mcuTemp > 100 ||
+         MCU_GetMCU2Data()->motorTemp > 100)) {
         thermal_forceOn();
         return;
     }
 
-    if (MCU_GetMCU2Data()->mcuTemp > PUMP_THRESHOLD) {
+    if (MCU_GetMCU2Data()->mcuTemp > PUMP_THRESHOLD ||
+        MCU_GetMCU2Data()->motorTemp > PUMP_THRESHOLD) {
         analogWrite(PUMP1_PIN, DUTY_CYCLE_MAX * 0.9);
         analogWrite(PUMP2_PIN, DUTY_CYCLE_MAX * 0.9);
-    } else if (MCU_GetMCU2Data()->mcuTemp < PUMP_THRESHOLD - 5) {
+    } else if (MCU_GetMCU2Data()->mcuTemp < PUMP_THRESHOLD - 5 ||
+               MCU_GetMCU2Data()->motorTemp < PUMP_THRESHOLD - 5) {
         analogWrite(PUMP1_PIN, 0);
         analogWrite(PUMP2_PIN, 0);
     }
 
-    if (MCU_GetMCU2Data()->mcuTemp > FAN_THRESHOLD) {
+    if (MCU_GetMCU2Data()->mcuTemp > FAN_THRESHOLD ||
+        MCU_GetMCU2Data()->motorTemp > FAN_THRESHOLD) {
         analogWrite(FAN_PIN, DUTY_CYCLE_MAX * 0.1);
-    } else if (MCU_GetMCU2Data()->mcuTemp < FAN_THRESHOLD - 5) {
+    } else if (MCU_GetMCU2Data()->mcuTemp < FAN_THRESHOLD - 5 ||
+               MCU_GetMCU2Data()->motorTemp < FAN_THRESHOLD - 5) {
         analogWrite(FAN_PIN, DUTY_CYCLE_MAX);
     }
 }

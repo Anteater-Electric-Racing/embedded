@@ -12,6 +12,8 @@
 
 #include "pcc_receive.h"
 
+#include "imd.h"
+
 #define THREAD_MCU_STACK_SIZE 128
 #define THREAD_MCU_PRIORITY 1
 
@@ -88,10 +90,12 @@ void MCU_Init() {
 
 static void threadMCU(void *pvParameters) {
     xLastWakeTime = xTaskGetTickCount();
+
     while (true) {
         // Read the CAN messages
         CAN_Receive(&rx_id, &rx_data);
 
+        // IMD_InitializeConfiguration();
         switch (rx_id) {
         case mMCU1_ID: {
             MCU1 mcu1 = {0};

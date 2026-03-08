@@ -31,7 +31,7 @@
 #define DEBUG_FLAG 0
 #define HIMAC_FLAG 0
 #define BMS_FLAG 0 // TO REMOVE
-#define IMD_FLAG 0
+#define IMD_FLAG 1
 
 #define ACTIVE_MAP 1
 
@@ -89,14 +89,14 @@
 #define APPS2_20PCT_ADC 1150.0F
 
 /**KZ Driving MAX (30%)) */
-#define APPS1_FULL_PCT_ADC 485.0F
-#define APPS2_FULL_PCT_ADC 3025.0F
+#define APPS1_FULL_PCT_ADC 546.0F
+#define APPS2_FULL_PCT_ADC 3075.0F
 
 // Measured resting ADC (change these with actual findings this is just safe
 // zone values)
 /**KZ Driving MIN (1+2) */
-#define APPS1_REST_ADC 80.0F
-#define APPS2_REST_ADC 2830.0F
+#define APPS1_REST_ADC 11.0F
+#define APPS2_REST_ADC 2827.0F
 
 // Clamp helper
 #define CLAMP(x, lo, hi) ((x) < (lo) ? (lo) : ((x) > (hi) ? (hi) : (x)))
@@ -142,12 +142,12 @@
 
 #define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
 #define CAPPED_MOTOR_TORQUE 75.0F
-#define MAX_TORQUE_STEP_UP_PCT 0.05F
-#define MAX_TORQUE_STEP_DOWN_PCT 0.2F
+#define MAX_TORQUE_STEP_UP_PCT 0F
+#define MAX_TORQUE_STEP_DOWN_PCT 1.0F
 #define TORQUE_SHIFT_OFFSET 5.0F
 
-#define BATTERY_MAX_CURRENT_A 50.0F // TO CHANGE
-#define BATTERY_MAX_REGEN_A 50.0F   // TO CHANGE
+#define BATTERY_MAX_CURRENT_A 140.0F // TO CHANGE
+#define BATTERY_MAX_REGEN_A 140.0F   // TO CHANGE
 
 #define COMPUTE_ALPHA(CUTOFF_HZ)                                               \
     (1.0F / (1.0F + (1.0F / (2.0F * M_PI * CUTOFF_HZ)) / TIME_STEP))

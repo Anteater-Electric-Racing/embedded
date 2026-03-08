@@ -14,3 +14,4 @@
 
 uint64_t PackIMDData(uint8_t index, uint16_t value);
 void IMD_UpdateThreshold(uint16_t threshold_kOhm);
+void IMD_InitializeConfiguration();

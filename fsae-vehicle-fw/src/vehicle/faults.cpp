@@ -149,10 +149,10 @@ void Faults_HandleFaults() {
         Motor_SetFaultState();
     }
     if (faultBitMap & FAULT_APPS_MASK) {
-        Motor_ClearToIdleFault();
+        Motor_SetFaultState();
     }
     if (faultBitMap & FAULT_BSE_MASK) {
-        Motor_ClearToIdleFault();
+        Motor_SetFaultState();
     }
     if (faultBitMap & FAULT_BPPS_MASK) {
         Motor_SetFaultState();
@@ -161,7 +161,7 @@ void Faults_HandleFaults() {
         Motor_SetFaultState();
     }
     if (faultBitMap & LOW_BATTERY_VOLTAGE_MASK) {
-        Motor_ClearToIdleFault();
+        Motor_SetFaultState();
     }
 }
 

@@ -55,7 +55,7 @@ void IMD_RequestThresholdReadback() {
 void IMD_InitializeConfiguration() {
     // Formula for FSAE: Pack Voltage * 500 Ohms/Volt
     // Example: 400V * 500 = 200,000 Ohms = 200 kOhm
-    uint16_t ruleThreshold = 250; // Set to 250k for a safety margin
+    uint16_t ruleThreshold = 260; // Set to 250k for a safety margin
 
     Serial.println("IMD: Starting configuration...");
 

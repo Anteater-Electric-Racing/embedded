@@ -88,18 +88,18 @@ void threadMain(void *pvParameters) {
 
 #if IMD_FLAG
 
-        Serial.print("IMDHV: ");
+        Serial.print("IMD_HV: ");
         Serial.print(IMD_GetInfo()->hv_voltage);
         Serial.print(" | ");
-        Serial.print("IMDRes: ");
+        Serial.print("IMD_Resistance: ");
         Serial.print(IMD_GetInfo()->resistance);
         Serial.print(" | ");
-        Serial.print("IMDStatus: ");
+        Serial.print("IMD_Status: ");
         Serial.print(IMD_GetInfo()->status);
         Serial.print(" | ");
-        Serial.print("IMDFault: ");
+        Serial.print("IMD_Fault: ");
         Serial.print(IMD_GetInfo()->isolation_fault);
-        Serial.print("\r");
+        Serial.print(" | ");
 
 #endif
 
