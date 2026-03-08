@@ -174,6 +174,19 @@ pub enum MCUWarningLevel {
 #[deku(endian = "little")]
 pub struct TelemetryData {
     pub apps_travel: f32,
+
+    pub bse_front: f32,
+    pub bse_rear: f32,
+
+    pub pack_voltage: f32,
+    pub pack_current: f32,
+    pub soc: f32,
+    pub discharge_limit: f32,
+    pub charge_limit: f32,
+    pub low_cell_volt: f32,
+    pub high_cell_volt: f32,
+    pub avg_cell_volt: f32,
+
     pub motor_speed: f32,
     pub motor_torque: f32,
     pub max_motor_torque: f32,
@@ -191,6 +204,12 @@ pub struct TelemetryData {
     pub motor_phase_curr_fault: bool,
     pub motor_stall_fault: bool,
     pub mcu_warning_level: MCUWarningLevel,
+
+    pub shocktravel1: f32,
+    pub shocktravel2: f32,
+    pub shocktravel3: f32,
+    pub shocktravel4: f32,
+
     #[deku(bits = 1)]
     pub over_current: bool,
     #[deku(bits = 1)]

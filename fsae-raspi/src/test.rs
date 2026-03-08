@@ -81,8 +81,8 @@ fn test_parse_telemetry_bad_length() {
 #[test]
 fn test_parse_telemetry_invalid_enum() {
     let mut raw = [0u8; TelemetryData::SIZE_BITS / 8];
-    // motor_direction at byte 16 — set to an invalid discriminant
-    raw[16] = 200;
+    // motor_direction at byte 56 — set to an invalid discriminant
+    raw[56] = 200;
     assert!(TelemetryData::from_bytes((raw.as_ref(), 0)).is_err());
 }
 
