@@ -117,18 +117,15 @@ void threadMotor(void *pvParameters) {
 
             /* Switched to reverse */
             vcu1.GearLeverPos_Sts =
-                3;                   // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
+                1;                   // 0 = Default, 1 = R, 2 = N, 3 = D, 4 = P
             vcu1.AC_Control_Cmd = 1; // 0 = Not active, 1 = Active
             vcu1.BMS_Aux_Relay_Cmd = 1; // 0 = not work, 1 = work
             vcu1.VCU_WorkMode = 0;
             vcu1.VCU_TorqueReq =
                 (uint8_t)((fabsf(motorData.desiredTorque) / MOTOR_MAX_TORQUE) *
                           100); // Torque demand in percentage (0-99.6) 350Nm
-            vcu1.VCU_MotorMode =
-                motorData.desiredTorque; //>= 0
-                                         //? 1
-                                         //: 2; // 0 = Standby, 1 = Drive, 2 =
-                                         // Generate Electricy, 3 = Reserved
+            vcu1.VCU_MotorMode = 1; // ? 1 : 2; // 0 = Standby, 1 = Drive, 2 =
+                                    // Generate Electricy, 3 = Reserved
             break;
         }
 
@@ -169,7 +166,9 @@ void threadMotor(void *pvParameters) {
         // Apply Deadband
         if (APPS_GetAPPSReading() > 0.03f) {
             targetTorque = torqueMap(APPS_GetAPPSReading());
-        } else if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) { //
+        }
+
+        if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) { //
             targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
         }
 
@@ -287,15 +286,16 @@ void Motor_UpdateMotor(float torqueDemand) {
             // if (BMS_GetOrionData()->lowCellVolt < LOW_VOLT_LIMIT) {
             //     Faults_SetFault(LOW_BATTERY_VOLTAGE_FAULT);
             // }
-            if (torqueDemand <= 0.0F &&
-                MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD) {
-                // If regen is enabled and the torque demand is zero, we
-                // need to set the torque demand to 0 to prevent the motor
-                // from applying torque in the wrong direction
-                motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
-            } else {
-                motorData.desiredTorque = torqueDemand;
-            }
+            // if (torqueDemand <= 0.0F &&
+            //     MCU_GetMCU1Data()->motorDirection == MOTOR_DIRECTION_FORWARD)
+            //     {
+            //     // If regen is enabled and the torque demand is zero, we
+            //     // need to set the torque demand to 0 to prevent the motor
+            //     // // from applying torque in the wrong direction
+            //     // motorData.desiredTorque = MAX_REGEN_TORQUE * REGEN_BIAS;
+            // } else {
+            motorData.desiredTorque = torqueDemand;
+            // }
 
         } else {
             motorData.state = MOTOR_STATE_IDLE;
@@ -426,3 +426,5 @@ void Motor_ClearToIdleFault() {
 void Motor_ClearFaultState() { motorData.state = MOTOR_STATE_DRIVING; }
 
 MotorState Motor_GetState() { return motorData.state; }
+
+float Motor_TargetTorque() { return targetTorque; }

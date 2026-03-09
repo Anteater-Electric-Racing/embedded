@@ -7,13 +7,13 @@
 #include "vehicle/bse.h"
 #include "vehicle/faults.h"
 #include "vehicle/motor.h"
+#include "vehicle/shockTravel.h"
 #include "vehicle/telemetry.h"
 #include "vehicle/thermal.h"
 #include <ADC.h>
 #include <arduino_freertos.h>
 #include <chrono>
 #include <stdint.h>
-#include "vehicle/shockTravel.h"
 
 enum SensorIndexesADC0 {    // TODO: Update with real values
     THERMISTOR_1_INDEX = 0, // A0
@@ -26,8 +26,8 @@ enum SensorIndexesADC0 {    // TODO: Update with real values
     SUSP_TRAV_LINPOT3 = 8,
     SUSP_TRAV_LINPOT4 = 9,
     THERMISTOR_2_INDEX = 10, // A1
-    THERMISTOR_3_INDEX,  // A2
-    THERMISTOR_4_INDEX   // A3
+    THERMISTOR_3_INDEX,      // A2
+    THERMISTOR_4_INDEX       // A3
 };
 
 enum SensorIndexesADC1 { // TODO: Update with real values
@@ -42,9 +42,9 @@ enum SensorIndexesADC1 { // TODO: Update with real values
 };
 
 uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {
-    A0, A1, A2, A3,  A4, A5,
+    A0, A1, A2, A3, A4, A5,
     A6, A7, A8, A9, A16}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
-                           // 24, 25, 19, 18, 14, 15, 17};
+                          // 24, 25, 19, 18, 14, 15, 17};
 uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 
 uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {
@@ -100,7 +100,9 @@ void threadADC(void *pvParameters) {
             uint16_t adcRead = adc->adc1->analogRead(currentPinADC1);
             adc1Reads[currentIndexADC1] = adcRead;
         }
-        ShockTravelUpdateData(adc0Reads[SUSP_TRAV_LINPOT1], adc0Reads[SUSP_TRAV_LINPOT2],adc0Reads[SUSP_TRAV_LINPOT3],adc0Reads[SUSP_TRAV_LINPOT4]);
+        ShockTravelUpdateData(
+            adc0Reads[SUSP_TRAV_LINPOT1], adc0Reads[SUSP_TRAV_LINPOT2],
+            adc0Reads[SUSP_TRAV_LINPOT3], adc0Reads[SUSP_TRAV_LINPOT4]);
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
         // thermal_Update(

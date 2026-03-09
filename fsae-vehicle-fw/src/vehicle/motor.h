@@ -28,3 +28,4 @@ void threadMotor(void *pvParameters);
 void Motor_SetFaultState();
 void Motor_ClearFaultState();
 void Motor_ClearToIdleFault();
+float Motor_TargetTorque();

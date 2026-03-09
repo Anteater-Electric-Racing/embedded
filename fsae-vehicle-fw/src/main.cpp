@@ -118,6 +118,10 @@ void threadMain(void *pvParameters) {
         Serial.print(Motor_GetState());
         Serial.print(" | ");
 
+        Serial.print("torque exp: ");
+        Serial.print(Motor_TargetTorque());
+        Serial.print(" | ");
+
         Serial.print("APPS/BSE: ");
         Serial.print(APPS_GetAPPSReading());
         Serial.print(" / ");

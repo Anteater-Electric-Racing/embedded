@@ -52,10 +52,10 @@ void thermal_forceOn() {
 
 /*implement */
 void thermal_MCULoop() {
-    if ((MCU_GetMCU2Data()->mcuTemp <= 0 || MCU_GetMCU2Data()->motorTemp) <=
-            0 ||
-        (MCU_GetMCU2Data()->mcuTemp > 100 ||
-         MCU_GetMCU2Data()->motorTemp > 100)) {
+    if ((MCU_GetMCU2Data()->mcuTemp <= 0) ||
+        (MCU_GetMCU2Data()->motorTemp <= 0) ||
+        (MCU_GetMCU2Data()->mcuTemp > 100) ||
+        (MCU_GetMCU2Data()->motorTemp > 100)) {
         thermal_forceOn();
         return;
     }
