@@ -6,6 +6,7 @@
 #define SPEED_I_GAIN 0.1F // Integral gain for speed control
 
 #include <arduino_freertos.h>
+#include <PID_v1.h>
 
 #include "utils/utils.h"
 
@@ -16,6 +17,7 @@
 #include "vehicle/rtm_button.h"
 #include "apps.h"
 #include "vehicle/ifl100-36.h"
+#include "tc.cpp"
 
 typedef struct{
     MotorState state;
@@ -27,6 +29,7 @@ static TickType_t xLastWakeTime;
 static VCU1 vcu1 = {0};
 static BMS1 bms1 = {0};
 static BMS2 bms2 = {0};
+double slip = 0;
 
 void Motor_Init(){
     motorData.state = MOTOR_STATE_OFF; // TODO Check if we want this
@@ -80,6 +83,7 @@ void threadMotor(void *pvParameters){
 
                 vcu1.VCU_TorqueReq = (uint8_t) ((fabsf(motorData.desiredTorque) / MOTOR_MAX_TORQUE) * 100); // Torque demand in percentage (0-99.6) 350Nm
                 vcu1.VCU_MotorMode = motorData.desiredTorque >= 0 ? 1 : 2; // 0 = Standby, 1 = Drive, 2 = Generate Electricy, 3 = Reserved
+                TractionControl(lWheel.getWheelRPM()/*placeholder*/, rWheel.getWheelRPM()/*placeholder*/, digitalRead(2), digitalRead(3), &vcu1.VCU_TorqueReq);
                 break;
             }
             case MOTOR_STATE_FAULT:
