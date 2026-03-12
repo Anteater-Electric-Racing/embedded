@@ -35,8 +35,16 @@ static BMS2 bms2 = {0};
 // Map 0: Rain (High precision, late power)
 // Map 1: Endurance (Balanced, predictable)
 // Map 2: Autocross  (More linear + induce level shift)
+
+/*
+
+intial default k = 9.0, x0 = 0.35
+karan/gabenote: gets to speed too qucik (nears max at 60% pedal travel)
+3/11 change (tbd): x0 = 0.425 (nears max at 75% pedal travel)
+
+*/
 const float k_vals[] PROGMEM = {10.0f, 9.0f, 12.0f};
-const float x0_vals[] PROGMEM = {0.7f, 0.35f, 0.3f};
+const float x0_vals[] PROGMEM = {0.7f, 0.425f, 0.375f};
 
 float k = 0.0f, x0 = 0.0f, low_limit = 0.0f, high_limit = 0.0f;
 
@@ -168,10 +176,14 @@ void threadMotor(void *pvParameters) {
             targetTorque = torqueMap(APPS_GetAPPSReading());
         }
 
+        // might be very redundant
         if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) { //
             targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
+        } else if (APPS_GetAPPSReading() <= 0.03f) {
+            targetTorque = 0;
         }
 
+        /*safety check if no regen at all*/
         if (targetTorque <= 0) {
             targetTorque = 0;
         }

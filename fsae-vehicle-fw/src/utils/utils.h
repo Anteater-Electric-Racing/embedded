@@ -3,7 +3,10 @@
 #pragma once
 
 /*
-    TODO 3/6 night: better serial monitor (python script with pySerial)
+
+    MIGHT be incorrect packed struct for setting charge/disch limits
+
+    TODO: better serial monitor (python script with pySerial)
    (constantly running) needs all necessary fields
 
     Cooling PID control loop based on MCU and Motor Temp
@@ -12,20 +15,14 @@
 
     Power limiting based on BMS current seen (if accurate)
 
-    IMD data check
+    IMD data check (1 msg read, HV mesage not read)
 
-    Fix torque output read from INVT
+    Fix torque output read from INVT (endianess)
 
     clean up code
 
-    add shocks travel + more to telemetry data packet
-
-
     TODO Fixes:
     BIG MZ Change - INTERUPT BASED CAN Testing:
-        - Fix PCC packet structure (acc/Ts voltage as uint8s)
-        - MITAGED --> send proper telemetry packet --> Better serial output
-   (read off port and output in more readable form
 */
 #define SERIALMONITOR_FLAG 1
 #define DEBUG_FLAG 0
@@ -89,8 +86,8 @@
 #define APPS2_20PCT_ADC 1150.0F
 
 /**KZ Driving MAX (30%)) */
-#define APPS1_FULL_PCT_ADC 546.0F
-#define APPS2_FULL_PCT_ADC 3075.0F
+#define APPS1_FULL_PCT_ADC 1526.0F
+#define APPS2_FULL_PCT_ADC 3659.0F
 
 // Measured resting ADC (change these with actual findings this is just safe
 // zone values)
@@ -143,7 +140,7 @@
 #define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
 #define CAPPED_MOTOR_TORQUE 150.0F
 #define MAX_TORQUE_STEP_UP_PCT 0F
-#define MAX_TORQUE_STEP_DOWN_PCT 2.0F
+#define MAX_TORQUE_STEP_DOWN_PCT 1.0F
 #define TORQUE_SHIFT_OFFSET 5.0F
 
 #define BATTERY_MAX_CURRENT_A 140.0F // TO CHANGE

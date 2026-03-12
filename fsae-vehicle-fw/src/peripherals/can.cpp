@@ -15,7 +15,7 @@
 #include "vehicle/motor.h"
 #include "vehicle/telemetry.h"
 
-#define CAN_INSTANCE CAN1
+#define CAN_INSTANCE CAN1 // can be removed
 #define CAN_BAUD_RATE 500000
 
 FlexCAN_T4<CAN2, RX_SIZE_256, TX_SIZE_16> can2;
@@ -40,6 +40,8 @@ void CAN_Init() {
     can3.setTX(DEF);
     can3.setRX(DEF);
     can3.enableFIFO();
+
+    /*interuppt based enables*/
     // can3.enableFIFOInterrupt();
     // can3.setMaxMB(16); // Set maximum message buffers to 16
 
@@ -51,6 +53,7 @@ void CAN_Send(std::uint32_t id, std::uint64_t msg) {
     motorMsg.id = id;
     memcpy(motorMsg.buf, &msg, sizeof(msg));
 
+    // @ksthakkar TODO: fix duplicate writes - watch CAN utilization
     can3.write(motorMsg);
     can2.write(motorMsg);
 }

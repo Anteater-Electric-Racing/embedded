@@ -118,7 +118,7 @@ void threadMain(void *pvParameters) {
         Serial.print(Motor_GetState());
         Serial.print(" | ");
 
-        Serial.print("torque exp: ");
+        Serial.print("T.out: ");
         Serial.print(Motor_TargetTorque());
         Serial.print(" | ");
 
