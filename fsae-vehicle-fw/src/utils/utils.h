@@ -4,22 +4,24 @@
 
 /*
 
-    MIGHT be incorrect packed struct for setting charge/disch limits
+    Misc KZ fixes (low priority):
+        MIGHT be incorrect packed struct order for setting charge/disch limits
 
-    TODO: better serial monitor (python script with pySerial)
-   (constantly running) needs all necessary fields
+        TODO: better serial monitor (python script with pySerial)
+    (constantly running) needs all necessary fields
 
-    Cooling PID control loop based on MCU and Motor Temp
+        Cooling PID control loop based on MCU and Motor Temp
 
-    Derating of torque based on temp.
+        Derating of torque based on temp.
 
-    Power limiting based on BMS current seen (if accurate)
+        Power limiting based on BMS current seen (if accurate)
 
-    IMD data check (1 msg read, HV mesage not read)
+        IMD data check (1 msg read, HV mesage not read) -- IMD error code 512 is
+    read until status is cleared
 
-    Fix torque output read from INVT (endianess)
+        Fix torque output read from INVT (endianess)
 
-    clean up code
+        clean up code
 
     TODO Fixes:
     BIG MZ Change - INTERUPT BASED CAN Testing:
