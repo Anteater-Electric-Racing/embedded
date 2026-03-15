@@ -195,23 +195,37 @@ pub struct TelemetryData {
     pub max_motor_torque: f32,
     pub motor_direction: MotorRotateDirection,
     pub motor_state: MotorState,
+
     pub mcu_main_state: MCUMainState,
     pub mcu_work_mode: MCUWorkMode,
+
     pub mcu_voltage: f32,
+    pub mcu_phase_current: f32,
     pub mcu_current: f32,
+
     pub motor_temp: i32,
     pub mcu_temp: i32,
-    pub dc_main_wire_over_volt_fault: bool,
-    pub dc_main_wire_over_curr_fault: bool,
-    pub motor_over_spd_fault: bool,
-    pub motor_phase_curr_fault: bool,
-    pub motor_stall_fault: bool,
+
     pub mcu_warning_level: MCUWarningLevel,
 
     pub shocktravel1: f32,
     pub shocktravel2: f32,
     pub shocktravel3: f32,
     pub shocktravel4: f32,
+
+    pub dc_main_wire_over_volt_fault: bool,
+    pub motor_phase_curr_fault: bool,
+    pub mcu_over_hot_fault: bool,
+    pub resolver_fault: bool,
+    pub phase_curr_sensor_fault: bool,
+    pub motor_over_spd_fault: bool,
+    pub drv_motor_over_hot_fault: bool,
+    pub dc_main_wire_over_curr_fault: bool,
+    pub drv_motor_over_cool_fault: bool,
+    pub dc_low_volt_warning: bool,
+    pub mcu_12v_low_volt_warning: bool,
+    pub motor_stall_fault: bool,
+    pub motor_open_phase_fault: bool,
 
     #[deku(bits = 1)]
     pub over_current: bool,
