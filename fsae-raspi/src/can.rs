@@ -178,6 +178,9 @@ pub struct TelemetryData {
     pub bse_front: f32,
     pub bse_rear: f32,
 
+    pub imd_resistance: f32,
+    pub imd_status: u32,
+
     pub pack_voltage: f32,
     pub pack_current: f32,
     pub soc: f32,
