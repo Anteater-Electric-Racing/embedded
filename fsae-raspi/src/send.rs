@@ -15,6 +15,10 @@ pub const MQTT_ID: &str = "fsae";
 pub const MQTT_HOST: &str = "127.0.0.1";
 pub const MQTT_PORT: u16 = 1883;
 
+const CREATE_DB: &str =
+    "CREATE DATABASE IF NOT EXISTS fsae WAL_LEVEL 2 WAL_FSYNC_PERIOD 0 STT_TRIGGER 1 KEEP 365d";
+const MAX_CONSECUTIVE_FAILURES: u32 = 10;
+
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
 }
@@ -31,19 +35,28 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
             let builder =
                 TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
 
+            {
+                let taos = builder
+                    .build()
+                    .await
+                    .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
+                if let Err(e) = taos.exec(CREATE_DB).await {
+                    error!(%e, "Failed to create database");
+                }
+            }
+
             for _ in 0..4 {
                 let rx = rx.clone();
                 let taos = builder
                     .build()
                     .await
                     .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
-                if let Err(e) = taos.exec("CREATE DATABASE IF NOT EXISTS fsae").await {
-                    error!(%e, "Failed to create database");
-                }
                 tokio::spawn(async move {
                     let mut buffer: Vec<String> = Vec::new();
                     let mut id: u64 = 0;
-                    while rx.lock().await.recv_many(&mut buffer, usize::MAX).await > 0 {
+                    let mut consecutive_failures: u32 = 0;
+
+                    while rx.lock().await.recv_many(&mut buffer, 5000).await > 0 {
                         let data = SmlDataBuilder::default()
                             .protocol(SchemalessProtocol::Line)
                             .precision(SchemalessPrecision::Millisecond)
@@ -52,8 +65,24 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
                             .build()
                             .unwrap_or_else(|e| panic!("Failed to build SML data: {e}"));
                         id = id.wrapping_add(1);
-                        if let Err(e) = taos.put(&data).await {
-                            error!(%e, "Failed to insert into TDengine");
+
+                        match taos.put(&data).await {
+                            Ok(_) => {
+                                consecutive_failures = 0;
+                            }
+                            Err(e) => {
+                                consecutive_failures += 1;
+                                error!(%e, consecutive_failures, "Failed to insert into TDengine");
+
+                                if consecutive_failures >= MAX_CONSECUTIVE_FAILURES {
+                                    error!(
+                                        "Hit {MAX_CONSECUTIVE_FAILURES} consecutive write failures — recreating database"
+                                    );
+                                    let _ = taos.exec("DROP DATABASE IF EXISTS fsae").await;
+                                    let _ = taos.exec(CREATE_DB).await;
+                                    consecutive_failures = 0;
+                                }
+                            }
                         }
                     }
                 });
