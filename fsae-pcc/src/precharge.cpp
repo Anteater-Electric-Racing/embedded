@@ -155,6 +155,50 @@ void updateVoltage(int pin) {
     }
 }
 
+typedef enum PCCScaleType { LINEAR, LOG, EXP, NONE } PCCScaleType;
+
+float scaleTsVoltage(float tsVoltage, PCCScaleType type) {
+    // Scale voltage based on curve fit
+
+    // Linear fit ( y=ax+b )
+
+    // Logarithmic fit ( y=a*ln(x)+b )
+
+    // Exponential fit ( y=a*exp(bx) )
+
+    // Initialize to input voltage as fail-safe
+
+    float outputVoltage = tsVoltage;
+
+    const float LINEAR_A = 0.0;
+    const float LINEAR_B = 0.0;
+
+    const float LOG_A = 0.0;
+    const float LOG_B = 0.0;
+
+    const float EXP_A = 0.0;
+    const float EXP_B = 0.0;
+
+    switch (type) {
+    case PCCScaleType::LINEAR: {
+        outputVoltage = LINEAR_A * tsVoltage + LINEAR_B; // ax + b
+        break;
+    }
+    case PCCScaleType::LOG: {
+        outputVoltage = LOG_A * log(tsVoltage) + LOG_B; // a ln(x) + b
+        break;
+    }
+    case PCCScaleType::EXP: {
+        outputVoltage = EXP_A * exp(EXP_B * tsVoltage);
+        break;
+    }
+    default:
+        break;
+    }
+
+    return outputVoltage;
+}
+
 // STANDBY STATE: Open AIRs, Open Precharge, indicate status, wait for stable
 // SDC
 void standby() {
@@ -181,8 +225,10 @@ void precharge() {
     }
 
     // The precharge progress is a function of the accumulator voltage
+    // Scale traction system voltage using scaling function
     pcData.prechargeProgress =
-        100.0 * pcData.tsVoltage / pcData.accVoltage; // [%]
+        100.0 * scaleTsVoltage(pcData.tsVoltage, PCCScaleType::NONE) /
+        pcData.accVoltage; // [%]
 
     // Print Precharging progress
     static uint32_t lastPrint = 0U;
