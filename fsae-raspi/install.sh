@@ -13,10 +13,11 @@ echo "==> Installing Rust for $REAL_USER..."
 sudo -u "$REAL_USER" bash -c 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
 
 echo "==> Building TDEngine..."
-wget https://downloads.tdengine.com/tdengine-tsdb-oss/3.4.0.9/tdengine-tsdb-oss-3.4.0.9-linux-arm64.tar.gz
-tar -zxvf tdengine-tsdb-oss-3.4.0.9-linux-arm64.tar.gz
-cd tdengine-tsdb-oss-3.4.0.9
-./install.sh
+TD_VER="3.4.0.9"
+wget -q "https://downloads.tdengine.com/tdengine-tsdb-oss/${TD_VER}/tdengine-tsdb-oss-${TD_VER}-linux-${ARCH}.tar.gz"
+tar -zxf "tdengine-tsdb-oss-${TD_VER}-linux-${ARCH}.tar.gz"
+cd "tdengine-tsdb-oss-${TD_VER}" && ./install.sh && cd -
+rm -rf "tdengine-tsdb-oss-${TD_VER}"*
 systemctl enable --now taosd
 
 echo "==> Patching and installing systemd service files for user '$REAL_USER'..."
