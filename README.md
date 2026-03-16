@@ -18,7 +18,7 @@ flowchart TD
         R -->|MQTT| D(["<a href='https://github.com/AlistairKeiller/FSAE/tree/master/fsae-dashboard' target='_blank'>Raspi Dashboard</a>"])
     end
     subgraph Graphana[Wireless Grafana]
-        I -->|HTTP| F(Full Histroy Preview)
+        I -->|HTTP| F(Full History Preview)
         R -->|MQTT| P(Real Time Preview)
     end
 ```
