@@ -13,7 +13,7 @@
 //! Production code relies on `can0`, while tests can run against vcan0
 //! using the virtual CAN network setup in the GitHub Actions workflow (test.yml).
 
-use crate::send::{send_message, Reading};
+use crate::send::{now_ms, send_message, Reading};
 use deku::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -174,23 +174,59 @@ pub enum MCUWarningLevel {
 #[deku(endian = "little")]
 pub struct TelemetryData {
     pub apps_travel: f32,
+
+    pub bse_front: f32,
+    pub bse_rear: f32,
+
+    pub imd_resistance: f32,
+    pub imd_status: u32,
+
+    pub pack_voltage: f32,
+    pub pack_current: f32,
+    pub soc: f32,
+    pub discharge_limit: f32,
+    pub charge_limit: f32,
+    pub low_cell_volt: f32,
+    pub high_cell_volt: f32,
+    pub avg_cell_volt: f32,
+
     pub motor_speed: f32,
     pub motor_torque: f32,
     pub max_motor_torque: f32,
     pub motor_direction: MotorRotateDirection,
     pub motor_state: MotorState,
+
     pub mcu_main_state: MCUMainState,
     pub mcu_work_mode: MCUWorkMode,
+
     pub mcu_voltage: f32,
+    pub mcu_phase_current: f32,
     pub mcu_current: f32,
+
     pub motor_temp: i32,
     pub mcu_temp: i32,
-    pub dc_main_wire_over_volt_fault: bool,
-    pub dc_main_wire_over_curr_fault: bool,
-    pub motor_over_spd_fault: bool,
-    pub motor_phase_curr_fault: bool,
-    pub motor_stall_fault: bool,
+
     pub mcu_warning_level: MCUWarningLevel,
+
+    pub shocktravel1: f32,
+    pub shocktravel2: f32,
+    pub shocktravel3: f32,
+    pub shocktravel4: f32,
+
+    pub dc_main_wire_over_volt_fault: bool,
+    pub motor_phase_curr_fault: bool,
+    pub mcu_over_hot_fault: bool,
+    pub resolver_fault: bool,
+    pub phase_curr_sensor_fault: bool,
+    pub motor_over_spd_fault: bool,
+    pub drv_motor_over_hot_fault: bool,
+    pub dc_main_wire_over_curr_fault: bool,
+    pub drv_motor_over_cool_fault: bool,
+    pub dc_low_volt_warning: bool,
+    pub mcu_12v_low_volt_warning: bool,
+    pub motor_stall_fault: bool,
+    pub motor_open_phase_fault: bool,
+
     #[deku(bits = 1)]
     pub over_current: bool,
     #[deku(bits = 1)]
@@ -235,11 +271,12 @@ async fn read_can_hardware() {
         };
 
         while let Ok(packet) = socket.read_packet().await {
+            let ts = now_ms();
             match TelemetryData::from_bytes((packet.as_ref(), 0)) {
                 Ok(((remaining, _), _)) if !remaining.is_empty() => {
                     warn!("Telemetry packet has {} trailing bytes", remaining.len(),);
                 }
-                Ok((_, data)) => send_message(data).await,
+                Ok((_, data)) => send_message(data, ts).await,
                 Err(e) => warn!(error = %e, "Malformed telemetry packet"),
             }
         }
@@ -256,7 +293,7 @@ async fn read_can_synthetic() {
     let mut interval = tokio::time::interval(Duration::from_millis(1));
     loop {
         interval.tick().await;
-        send_message(TelemetryData::default()).await;
+        send_message(TelemetryData::default(), now_ms()).await;
         count += 1;
 
         let elapsed = last.elapsed();
