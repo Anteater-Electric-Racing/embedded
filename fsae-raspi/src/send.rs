@@ -136,9 +136,13 @@ fn push_field(buf: &mut String, k: &str, v: &serde_json::Value) {
     }
 }
 
-fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Option<String> {
+fn to_line_protocol_from_value(
+    measurement: &str,
+    map: &serde_json::Value,
+    timestamp_ms: u64,
+) -> Option<String> {
     let obj = map.as_object()?;
-    let mut buf = String::with_capacity(measurement.len() + 1 + obj.len() * 30);
+    let mut buf = String::with_capacity(measurement.len() + 1 + obj.len() * 30 + 20);
     buf.push_str(measurement);
     buf.push(' ');
 
@@ -151,17 +155,31 @@ fn to_line_protocol_from_value(measurement: &str, map: &serde_json::Value) -> Op
         push_field(&mut buf, k, v);
     }
 
+    buf.push(' ');
+    buf.push_str(itoa::Buffer::new().format(timestamp_ms));
+
     Some(buf)
 }
 
-pub async fn send_message<T: Reading + Send + 'static>(message: T) {
-    let value = match serde_json::to_value(&message) {
+pub fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("clock went backwards")
+        .as_millis() as u64
+}
+
+pub async fn send_message<T: Reading + Send + 'static>(message: T, timestamp_ms: u64) {
+    let mut value = match serde_json::to_value(&message) {
         Ok(v) => v,
         Err(e) => {
             error!(%e, "Failed to serialize message");
             return;
         }
     };
+
+    if let Some(obj) = value.as_object_mut() {
+        obj.insert("ts".to_string(), serde_json::json!(timestamp_ms));
+    }
 
     let json = value.to_string();
     let topic = T::topic();
@@ -176,15 +194,15 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T) {
         }
         Err(e) => error!(%e, "MQTT publish error"),
     }
-    match get_tdengine_sender()
-        .await
-        .try_send(match to_line_protocol_from_value(topic, &value) {
+    match get_tdengine_sender().await.try_send(
+        match to_line_protocol_from_value(topic, &value, timestamp_ms) {
             Some(line) => line,
             None => {
                 error!("Failed to convert to line protocol");
                 return;
             }
-        }) {
+        },
+    ) {
         Ok(()) => {}
         Err(TrySendError::Full(_)) => {
             tracing::warn!("TDengine channel full — dropping message");

@@ -13,7 +13,7 @@
 //! Production code relies on `can0`, while tests can run against vcan0
 //! using the virtual CAN network setup in the GitHub Actions workflow (test.yml).
 
-use crate::send::{send_message, Reading};
+use crate::send::{now_ms, send_message, Reading};
 use deku::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -271,11 +271,12 @@ async fn read_can_hardware() {
         };
 
         while let Ok(packet) = socket.read_packet().await {
+            let ts = now_ms();
             match TelemetryData::from_bytes((packet.as_ref(), 0)) {
                 Ok(((remaining, _), _)) if !remaining.is_empty() => {
                     warn!("Telemetry packet has {} trailing bytes", remaining.len(),);
                 }
-                Ok((_, data)) => send_message(data).await,
+                Ok((_, data)) => send_message(data, ts).await,
                 Err(e) => warn!(error = %e, "Malformed telemetry packet"),
             }
         }
@@ -292,7 +293,7 @@ async fn read_can_synthetic() {
     let mut interval = tokio::time::interval(Duration::from_millis(1));
     loop {
         interval.tick().await;
-        send_message(TelemetryData::default()).await;
+        send_message(TelemetryData::default(), now_ms()).await;
         count += 1;
 
         let elapsed = last.elapsed();
