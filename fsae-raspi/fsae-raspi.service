@@ -1,11 +1,13 @@
 [Unit]
 Description=FSAE Raspi Service
-After=network.target
+After=network.target taosd.service
+Requires=taosd.service
 
 [Service]
-User=fsae
-WorkingDirectory=/home/fsae/embedded
-ExecStart=/home/fsae/.cargo/bin/cargo run --bin fsae-raspi --release
+User=__USER__
+WorkingDirectory=__HOME__/Documents/embedded
+ExecStartPre=/bin/sh -c 'until taos -s "SELECT SERVER_VERSION();" > /dev/null 2>&1; do sleep 2; done'
+ExecStart=__HOME__/.cargo/bin/cargo run --bin fsae-raspi --release
 Restart=always
 RestartSec=10
 
