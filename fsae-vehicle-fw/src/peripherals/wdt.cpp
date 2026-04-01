@@ -2,12 +2,10 @@
 #include <Watchdog_t4.h>
 #include <arduino_freertos.h>
 
-#include "wdt.h"
+#include "peripherals/wdt.h"
 #include "utils/utils.h"
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
-
-
 
 // Bitmask flag definition
 static uint8_t WDT_BIT_BSE = 0b01;

@@ -34,8 +34,7 @@ void BSE_Init() {
         BSE_CUTOFF_HZ); // 10Hz cutoff frequency, 0.01s sample time
 }
 
-void BSE_UpdateData(uint32_t bseReading1, 
-                    uint32_t bseReading2) {
+void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
     // update clock for WDT
     bse_last_run_tick = xTaskGetTickCount();
 
