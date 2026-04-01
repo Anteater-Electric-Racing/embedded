@@ -42,7 +42,9 @@ void APPS_Init() {
 }
 
 void APPS_UpdateData(uint16_t rawReading1,
-                     uint16_t rawReading2) { // changed uint16 from 32
+                     uint16_t rawReading2) { 
+    // changed uint16 from 32
+    
     // update clock for WDT
     apps_last_run_tick = xTaskGetTickCount();
     

@@ -1,13 +1,13 @@
-#include "wdt.h"
-
-#include "utils/utils.h"
-
-#include "vehicle/apps.h"
-#include "vehicle/bse.h"
-
 #include <Arduino.h>
 #include <Watchdog_t4.h>
 #include <arduino_freertos.h>
+
+#include "wdt.h"
+#include "utils/utils.h"
+#include "vehicle/apps.h"
+#include "vehicle/bse.h"
+
+
 
 // Bitmask flag definition
 static uint8_t WDT_BIT_BSE = 0b01;
@@ -26,7 +26,7 @@ void WDT_Init() {
 
     WDT_timings_t config;
 
-    config.timeout = 1.0;     // second before reset
+    config.timeout = 1.0; // second before reset
     config.trigger = 0.0;
     config.callback = nullptr;
 
@@ -59,7 +59,7 @@ void WDT_Update_Task() {
 
         // Fault time are both 100 ms
         if (bse_ageMs > BSE_FAULT_TIME_THRESHOLD_MS) {
-            mask |= WDT_BIT_BSE;  // x |= y  ==> x = x | y
+            mask |= WDT_BIT_BSE; // x |= y ==> x = x | y
         }
         if (apps_ageMs > APPS_FAULT_TIME_THRESHOLD_MS) {
             mask |= WDT_BIT_APPS;
@@ -67,15 +67,15 @@ void WDT_Update_Task() {
 
         // pet if 0b00
         if (mask == WDT_REQUIRED_MASK) {
-            WDT.feed();  // pet hardware watchdog
+            WDT.feed(); // pet hardware watchdog
         } else if (mask == WDT_BIT_BSE) {
             Serial.println("WDT: BSE update overdue");
         } else if (mask == WDT_BIT_APPS) {
             Serial.println("WDT: APPS update overdue");
-        } else if (mask == (WDT_BIT_BSE | WDT_BIT_APPS)) {  // mask = 0b11
+        } else if (mask == (WDT_BIT_BSE | WDT_BIT_APPS)) { // mask = 0b11
             Serial.println("WDT: BSE and APPS updates overdue");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(WDT_CHECK_PERIOD_MS));  // 100ms delay
+        vTaskDelay(pdMS_TO_TICKS(WDT_CHECK_PERIOD_MS)); // 100ms delay
     }
 }
