@@ -10,8 +10,6 @@
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 
-
-
 typedef struct {
     float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
     float appsReading2_Percentage; // Percentage of pedal travel (0 to 1)
