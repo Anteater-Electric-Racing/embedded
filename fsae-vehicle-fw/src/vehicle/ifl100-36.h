@@ -11,8 +11,32 @@
 #define mMCU2_ID 0x106
 #define mMCU3_ID 0x107
 
+#define mOBMS1_ID 0x6B0
+#define mOBMS2_ID 0x6B1
+#define mOBMS3_ID 0x6B2
+#define mOBMS4_ID 0x6B3
+
+#define pcc_ID 0x222
+
 #define mBMS1_ID 0x1A0
 #define mBMS2_ID 0x1A1
+
+// double check this
+#define mIMD_GENERAL_ID 0x18FF01F4
+#define mIMD_DETAIL_ID 0x18FF02F4
+#define mIMD_VOLTAGE_ID 0x18FF03F4
+#define mIMD_IT_SYSTEM_ID 0x18FF04F4
+
+// J1939 ID: Priority 6 (0x18) | PGN (0xEF00) | Dest (0xF4) | Source (0x17)
+#define IMD_CMD_ID 0x18EFF417
+
+// Indices from manual section 2.2
+#define IMD_IDX_THRESHOLD_ERROR 0x47
+#define IMD_IDX_STATUS_LOCK 0x6B
+
+// Lock States
+#define IMD_LOCK_UNLOCK 0xFC
+#define IMD_LOCK_LOCK 0xFD
 
 typedef enum {
     DIRECTION_STANDBY = 0,
@@ -49,11 +73,11 @@ typedef struct __attribute__((packed)) {
 
     uint64_t Reserved : 5;
     uint64_t VCUAuthenticationStatus : 2;
-    uint64_t ChangeGearAlarm: 1; // end of byte 3
+    uint64_t ChangeGearAlarm : 1; // end of byte 3
 
-    uint64_t VehicleState: 1;
-    uint64_t Brake_Pedal_Sts: 2;
-    uint64_t BMS_Main_Relay_Cmd: 1;
+    uint64_t VehicleState : 1;
+    uint64_t Brake_Pedal_Sts : 2;
+    uint64_t BMS_Main_Relay_Cmd : 1;
     uint64_t GearLeverPos_Sts : 3;
     uint64_t GearLeverPos_Sts_F : 1; // end of byte 4
 
@@ -64,38 +88,38 @@ typedef struct __attribute__((packed)) {
     uint64_t KeyPosition : 2; // end of byte 5
 
     uint64_t RollingCounter : 4;
-    uint64_t BMS_Aux_Relay_Cmd: 1;
+    uint64_t BMS_Aux_Relay_Cmd : 1;
     uint64_t PowerReduceReq : 3; // end of byte 6
 
     uint64_t CheckSum : 8; // end of byte 7
-} VCU1; // bit order verified
+} VCU1;                    // bit order verified
 
 typedef struct __attribute__((packed)) {
-    uint64_t MCU_ActMotorSpd : 16; // end of byte 0 and byte 1
-    uint64_t MCU_ActMotorTq: 8; // end of byte 2
-    uint64_t MCU_MaxMotorTq : 8; // end of byte 3
+    uint64_t MCU_ActMotorSpd : 16;    // end of byte 0 and byte 1
+    uint64_t MCU_ActMotorTq : 8;      // end of byte 2
+    uint64_t MCU_MaxMotorTq : 8;      // end of byte 3
     uint64_t MCU_MaxMotorBrakeTq : 8; // end of byte 4
 
     // flipped
-    uint64_t Reserved: 3;
+    uint64_t Reserved : 3;
     uint64_t MCU_MotorMainState : 3;
     uint64_t MCU_MotorRotateDirection : 2; // end of byte 5
 
     uint64_t RollingCounter : 4; // end of byte 6
     uint64_t MCU_MotorState : 2;
-    uint64_t MCU_MotorWorkMode: 2;
+    uint64_t MCU_MotorWorkMode : 2;
 
     uint64_t CheckSum : 8; // end of byte 7
-} MCU1; // order fixed, needs to be verified
+} MCU1;                    // order fixed, needs to be verified
 
 typedef struct __attribute__((packed)) {
-    uint64_t MCU_Motor_Temp : 8; // end of byte 0
-    uint64_t MCU_hardwareTemp: 8; // end of byte 1
+    uint64_t MCU_Motor_Temp : 8;   // end of byte 0
+    uint64_t MCU_hardwareTemp : 8; // end of byte 1
 
     uint64_t MCU_DCMainWireOverCurrFault : 1;
     uint64_t MCU_MotorPhaseCurrFault : 1;
-    uint64_t MCU_OverHotFault: 1;
-    uint64_t MCU_MotorResolver_Fault: 1;
+    uint64_t MCU_OverHotFault : 1;
+    uint64_t MCU_MotorResolver_Fault : 1;
     uint64_t MCU_PhaseCurrSensorState : 1;
     uint64_t MCU_MotorOverSpdFault : 1;
     uint64_t Drv_MotorOverHotFault : 1;
@@ -116,25 +140,25 @@ typedef struct __attribute__((packed)) {
     uint64_t MCU_MotorStallFault : 1; // end of byte 6
 
     uint64_t CheckSum : 8; // end of byte 7
-} MCU2; // fixed order, needs to be verified
+} MCU2;                    // fixed order, needs to be verified
 
 typedef struct __attribute__((packed)) {
     uint64_t MCU_DC_MainWireVolt : 16; // end of byte 0 and byte 1
-    uint64_t MCU_DC_MainWireCurr: 16; // end of byte 2 and byte 3
-    uint64_t MCU_MotorPhaseCurr : 16; // end of byte 4 and byte 5
-    uint64_t Reserved : 16; // end of byte 6 and byte 7
-} MCU3; // bit order verified
+    uint64_t MCU_DC_MainWireCurr : 16; // end of byte 2 and byte 3
+    uint64_t MCU_MotorPhaseCurr : 16;  // end of byte 4 and byte 5
+    uint64_t Reserved : 16;            // end of byte 6 and byte 7
+} MCU3;                                // bit order verified
 
 typedef struct __attribute__((packed)) {
     uint64_t BMS_Warning_Level : 2;
     uint64_t Batt_charge_Sts : 2;
     uint64_t Negative_Relay_FB : 1;
     uint64_t Positive_Relay_FB : 1;
-    uint64_t HighVoltLoopLockSts: 1;
+    uint64_t HighVoltLoopLockSts : 1;
     uint64_t Batt_Charge_Sts_F : 1; // end of byte 0
 
-    uint64_t Batt_SOC_Value: 8; // end of byte 1
-    uint64_t Batt_SOH_Value: 8; // end of byte 2
+    uint64_t Batt_SOC_Value : 8; // end of byte 1
+    uint64_t Batt_SOH_Value : 8; // end of byte 2
 
     uint64_t BMS_Cmd_AC_DC : 2;
     uint64_t Pre_charge_Relay_FB : 1;
@@ -147,7 +171,7 @@ typedef struct __attribute__((packed)) {
     uint64_t Batt_Pack_Coincidence_Alarm : 1;
     uint64_t Batt_Pack_Matching_Alarm : 1;
     uint64_t Insulation_Resistance_Low_F : 1;
-    uint64_t HighVoltLoopLockSts_F: 1;
+    uint64_t HighVoltLoopLockSts_F : 1;
     uint64_t ChargeRelayAdhereDetectionSts : 1;
     uint64_t RelayAdhereDetectionSts : 1; // end of byte 4
 
@@ -157,62 +181,142 @@ typedef struct __attribute__((packed)) {
     uint64_t Reserved3 : 4; // end of byte 6
 
     uint64_t CheckSum : 8; // end of byte 7
-} BMS1; // bit order verified
+} BMS1;                    // bit order verified
 
 typedef struct __attribute__((packed)) {
-    uint64_t sAllowMaxDischarge : 16; // end of byte 1 and byte 2
-    uint64_t sAllowMaxRegenCharge: 16; // end of byte 3 and byte 4
+    uint64_t sAllowMaxDischarge : 16;   // end of byte 1 and byte 2
+    uint64_t sAllowMaxRegenCharge : 16; // end of byte 3 and byte 4
 
-    uint64_t Reserved : 20; // end of byte 5
+    uint64_t Reserved : 20;      // end of byte 5
     uint64_t RollingCounter : 4; // end of byte 6
 
     uint64_t CheckSum : 8; // end of byte 7
-} BMS2; // bit order verified
+} BMS2;                    // bit order verified
 
 typedef struct {
     // MCU1 data
-    float motorSpeed; // Motor speed in RPM
-    float motorTorque; // Motor torque in Nm
-    float maxMotorTorque; // Max motor torque in Nm
-    float maxMotorBrakeTorque; // Max motor brake torque in Nm
+    float motorSpeed;                    // Motor speed in RPM
+    float motorTorque;                   // Motor torque in Nm
+    float maxMotorTorque;                // Max motor torque in Nm
+    float maxMotorBrakeTorque;           // Max motor brake torque in Nm
     MotorRotateDirection motorDirection; // Motor direction
-    MCUMainState mcuMainState; // Motor main state
-    MCUWorkMode mcuWorkMode; // MCU work mode
+    MCUMainState mcuMainState;           // Motor main state
+    MCUWorkMode mcuWorkMode;             // MCU work mode
 } MCU1Data;
 
 typedef struct {
-    int32_t motorTemp; // Motor temperature in C
-    int32_t mcuTemp; // Hardware temperature in C
-    bool dcMainWireOverVoltFault; // DC over voltage fault
-    bool motorPhaseCurrFault; // MCU motor phase current fault
-    bool mcuOverHotFault; // MCU overheat fault
-    bool resolverFault; // Resolver fault
-    bool phaseCurrSensorFault; // Phase current sensor fault
-    bool motorOverSpdFault; // MCU motor over speed fault
-    bool drvMotorOverHotFault; // Driver motor overheat fault
-    bool dcMainWireOverCurrFault; // DC main wire over voltage fault
-    bool drvMotorOverCoolFault; // Driver motor overcool fault
-    bool mcuMotorSystemState; // MCU motor system state
-    bool mcuTempSensorState; // MCU temperature sensor state
-    bool motorTempSensorState; // MCU motor temperature sensor state
-    bool dcVoltSensorState; // MCU DC voltage sensor state
-    bool dcLowVoltWarning; // MCU DC low voltage warning
-    bool mcu12VLowVoltWarning; // MCU 12V low voltage warning
-    bool motorStallFault; // MCU motor stall fault
-    bool motorOpenPhaseFault; // MCU motor open phase fault
+    int32_t motorTemp;               // Motor temperature in C
+    int32_t mcuTemp;                 // Hardware temperature in C
+    bool dcMainWireOverVoltFault;    // DC over voltage fault
+    bool motorPhaseCurrFault;        // MCU motor phase current fault
+    bool mcuOverHotFault;            // MCU overheat fault
+    bool resolverFault;              // Resolver fault
+    bool phaseCurrSensorFault;       // Phase current sensor fault
+    bool motorOverSpdFault;          // MCU motor over speed fault
+    bool drvMotorOverHotFault;       // Driver motor overheat fault
+    bool dcMainWireOverCurrFault;    // DC main wire over voltage fault
+    bool drvMotorOverCoolFault;      // Driver motor overcool fault
+    bool mcuMotorSystemState;        // MCU motor system state
+    bool mcuTempSensorState;         // MCU temperature sensor state
+    bool motorTempSensorState;       // MCU motor temperature sensor state
+    bool dcVoltSensorState;          // MCU DC voltage sensor state
+    bool dcLowVoltWarning;           // MCU DC low voltage warning
+    bool mcu12VLowVoltWarning;       // MCU 12V low voltage warning
+    bool motorStallFault;            // MCU motor stall fault
+    bool motorOpenPhaseFault;        // MCU motor open phase fault
     MCUWarningLevel mcuWarningLevel; // MCU warning level
 } MCU2Data;
 
 typedef struct {
-    float mcuVoltage; // DC main wire voltage in V
-    float mcuCurrent; // DC main wire current in A
+    float mcuVoltage;     // DC main wire voltage in V
+    float mcuCurrent;     // DC main wire current in A
     float motorPhaseCurr; // Motor phase current in A
 } MCU3Data;
 
+typedef struct __attribute__((packed)) {
+    int16_t packCurrent;  // Byte 0-1: Pack Current (0.1A/bit)
+    uint16_t packVoltage; // Byte 2-3: Pack Voltage (0.1V/bit)
+    uint8_t packSOC;      // Byte 4: SOC (0.5%/bit)
+    uint8_t relayState;   // Byte 5: Relay State Bitmask
+    uint8_t reserved;     // Byte 6
+    uint8_t checksum;     // Byte 7
+} OBMS1;
+
+typedef struct __attribute__((packed)) {
+    uint16_t packDCL; // Byte 0-1: Discharge Current Limit (1A/bit)
+    uint16_t packCCL; // Byte 2-3: Charge Current Limit (1A/bit)
+    int8_t highTemp;  // Byte 4: Highest Temp (1C/bit)
+    int8_t lowTemp;   // Byte 5: Lowest Temp (1C/bit)
+    uint8_t reserved; // Byte 6
+    uint8_t checksum; // Byte 7
+} OBMS2;
+
+typedef struct __attribute__((packed)) {
+    uint16_t lowCellVolt;  // Byte 0-1: Lowest Cell Voltage (0.0001V/bit)
+    uint16_t highCellVolt; // Byte 2-3: Highest Cell Voltage (0.0001V/bit)
+    uint16_t avgCellVolt;  // Byte 4-5: Average Cell Voltage (0.0001V/bit)
+    uint8_t lowCellVoltID; // Byte 6: ID of the lowest voltage cell
+    uint8_t checksum;      // Byte 7
+} OBMS3;
+
+typedef struct __attribute__((packed)) {
+    uint16_t packResistance;  // Example: Pack Internal Resistance
+    uint16_t packOpenVoltage; // Example: Pack Open Circuit Voltage
+    uint8_t reserved[3];
+    uint8_t checksum;
+} OBMS4;
+
+typedef struct {
+    float packCurrent;  // Amps
+    float packVoltage;  // Volts
+    float soc;          // Percentage (0-100%)
+    uint8_t relayState; // Bitmask (Discharge, Charge, etc.)
+
+    float dischargeLimit; // Amps
+    float chargeLimit;    // Amps
+    int8_t highTemp;      // Celsius
+    int8_t lowTemp;       // Celsius
+
+    float lowCellVolt;  // Volts (e.g., 3.4215f)
+    float highCellVolt; // Volts
+    float avgCellVolt;  // Volts
+    uint8_t lowCellID;
+} OrionBMSData;
+
+typedef struct __attribute__((packed)) {
+    uint16_t R_iso_corrected; // [kOhm] Intel order
+    uint8_t R_iso_status;     // 0xFC: Startup, 0xFD: First Meas, 0xFE:
+    // Normal
+    uint8_t measurement_cnt;
+    uint16_t status_flags; // Warnings and
+    // Alarms (Bit 0: Error, Bit 4: Iso
+    //                          // Alarm, etc.)
+    uint8_t device_activity; // 0: Init, 1: Normal, 2: Self-test
+    uint8_t reserved;
+} IMD_General;
+
+typedef struct __attribute__((packed)) {
+    uint16_t hv_system;       // Offset 32128, 0.05V/bit
+    uint16_t hv_neg_to_earth; // Offset 32128, 0.05V/bit
+    uint16_t hv_pos_to_earth; // Offset 32128, 0.05V/bit
+    uint8_t measurement_cnt;
+    uint8_t reserved;
+} IMD_Voltage;
+
+// Unified storage for your application
+typedef struct {
+    float resistance; // kOhm
+    float hv_voltage; // Volts
+    uint16_t status;  // Raw flags
+    bool isolation_fault;
+} IMDData;
+
+OrionBMSData *BMS_GetOrionData();
+
 void MCU_Init();
-uint8_t ComputeChecksum(uint8_t* data);
+uint8_t ComputeChecksum(uint8_t *data);
 
-
-MCU1Data* MCU_GetMCU1Data();
-MCU2Data* MCU_GetMCU2Data();
-MCU3Data* MCU_GetMCU3Data();
+MCU1Data *MCU_GetMCU1Data();
+MCU2Data *MCU_GetMCU2Data();
+MCU3Data *MCU_GetMCU3Data();
+IMDData *IMD_GetInfo();

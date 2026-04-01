@@ -12,7 +12,8 @@ typedef enum {
     FAULT_APPS,
     FAULT_BSE,
     FAULT_BPPS,
-    FAULT_APPS_BRAKE_PLAUSIBILITY
+    FAULT_APPS_BRAKE_PLAUSIBILITY,
+    LOW_BATTERY_VOLTAGE_FAULT
 } FaultType;
 
 void Faults_Init();
@@ -22,4 +23,3 @@ uint32_t Faults_GetFaults();
 void Faults_ClearFault(FaultType fault);
 void Faults_HandleFaults();
 bool Faults_CheckAllClear();
-

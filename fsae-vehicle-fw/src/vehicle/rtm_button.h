@@ -2,3 +2,4 @@
 
 void RTMButton_Update(bool rtmButton);
 bool RTMButton_GetState();
+void RTMButton_Reset();
