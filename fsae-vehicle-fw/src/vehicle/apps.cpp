@@ -1,7 +1,7 @@
 // Anteater Electric Racing, 2025
-
-#include <arduino_freertos.h>
 #include <cmath>
+#include <arduino_freertos.h>
+
 #include "utils/utils.h"
 #include "peripherals/wdt.h"
 #include "vehicle/apps.h"
@@ -42,7 +42,7 @@ void APPS_Init() {
     appsAlpha = COMPUTE_ALPHA(100.0F);
 }
 
-void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) { 
+void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) {
     // changed uint16 from 32
     // update clock for WDT
     apps_last_run_tick = xTaskGetTickCount();
