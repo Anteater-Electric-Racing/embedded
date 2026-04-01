@@ -1,6 +1,8 @@
 // Anteater Electric Racing, 2025
+
 #include <arduino_freertos.h>
 #include <cmath>
+
 #include "utils/utils.h"
 #include "peripherals/wdt.h"
 #include "vehicle/apps.h"
