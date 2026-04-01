@@ -17,7 +17,7 @@
 #include "vehicle/rtm_button.h"
 #include "vehicle/shockTravel.h"
 #include "vehicle/telemetry.h"
-#include "vehicle/ifl100-36.h"
+#include "vehicle/thermal.h"
 
 #include "utils/utils.h"
 #include <iostream>
@@ -40,6 +40,9 @@ void setup() { // runs once on bootup
     Telemetry_Init();
     Motor_Init();
     MCU_Init();
+    GPIO_Init();
+    PCC_Init();
+    thermal_Init();
     WDT_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
