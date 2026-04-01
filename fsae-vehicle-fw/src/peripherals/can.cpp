@@ -41,10 +41,6 @@ void CAN_Init() {
     can3.setRX(DEF);
     can3.enableFIFO();
 
-    /*interuppt based enables*/
-    // can3.enableFIFOInterrupt();
-    // can3.setMaxMB(16); // Set maximum message buffers to 16
-
     tp.begin();
     tp.setWriteBus(&can3); // Set the bus to write to can3
 }

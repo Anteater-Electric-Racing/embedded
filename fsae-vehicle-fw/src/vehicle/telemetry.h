@@ -21,6 +21,9 @@ typedef struct __attribute__((packed)) {
     float BSEFront; // front brake pressure in PSI
     float BSERear;  // rear brake pressure in PSI
 
+    float imdResistance;
+    uint32_t imdStatus;
+
     // BMS Data
     float packVoltage;
     float packCurrent;
@@ -43,19 +46,13 @@ typedef struct __attribute__((packed)) {
     MCUWorkMode mcuWorkMode;   // MCU work mode
 
     float mcuVoltage;
+    float motorPhaseCurrent;
     float mcuCurrent;
 
     // MCU2 data
     int32_t motorTemp; // Motor temperature in C
     int32_t mcuTemp;   // Inverter temperature in C
 
-    bool dcMainWireOverVoltFault; // DC over voltage fault
-    bool dcMainWireOverCurrFault; // DC main wire over voltage fault
-    bool motorOverSpdFault;       // MCU motor over speed fault
-    //  bool phaseCurrSensorFault; // Phase current sensor fault
-
-    bool motorPhaseCurrFault;        // MCU motor phase current fault
-    bool motorStallFault;            // MCU motor stall fault
     MCUWarningLevel mcuWarningLevel; // MCU warning level
 
     // Dynamics Data
@@ -63,6 +60,20 @@ typedef struct __attribute__((packed)) {
     float shocktravel2;
     float shocktravel3;
     float shocktravel4;
+
+    bool dcMainWireOverVoltFault;
+    bool motorPhaseCurrFault;
+    bool mcuOverHotFault;
+    bool resolverFault;
+    bool phaseCurrSensorFault;
+    bool motorOverSpdFault;
+    bool drvMotorOverHotFault;
+    bool dcMainWireOverCurrFa;
+    bool drvMotorOverCoolFaul;
+    bool dcLowVoltWarning;
+    bool mcu12VLowVoltWarning;
+    bool motorStallFault;
+    bool motorOpenPhaseFault;
 
     int32_t faultMap; // Debug data
 } TelemetryData;

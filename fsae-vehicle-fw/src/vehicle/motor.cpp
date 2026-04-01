@@ -187,18 +187,6 @@ void threadMotor(void *pvParameters) {
         if (targetTorque <= 0) {
             targetTorque = 0;
         }
-        //     // Capping the Deceleration
-        //     targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
-        // }
-        // Slew Rate Limiting
-
-        // if (torqueDelta > MAX_TORQUE_STEP_UP_PCT) {
-        //     // Capping the Acceleration
-        //     targetTorque = lastTorqueSent + MAX_TORQUE_STEP_UP_PCT;
-        // if (torqueDelta < -MAX_TORQUE_STEP_DOWN_PCT) {
-        //     // Capping the Deceleration
-        //     targetTorque = lastTorqueSent - MAX_TORQUE_STEP_DOWN_PCT;
-        // }
 
         lastTorqueSent = targetTorque;
 

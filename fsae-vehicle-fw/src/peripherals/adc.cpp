@@ -42,15 +42,16 @@ enum SensorIndexesADC1 { // TODO: Update with real values
 };
 
 uint16_t adc0Pins[SENSOR_PIN_AMT_ADC0] = {
-    A0, A1, A2, A3, A4, A5,
-    A6, A7, A8, A9, A16}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
-                          // 24, 25, 19, 18, 14, 15, 17};
+    A0, A1, A2, A3, A4, A5, A6, A7, A8, A9 //, A16
+}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
+   // 24, 25, 19, 18, 14, 15, 17};
 uint16_t adc0Reads[SENSOR_PIN_AMT_ADC0];
 
 uint16_t adc1Pins[SENSOR_PIN_AMT_ADC1] = {
-    A17, A16, A15, A7, A6, A5,
-    A4,  A3,  A2,  A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
-                            // 24, 25, 19, 18, 14, 15, 17};
+    // A17, A16, A15,
+    A7, A6, A5, A4,
+    A3, A2, A1, A0}; // A4, A4, 18, 17, 17, 17, 17}; // real values: {21,
+                     // 24, 25, 19, 18, 14, 15, 17};
 uint16_t adc1Reads[SENSOR_PIN_AMT_ADC1];
 
 static TickType_t lastWakeTime;
@@ -105,8 +106,5 @@ void threadADC(void *pvParameters) {
             adc0Reads[SUSP_TRAV_LINPOT3], adc0Reads[SUSP_TRAV_LINPOT4]);
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
-        // thermal_Update(
-        //     adc0Reads[THERMISTOR_1_INDEX], adc0Reads[THERMISTOR_2_INDEX],
-        //     adc0Reads[THERMISTOR_3_INDEX], adc0Reads[THERMISTOR_4_INDEX]);
     }
 }

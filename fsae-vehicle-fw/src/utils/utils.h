@@ -139,8 +139,8 @@
 
 #define BSE_CUTOFF_HZ 100.0F
 
-#define MOTOR_MAX_TORQUE 152.0F // TODO: Update with real value //used to be 260
-#define CAPPED_MOTOR_TORQUE 150.0F
+#define MOTOR_MAX_TORQUE 260.0F // TODO: Update with real value //used to be 260
+#define CAPPED_MOTOR_TORQUE 258.0F
 #define MAX_TORQUE_STEP_UP_PCT 0F
 #define MAX_TORQUE_STEP_DOWN_PCT 1.0F
 #define TORQUE_SHIFT_OFFSET 5.0F
