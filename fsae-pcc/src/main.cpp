@@ -48,24 +48,24 @@ void threadMain(void *pvParameters) {
 
         Serial.print("                                              State: ");
         switch (state) {
-            case STATE_STANDBY:
-                Serial.print("STANDBY");
-                break;
-            case STATE_PRECHARGE:
-                Serial.print("PRECHARGE");
-                break;
-            case STATE_DISCHARGE:
-                Serial.print("DISCHARGE");
-                break;
-            case STATE_ONLINE:
-                Serial.print("ONLINE");
-                break;
-            case STATE_ERROR:
-                Serial.print("ERROR");
-                break;
-            default:
-                Serial.print("UNDEFINED");
-                break;
+        case STATE_STANDBY:
+            Serial.print("STANDBY");
+            break;
+        case STATE_PRECHARGE:
+            Serial.print("PRECHARGE");
+            break;
+        case STATE_DISCHARGE:
+            Serial.print("DISCHARGE");
+            break;
+        case STATE_ONLINE:
+            Serial.print("ONLINE");
+            break;
+        case STATE_ERROR:
+            Serial.print("ERROR");
+            break;
+        default:
+            Serial.print("UNDEFINED");
+            break;
         }
         Serial.print(" | Accumulator Voltage: ");
         Serial.print(accumulator_voltage, 4);
