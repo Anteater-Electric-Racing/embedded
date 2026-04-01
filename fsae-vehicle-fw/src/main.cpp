@@ -40,6 +40,7 @@ void setup() { // runs once on bootup
     Telemetry_Init();
     Motor_Init();
     MCU_Init();
+    WDT_Init();
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);

@@ -41,15 +41,11 @@ void APPS_Init() {
     appsAlpha = COMPUTE_ALPHA(100.0F);
 }
 
-<<<<<<< HEAD
-void APPS_UpdateData(uint32_t rawReading1, uint32_t rawReading2) {
-    // update clock for WDT
-    apps_last_run_tick = xTaskGetTickCount();
-
-    // Filter incoming values
-=======
 void APPS_UpdateData(uint16_t rawReading1,
                      uint16_t rawReading2) { // changed uint16 from 32
+    // update clock for WDT
+    apps_last_run_tick = xTaskGetTickCount();
+    
     // Serial.print("Raw APPS1: ");
     // Serial.println(rawReading1);
     // Serial.print("Raw APPS2: ");
@@ -61,7 +57,6 @@ void APPS_UpdateData(uint16_t rawReading1,
     // if (rawReading2 > APPS2_20PCT_ADC)
     //     rawReading2 = APPS2_20PCT_ADC;
 
->>>>>>> main
     LOWPASS_FILTER(rawReading1, appsData.apps1RawReading, appsAlpha);
     LOWPASS_FILTER(rawReading2, appsData.apps2RawReading, appsAlpha);
 
