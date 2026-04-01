@@ -27,7 +27,7 @@
 use crate::{
     can::TelemetryData,
     mqtt::mqttd,
-    send::{send_message, Reading, MQTT_HOST, MQTT_PORT},
+    send::{now_ms, send_message, Reading, MQTT_HOST, MQTT_PORT},
 };
 use deku::prelude::*;
 #[cfg(test)]
@@ -81,8 +81,8 @@ fn test_parse_telemetry_bad_length() {
 #[test]
 fn test_parse_telemetry_invalid_enum() {
     let mut raw = [0u8; TelemetryData::SIZE_BITS / 8];
-    // motor_direction at byte 16 — set to an invalid discriminant
-    raw[16] = 200;
+    // motor_direction at byte 56 — set to an invalid discriminant
+    raw[56] = 200;
     assert!(TelemetryData::from_bytes((raw.as_ref(), 0)).is_err());
 }
 
@@ -147,7 +147,7 @@ pub async fn verify_tdengine_write<
 
     for (i, meta) in column_meta.iter().enumerate() {
         let col_name = meta[0].as_str().unwrap_or_default();
-        if col_name == "_ts" {
+        if col_name == "_ts" || col_name == "ts" {
             continue;
         }
         if let Some(expected_val) = expected_obj.get(col_name) {
@@ -189,7 +189,7 @@ fn test_verify_tdengine_write() {
 
     println!("Sending TelemetryData test packet to TDengine");
     tokio::runtime::Runtime::new().unwrap().block_on(async {
-        send_message(test_packet.clone()).await;
+        send_message(test_packet.clone(), now_ms()).await;
         tokio::time::sleep(Duration::from_millis(500)).await;
         println!("finished sending, now verifying...");
         match verify_tdengine_write(test_packet).await {
@@ -239,13 +239,24 @@ async fn verify_mqtt_listener(telemetry_struct: TelemetryData) -> bool {
                     }
                 };
 
-                let data_deserialized = match serde_json::from_str::<TelemetryData>(data_string) {
-                    Ok(d) => d,
-                    Err(e) => {
-                        eprintln!("[poll] | Failed to deserialize incoming data: {}", e);
-                        continue;
-                    }
-                };
+                let mut map: serde_json::Map<String, serde_json::Value> =
+                    match serde_json::from_str(data_string) {
+                        Ok(m) => m,
+                        Err(e) => {
+                            eprintln!("[poll] | Failed to deserialize incoming data: {}", e);
+                            continue;
+                        }
+                    };
+                map.remove("ts");
+
+                let data_deserialized: TelemetryData =
+                    match serde_json::from_value(serde_json::Value::Object(map)) {
+                        Ok(d) => d,
+                        Err(e) => {
+                            eprintln!("[poll] | Failed to convert map to TelemetryData: {}", e);
+                            continue;
+                        }
+                    };
 
                 return data_deserialized == telemetry_struct;
             }
@@ -276,7 +287,7 @@ fn test_verify_mqtt_listener() {
     let handle = runtime.spawn(verify_mqtt_listener(listener_data.clone()));
     runtime.block_on(async {
         tokio::time::sleep(Duration::from_millis(500)).await;
-        send_message(listener_data.clone()).await;
+        send_message(listener_data.clone(), now_ms()).await;
     });
     let result = runtime
         .block_on(handle)
