@@ -1,23 +1,34 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-# influxdb
-curl https://www.influxdata.com/d/install_influxdb3.sh | bash
-
-# grafana
-sudo apt install -y apt-transport-https software-properties-common wget
-sudo mkdir -p /etc/apt/keyrings/
-wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-if ! grep -q "^deb .*\[signed-by=/etc/apt/keyrings/grafana.gpg\] https://apt.grafana.com stable main" /etc/apt/sources.list.d/grafana.list 2>/dev/null; then
-    echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Please run as root (sudo ./install.sh)" >&2
+    exit 1
 fi
-sudo apt-get update && sudo apt-get install -y grafana
-sudo service grafana-server start
 
-# rust
-curl https://sh.rustup.rs -sSf | sh -s -- -y
+REAL_USER="${SUDO_USER:-$(logname)}"
+REAL_HOME=$(eval echo "~$REAL_USER")
 
-# installing service
-sudo ./add_service.sh
+echo "==> Installing Rust for $REAL_USER..."
+sudo -u "$REAL_USER" bash -c 'curl https://sh.rustup.rs -sSf | sh -s -- -y'
 
-# installing network
-sudo ./add_network.sh
+echo "==> Building TDEngine..."
+TD_VER="3.4.0.9"
+wget -q "https://downloads.tdengine.com/tdengine-tsdb-oss/${TD_VER}/tdengine-tsdb-oss-${TD_VER}-linux-${ARCH}.tar.gz"
+tar -zxf "tdengine-tsdb-oss-${TD_VER}-linux-${ARCH}.tar.gz"
+cd "tdengine-tsdb-oss-${TD_VER}" && ./install.sh && cd -
+rm -rf "tdengine-tsdb-oss-${TD_VER}"*
+systemctl enable --now taosd
+
+echo "==> Patching and installing systemd service files for user '$REAL_USER'..."
+for SERVICE in fsae-raspi.service; do
+    sed \
+        -e "s|__USER__|$REAL_USER|g" \
+        -e "s|__HOME__|$REAL_HOME|g" \
+        "$SERVICE" > "/etc/systemd/system/$SERVICE"
+    systemctl daemon-reload
+    systemctl enable --now "$SERVICE"
+done
+
+echo "==> Installing CAN network config..."
+cp 80-can.network /etc/systemd/network/

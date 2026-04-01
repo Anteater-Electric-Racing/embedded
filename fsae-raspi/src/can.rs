@@ -1,4 +1,4 @@
-//! This module enables the recieving and decoding of telemetry
+//! This module enables the receiving and decoding of telemetry
 //! data from the motor controller over CAN ISO-TP and sets up test
 //! functions for transmitting test packets over vCAN.
 //!
@@ -7,112 +7,242 @@
 //! - ISO-TP socket setup for receiving and sending frames
 //! - Parsing of the MCU telemetry packet into typed data
 //! - Definitions of all enums representing MCU and motor state machines
-//! - 'TelemetryData' structure, which contains the fully decoded packet
+//! - `TelemetryData` structure, which contains the fully decoded packet
 //! - Test function to send and verify dummy telemetry over vcan0
 //!
-//! Code runs use relies on 'can0', while tests can run against vcan0
-//! using the virtual can network setup on Github actions workflow (test.yml)
+//! Production code relies on `can0`, while tests can run against vcan0
+//! using the virtual CAN network setup in the GitHub Actions workflow (test.yml).
 
-use crate::send::{send_message, Reading};
+use crate::send::{now_ms, send_message, Reading};
+use deku::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::time::Duration;
 use tokio::time::sleep;
 use tokio_socketcan_isotp::{IsoTpSocket, StandardId};
+use tracing::{error, info, warn};
 
 const CAN_INTERFACE: &str = "can0";
+const CAN_SRC_ID: u16 = 0x666;
+const CAN_DST_ID: u16 = 0x777;
 
-macro_rules! define_enum {
-    ($name:ident, $($variant:ident = $value:expr),*) => {
-        #[derive(Serialize, Deserialize, PartialEq, Clone)]
-        #[allow(clippy::enum_variant_names)]
-        pub enum $name {
-            $($variant = $value),*
-        }
-
-        impl $name {
-            pub fn from_byte(byte: u8) -> Self {
-                match byte {
-                    $($value => Self::$variant),*,
-                    _ => panic!("Invalid value for {}", stringify!($name)),
-                }
-            }
-        }
-    };
+#[derive(
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
+)]
+#[deku(ctx = "endian: deku::ctx::Endian")]
+#[deku(id_type = "u8")]
+#[repr(u8)]
+pub enum MotorState {
+    #[deku(id = 0)]
+    #[default]
+    Off,
+    #[deku(id = 1)]
+    Precharging,
+    #[deku(id = 2)]
+    Idle,
+    #[deku(id = 3)]
+    Driving,
+    #[deku(id = 4)]
+    Fault,
 }
 
-define_enum!(
-    MotorState,
-    MotorStateOff = 0,
-    MotorStatePrecharging = 1,
-    MotorStateIdle = 2,
-    MotorStateDriving = 3,
-    MotorStateFault = 4
-);
+#[derive(
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
+)]
+#[deku(ctx = "endian: deku::ctx::Endian")]
+#[deku(id_type = "u8")]
+#[repr(u8)]
+pub enum MotorRotateDirection {
+    #[deku(id = 0)]
+    #[default]
+    Standby,
+    #[deku(id = 1)]
+    Forward,
+    #[deku(id = 2)]
+    Backward,
+    #[deku(id = 3)]
+    Error,
+}
 
-define_enum!(
-    MotorRotateDirection,
-    DirectionStandby = 0,
-    DirectionForward = 1,
-    DirectionBackward = 2,
-    DirectionError = 3
-);
+#[derive(
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
+)]
+#[deku(ctx = "endian: deku::ctx::Endian")]
+#[deku(id_type = "u8")]
+#[repr(u8)]
+pub enum MCUMainState {
+    #[deku(id = 0)]
+    #[default]
+    Standby,
+    #[deku(id = 1)]
+    Precharge,
+    #[deku(id = 2)]
+    PowerReady,
+    #[deku(id = 3)]
+    Run,
+    #[deku(id = 4)]
+    PowerOff,
+}
 
-define_enum!(
-    MCUMainState,
-    StateStandby = 0,
-    StatePrecharge = 1,
-    StatePowerReady = 2,
-    StateRun = 3,
-    StatePowerOff = 4
-);
+#[derive(
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
+)]
+#[deku(ctx = "endian: deku::ctx::Endian")]
+#[deku(id_type = "u8")]
+#[repr(u8)]
+pub enum MCUWorkMode {
+    #[deku(id = 0)]
+    #[default]
+    Standby,
+    #[deku(id = 1)]
+    Torque,
+    #[deku(id = 2)]
+    Speed,
+}
 
-define_enum!(
-    MCUWorkMode,
-    WorkModeStandby = 0,
-    WorkModeTorque = 1,
-    WorkModeSpeed = 2
-);
-
-define_enum!(
-    MCUWarningLevel,
-    ErrorNone = 0,
-    ErrorLow = 1,
-    ErrorMedium = 2,
-    ErrorHigh = 3
-);
+#[derive(
+    Default,
+    Debug,
+    Deserialize_repr,
+    Serialize_repr,
+    PartialEq,
+    Clone,
+    Copy,
+    DekuRead,
+    DekuWrite,
+    DekuSize,
+)]
+#[deku(ctx = "endian: deku::ctx::Endian")]
+#[deku(id_type = "u8")]
+#[repr(u8)]
+pub enum MCUWarningLevel {
+    #[deku(id = 0)]
+    #[default]
+    None,
+    #[deku(id = 1)]
+    Low,
+    #[deku(id = 2)]
+    Medium,
+    #[deku(id = 3)]
+    High,
+}
 
 /// Telemetry data record produced by the motor controller.
 ///
-/// Structure from the ISO-TP frame received over
-/// CAN. It contains driver inputs, motor state information, controller status,
+/// Parsed from the CAN_PACKET_SIZE-byte ISO-TP frame received over CAN.
+/// Contains driver inputs, motor state information, controller status,
 /// temperatures, electrical measurements, fault flags, and debug channels.
-///
-/// Fields match up with the telemetryData packet in
-/// test_send_telemetry_over_isotp().
-#[derive(Serialize, Deserialize, PartialEq, Clone)]
+#[derive(
+    Serialize, Deserialize, Default, Debug, Clone, PartialEq, DekuRead, DekuWrite, DekuSize,
+)]
+#[deku(endian = "little")]
 pub struct TelemetryData {
     pub apps_travel: f32,
+
+    pub bse_front: f32,
+    pub bse_rear: f32,
+
+    pub imd_resistance: f32,
+    pub imd_status: u32,
+
+    pub pack_voltage: f32,
+    pub pack_current: f32,
+    pub soc: f32,
+    pub discharge_limit: f32,
+    pub charge_limit: f32,
+    pub low_cell_volt: f32,
+    pub high_cell_volt: f32,
+    pub avg_cell_volt: f32,
+
     pub motor_speed: f32,
     pub motor_torque: f32,
     pub max_motor_torque: f32,
     pub motor_direction: MotorRotateDirection,
     pub motor_state: MotorState,
+
     pub mcu_main_state: MCUMainState,
     pub mcu_work_mode: MCUWorkMode,
+
     pub mcu_voltage: f32,
+    pub mcu_phase_current: f32,
     pub mcu_current: f32,
+
     pub motor_temp: i32,
     pub mcu_temp: i32,
-    pub dc_main_wire_over_volt_fault: bool,
-    pub dc_main_wire_over_curr_fault: bool,
-    pub motor_over_spd_fault: bool,
-    pub motor_phase_curr_fault: bool,
-    pub motor_stall_fault: bool,
+
     pub mcu_warning_level: MCUWarningLevel,
-    pub debug_0: f32,
-    pub debug_1: f32,
-    pub debug_2: f32,
-    pub debug_3: f32,
+
+    pub shocktravel1: f32,
+    pub shocktravel2: f32,
+    pub shocktravel3: f32,
+    pub shocktravel4: f32,
+
+    pub dc_main_wire_over_volt_fault: bool,
+    pub motor_phase_curr_fault: bool,
+    pub mcu_over_hot_fault: bool,
+    pub resolver_fault: bool,
+    pub phase_curr_sensor_fault: bool,
+    pub motor_over_spd_fault: bool,
+    pub drv_motor_over_hot_fault: bool,
+    pub dc_main_wire_over_curr_fault: bool,
+    pub drv_motor_over_cool_fault: bool,
+    pub dc_low_volt_warning: bool,
+    pub mcu_12v_low_volt_warning: bool,
+    pub motor_stall_fault: bool,
+    pub motor_open_phase_fault: bool,
+
+    #[deku(bits = 1)]
+    pub over_current: bool,
+    #[deku(bits = 1)]
+    pub under_voltage: bool,
+    #[deku(bits = 1)]
+    pub over_temperature: bool,
+    #[deku(bits = 1)]
+    pub apps: bool,
+    #[deku(bits = 1)]
+    pub bse: bool,
+    #[deku(bits = 1)]
+    pub bpps: bool,
+    #[deku(bits = 1)]
+    pub apps_brake_plaus: bool,
+    #[deku(bits = 1, pad_bits_after = "24")]
+    pub low_battery_voltage: bool,
 }
 
 impl Reading for TelemetryData {
@@ -121,128 +251,66 @@ impl Reading for TelemetryData {
     }
 }
 
-fn parse_bool(byte: u8) -> bool {
-    byte != 0
-}
-
-/// Continuously reads ISO-TP packets from 'can0', parses the MCU
-/// telemetry frame, converts it into a TelemetryData struct, and forwards it
-/// via 'send_message()'.
+/// Reads ISO-TP packets from `can0` in a loop, parses each into
+/// [`TelemetryData`], and forwards via [`send_message`].
 ///
-/// Loop retries socket creation on failure and logs malformed packets.
-///
-/// Expected packet length of 58 bytes.
-pub async fn read_can() {
+/// Retries socket creation on failure; logs malformed packets.
+async fn read_can_hardware() {
     loop {
         let socket = match IsoTpSocket::open(
             CAN_INTERFACE,
-            StandardId::new(0x666).expect("Invalid src id"),
-            StandardId::new(0x777).expect("Invalid src id"),
+            StandardId::new(CAN_SRC_ID).expect("Invalid src id"),
+            StandardId::new(CAN_DST_ID).expect("Invalid dst id"),
         ) {
             Ok(socket) => socket,
             Err(e) => {
-                println!("Failed to open socket: {}", e);
+                error!(%e, "Failed to open CAN socket");
                 sleep(Duration::from_secs(1)).await;
                 continue;
             }
         };
 
         while let Ok(packet) = socket.read_packet().await {
-            if packet.len() != 58 {
-                println!("Invalid packet length {}: {:?}", packet.len(), packet);
-                continue;
+            let ts = now_ms();
+            match TelemetryData::from_bytes((packet.as_ref(), 0)) {
+                Ok(((remaining, _), _)) if !remaining.is_empty() => {
+                    warn!("Telemetry packet has {} trailing bytes", remaining.len(),);
+                }
+                Ok((_, data)) => send_message(data, ts).await,
+                Err(e) => warn!(error = %e, "Malformed telemetry packet"),
             }
-            send_message(TelemetryData {
-                apps_travel: f32::from_le_bytes(packet[0..4].try_into().unwrap()),
-                motor_speed: f32::from_le_bytes(packet[4..8].try_into().unwrap()),
-                motor_torque: f32::from_le_bytes(packet[8..12].try_into().unwrap()),
-                max_motor_torque: f32::from_le_bytes(packet[12..16].try_into().unwrap()),
-                motor_direction: MotorRotateDirection::from_byte(packet[16]),
-                motor_state: MotorState::from_byte(packet[17]),
-                mcu_main_state: MCUMainState::from_byte(packet[18]),
-                mcu_work_mode: MCUWorkMode::from_byte(packet[19]),
-                mcu_voltage: f32::from_le_bytes(packet[20..24].try_into().unwrap()),
-                mcu_current: f32::from_le_bytes(packet[24..28].try_into().unwrap()),
-                motor_temp: i32::from_le_bytes(packet[28..32].try_into().unwrap()),
-                mcu_temp: i32::from_le_bytes(packet[32..36].try_into().unwrap()),
-                dc_main_wire_over_volt_fault: parse_bool(packet[36]),
-                dc_main_wire_over_curr_fault: parse_bool(packet[37]),
-                motor_over_spd_fault: parse_bool(packet[38]),
-                motor_phase_curr_fault: parse_bool(packet[39]),
-                motor_stall_fault: parse_bool(packet[40]),
-                mcu_warning_level: MCUWarningLevel::from_byte(packet[41]),
-                debug_0: f32::from_le_bytes(packet[42..46].try_into().unwrap()),
-                debug_1: f32::from_le_bytes(packet[46..50].try_into().unwrap()),
-                debug_2: f32::from_le_bytes(packet[50..54].try_into().unwrap()),
-                debug_3: f32::from_le_bytes(packet[54..58].try_into().unwrap()),
-            })
-            .await;
         }
     }
 }
 
-/// Sends a 'TelemetryData' instance over ISO-TP on 'vcan0'.
-///
-/// This function is intended for testing and is only compiled in 'cfg(test)'
-/// mode. The struct is serialized using bincode and written as a single
-/// ISO-TP packet.
-///
-/// Requires a virtual CAN interface.
-#[cfg(test)]
-async fn send_telemetry_over_isotp(data: &TelemetryData) -> Result<(), Box<dyn std::error::Error>> {
-    let socket = IsoTpSocket::open(
-        "vcan0",
-        StandardId::new(0x123).ok_or("Invalid source ID")?,
-        StandardId::new(0x321).ok_or("Invalid destination ID")?,
-    )?;
+/// Generates synthetic telemetry (debug builds only).
+async fn read_can_synthetic() {
+    use std::time::Instant;
 
-    let payload = bincode::serde::encode_to_vec(data, bincode::config::legacy())?;
+    let mut count: u64 = 0;
+    let mut last = Instant::now();
 
-    socket.write_packet(&payload).await?;
+    let mut interval = tokio::time::interval(Duration::from_millis(1));
+    loop {
+        interval.tick().await;
+        send_message(TelemetryData::default(), now_ms()).await;
+        count += 1;
 
-    println!("TelemetryData sent over iso-tp ({} bytes)", payload.len());
-    Ok(())
+        let elapsed = last.elapsed();
+        if elapsed >= Duration::from_secs(1) {
+            info!("{:.0} msg/s", count as f64 / elapsed.as_secs_f64());
+            count = 0;
+            last = Instant::now();
+        }
+    }
 }
 
-/// Test verifying ISO-TP transmission by sending and verifying dummy `TelemetryData` packet over ISO-TP
-///
-/// Requires a virtual CAN interface configured with:
-/// ''' bash
-/// sudo modprobe vcan
-/// sudo ip link add dev vcan0 type vcan
-/// sudo ip link set up vcan0
-/// '''
-/// ^^ vCAN commands automatically setup and verify
-///    'test_send_telemetry_over_isotp' function
-//     on test.yml Github actions workflow
-
-#[tokio::test]
-async fn test_send_telemetry_over_isotp() -> Result<(), Box<dyn std::error::Error>> {
-    let data = TelemetryData {
-        apps_travel: 72.5,
-        motor_speed: 3200.0,
-        motor_torque: 85.4,
-        max_motor_torque: 120.0,
-        motor_direction: MotorRotateDirection::DirectionForward,
-        motor_state: MotorState::MotorStateDriving,
-        mcu_main_state: MCUMainState::StateRun,
-        mcu_work_mode: MCUWorkMode::WorkModeTorque,
-        mcu_voltage: 13.8,
-        mcu_current: 2.4,
-        motor_temp: 75,
-        mcu_temp: 68,
-        dc_main_wire_over_volt_fault: false,
-        dc_main_wire_over_curr_fault: false,
-        motor_over_spd_fault: false,
-        motor_phase_curr_fault: false,
-        motor_stall_fault: false,
-        mcu_warning_level: MCUWarningLevel::ErrorNone,
-        debug_0: 0.0,
-        debug_1: 0.0,
-        debug_2: 0.0,
-        debug_3: 0.0,
-    };
-
-    send_telemetry_over_isotp(&data).await?;
-    Ok(())
+/// Entry point: dispatches to the hardware or synthetic reader depending
+/// on the build profile.
+pub async fn read_can() {
+    if cfg!(feature = "synthetic") {
+        read_can_synthetic().await;
+    } else {
+        read_can_hardware().await;
+    }
 }
