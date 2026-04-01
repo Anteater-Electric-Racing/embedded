@@ -1,13 +1,15 @@
 // Anteater Electric Racing, 2025
 
-#include "apps.h"
+#include <arduino_freertos.h>
+#include <cmath>
+
+#include "vehicle/apps.h"
 #include "utils/utils.h"
 #include "peripherals/wdt.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
 
-#include <arduino_freertos.h>
-#include <cmath>
+
 
 typedef struct {
     float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
@@ -41,9 +43,7 @@ void APPS_Init() {
     appsAlpha = COMPUTE_ALPHA(100.0F);
 }
 
-void APPS_UpdateData(uint16_t rawReading1,
-                     uint16_t rawReading2) { // changed uint16 from 32
-    
+void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) { // changed uint16 from 32
     // update clock for WDT
     apps_last_run_tick = xTaskGetTickCount();
     
