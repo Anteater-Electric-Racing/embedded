@@ -7,6 +7,10 @@
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
 
+// Global watchdog tick tracking variables
+TickType_t bse_last_run_tick = 0;
+TickType_t apps_last_run_tick = 0;
+
 // Bitmask flag definition
 static uint8_t WDT_BIT_BSE = 0b01;
 static uint8_t WDT_BIT_APPS = 0b10;
