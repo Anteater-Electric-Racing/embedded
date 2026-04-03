@@ -52,12 +52,14 @@ void CAN_Init() {
     can2.setTX(DEF);
     can2.setRX(DEF);
     can2.enableFIFO();
+    can2.enableFIFOInterrupt();
+    can2.onReceive(CAN_Interrupt_Receive); // Upon receiving a message, CAN_Interrupt_Receive is called.
 
     can3.begin();
     can3.setBaudRate(CAN_BAUD_RATE);
     can3.setTX(DEF);
     can3.setRX(DEF);
-    //can3.enableFIFO();
+    can3.enableFIFO();
     can3.enableFIFOInterrupt(); // Enables hardware interrupts
     can3.onReceive(CAN_Interrupt_Receive); // Upon receiving a message, CAN_Interrupt_Receive is called.
     // can3.setMaxMB(16); // Set maximum message buffers to 16

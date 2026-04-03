@@ -35,6 +35,8 @@ static MCU3Data mcu3Data;
 
 static OrionBMSData bmsData;
 
+static uint32_t CANMessageOverflow = 0;
+
 void MCU_Init() {
     // Fill with reasonable dummy values
     mcu1Data = {.motorSpeed = 0.0F,
@@ -94,15 +96,29 @@ void CAN_RxInterruptHandler(uint32_t id, uint64_t data) {
     CANMessage_t msg = {.rx_id = id, .rx_data = data};
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     // Put message in queue from ISR
-    xQueueSendFromISR(canRxQueue, &msg, &xHigherPriorityTaskWoken);
+    BaseType_t result = xQueueSendFromISR(canRxQueue, &msg, &xHigherPriorityTaskWoken);
+
+    if (result != pdTRUE) {
+        CANMessageOverflow++;
+    }
+
     // Wake up the processing task if needed
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 static void threadMCU(void *pvParameters) {
     CANMessage_t msg;
+
+    static uint32_t lastOverflowCount = 0;
+
     while (true) {
-        // CPU sleeps here until message arrives
+        // Check for CAN message overflow and print it if it has occurred
+        if (CANMessageOverflow != lastOverflowCount) {
+            Serial.print("CAN Message Overflow! Count: ");
+            Serial.println(CANMessageOverflow);
+            lastOverflowCount = CANMessageOverflow;
+        }
+
         if (xQueueReceive(canRxQueue, &msg, portMAX_DELAY) == pdTRUE) {
             switch (msg.rx_id) {
                 case mMCU1_ID: {
@@ -194,7 +210,7 @@ static void threadMCU(void *pvParameters) {
                 }
 
                 case pcc_ID: {
-                    // Serial.print("PCC OK?");
+                    //Serial.print("PCC OK?");
                     processPCCMessage(msg.rx_data);
                     break;
                 }
@@ -242,7 +258,8 @@ static void threadMCU(void *pvParameters) {
                 }
             }
         }
-        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
+        //vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1));
+
     }
 }
 

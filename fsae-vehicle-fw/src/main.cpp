@@ -30,6 +30,8 @@ static TickType_t xLastWakeTime;
 void threadMain(void *pvParameters);
 
 void setup() { // runs once on bootup
+    Serial.begin(9600);
+
     ADC_Init();
     CAN_Init();
     APPS_Init();
@@ -56,7 +58,7 @@ void setup() { // runs once on bootup
 }
 
 void threadMain(void *pvParameters) {
-    Serial.begin(9600);
+
 
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
