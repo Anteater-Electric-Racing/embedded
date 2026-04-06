@@ -18,6 +18,7 @@ pub const MQTT_PORT: u16 = 1883;
 const CREATE_DB: &str =
     "CREATE DATABASE IF NOT EXISTS fsae WAL_LEVEL 2 WAL_FSYNC_PERIOD 0 STT_TRIGGER 1 KEEP 365d";
 const MAX_CONSECUTIVE_FAILURES: u32 = 10;
+const RECONNECT_DELAY: Duration = Duration::from_secs(2);
 
 pub trait Reading: Serialize {
     fn topic() -> &'static str;
@@ -26,20 +27,30 @@ pub trait Reading: Serialize {
 static TDENGINE: OnceCell<Sender<String>> = OnceCell::const_new();
 static MQTT_CLIENT: OnceCell<AsyncClient> = OnceCell::const_new();
 
+async fn connect_with_retry(builder: &TaosBuilder) -> taos::Taos {
+    loop {
+        match builder.build().await {
+            Ok(t) => return t,
+            Err(e) => {
+                error!(%e, "Failed to connect to TDengine, retrying in {RECONNECT_DELAY:?}");
+                tokio::time::sleep(RECONNECT_DELAY).await;
+            }
+        }
+    }
+}
+
 async fn get_tdengine_sender() -> &'static Sender<String> {
     TDENGINE
         .get_or_init(|| async {
             let (tx, rx) = tokio::sync::mpsc::channel(100_000);
             let rx = Arc::new(Mutex::new(rx));
 
-            let builder =
-                TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}"));
+            let builder = Arc::new(
+                TaosBuilder::from_dsn(TAOS_URL).unwrap_or_else(|e| panic!("Invalid DSN: {e}")),
+            );
 
             {
-                let taos = builder
-                    .build()
-                    .await
-                    .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
+                let taos = connect_with_retry(&builder).await;
                 if let Err(e) = taos.exec(CREATE_DB).await {
                     error!(%e, "Failed to create database");
                 }
@@ -47,14 +58,12 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
 
             for _ in 0..4 {
                 let rx = rx.clone();
-                let taos = builder
-                    .build()
-                    .await
-                    .unwrap_or_else(|e| panic!("Failed to connect to TDengine: {e}"));
+                let builder = builder.clone();
                 tokio::spawn(async move {
                     let mut buffer: Vec<String> = Vec::new();
                     let mut id: u64 = 0;
                     let mut consecutive_failures: u32 = 0;
+                    let mut taos = connect_with_retry(&builder).await;
 
                     while rx.lock().await.recv_many(&mut buffer, 5000).await > 0 {
                         let data = SmlDataBuilder::default()
@@ -76,10 +85,9 @@ async fn get_tdengine_sender() -> &'static Sender<String> {
 
                                 if consecutive_failures >= MAX_CONSECUTIVE_FAILURES {
                                     error!(
-                                        "Hit {MAX_CONSECUTIVE_FAILURES} consecutive write failures — recreating database"
+                                        "Hit {MAX_CONSECUTIVE_FAILURES} consecutive failures — reconnecting"
                                     );
-                                    let _ = taos.exec("DROP DATABASE IF EXISTS fsae").await;
-                                    let _ = taos.exec(CREATE_DB).await;
+                                    taos = connect_with_retry(&builder).await;
                                     consecutive_failures = 0;
                                 }
                             }
@@ -194,6 +202,7 @@ pub async fn send_message<T: Reading + Send + 'static>(message: T, timestamp_ms:
         }
         Err(e) => error!(%e, "MQTT publish error"),
     }
+
     match get_tdengine_sender().await.try_send(
         match to_line_protocol_from_value(topic, &value, timestamp_ms) {
             Some(line) => line,
