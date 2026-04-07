@@ -45,7 +45,7 @@ void APPS_Init() {
 void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) {
     // changed uint16 from 32
     // update clock for WDT
-    apps_last_run_tick = xTaskGetTickCount();
+    // apps_last_run_tick = xTaskGetTickCount();
 
     // Serial.print("Raw APPS1: ");
     // Serial.println(rawReading1);
@@ -117,12 +117,16 @@ void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) {
         appsData.appsReading1_Voltage = APPS_3V3_MIN;
     } else if (appsData.appsReading1_Voltage > APPS_3V3_MAX) {
         appsData.appsReading1_Voltage = APPS_3V3_MAX;
+    } else {
+        apps_last_run_tick = xTaskGetTickCount(); // update if WDT has normal values
     }
 
     if (appsData.appsReading2_Voltage < APPS_5V_MIN) {
         appsData.appsReading2_Voltage = APPS_5V_MIN;
     } else if (appsData.appsReading2_Voltage > APPS_5V_MAX) {
         appsData.appsReading2_Voltage = APPS_5V_MAX;
+    } else {
+        apps_last_run_tick = xTaskGetTickCount(); // update if WDT has normal values
     }
 
     // Serial.print("APPS1 RAW Voltage: ");
