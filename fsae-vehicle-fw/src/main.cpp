@@ -31,35 +31,39 @@ static TickType_t xLastWakeTime;
 void threadMain(void *pvParameters);
 
 void setup() { // runs once on bootup
+    Serial.begin(9600);
+    Serial.println("Teensy Booted"); //statement to check reboot
     ADC_Init();
-    CAN_Init();
+    // CAN_Init();
     APPS_Init();
-    Shock_Init();
+    // Shock_Init();
     BSE_Init();
-    Faults_Init();
-    Telemetry_Init();
-    Motor_Init();
-    MCU_Init();
-    GPIO_Init();
-    PCC_Init();
-    thermal_Init();
+    // Faults_Init();
+    // Telemetry_Init();
+    // Motor_Init();
+    // MCU_Init();
+    // GPIO_Init();
+    // PCC_Init();
+    // thermal_Init();
     WDT_Init();
+
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
-    xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL,
-                THREAD_MOTOR_PRIORITY, NULL);
-    xTaskCreate(threadTelemetry, "threadTelemetryCAN",
-                THREAD_CAN_TELEMETRY_STACK_SIZE, NULL,
-                THREAD_CAN_TELEMETRY_PRIORITY, NULL);
-    xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
-                THREAD_MAIN_PRIORITY, NULL);
+    xTaskCreate(WDT_Update_Task, "threadWDT", 128, NULL, 3, NULL); // runs wdt update task
+    // xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL,
+    //             THREAD_MOTOR_PRIORITY, NULL);
+    // xTaskCreate(threadTelemetry, "threadTelemetryCAN",
+    //             THREAD_CAN_TELEMETRY_STACK_SIZE, NULL,
+    //             THREAD_CAN_TELEMETRY_PRIORITY, NULL);
+    // xTaskCreate(threadMain, "threadMain", THREAD_MAIN_STACK_SIZE, NULL,
+    //             THREAD_MAIN_PRIORITY, NULL);
     vTaskStartScheduler();
 }
 
 void threadMain(void *pvParameters) {
     Serial.begin(9600);
-
+    // Serial.print("Teensy Booted"); //statement to check reboot
     xLastWakeTime = xTaskGetTickCount(); // Initialize the last wake time
 
 #if HIMAC_FLAG

@@ -37,7 +37,7 @@ void WDT_Init() {
     Serial.println("Watchdog initialized (1 second timeout)");
 }
 
-void WDT_Update_Task() {
+void WDT_Update_Task(void *pvParameters) {
     TickType_t now;
 
     TickType_t bse_ageTicks;
@@ -60,16 +60,17 @@ void WDT_Update_Task() {
         mask = 0b00;
 
         // Fault time are both 100 ms
-        if (bse_ageMs > BSE_FAULT_TIME_THRESHOLD_MS) {
+        if (bse_ageMs >= BSE_FAULT_TIME_THRESHOLD_MS) {
             mask |= WDT_BIT_BSE; // x |= y ==> x = x | y
         }
-        if (apps_ageMs > APPS_FAULT_TIME_THRESHOLD_MS) {
+        if (apps_ageMs >= APPS_FAULT_TIME_THRESHOLD_MS) {
             mask |= WDT_BIT_APPS;
         }
 
         // pet if 0b00
         if (mask == WDT_REQUIRED_MASK) {
             WDT.feed(); // pet hardware watchdog
+            Serial.println("WDT fed successfully");
         } else if (mask == WDT_BIT_BSE) {
             Serial.println("WDT: BSE update overdue");
         } else if (mask == WDT_BIT_APPS) {
@@ -78,6 +79,6 @@ void WDT_Update_Task() {
             Serial.println("WDT: BSE and APPS updates overdue");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(WDT_CHECK_PERIOD_MS)); // 100ms delay
+        vTaskDelay(pdMS_TO_TICKS(25)); // 100ms delay
     }
 }

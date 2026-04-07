@@ -6,4 +6,4 @@ extern TickType_t bse_last_run_tick;
 extern TickType_t apps_last_run_tick;
 
 void WDT_Init();
-void WDT_Update_Task();
+void WDT_Update_Task(void *pvParameters);
