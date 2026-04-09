@@ -74,7 +74,7 @@ void ADC_Init() {
         ADC_CONVERSION_SPEED::LOW_SPEED); // change the conversion speed
     adc->adc1->setSamplingSpeed(
         ADC_SAMPLING_SPEED::LOW_SPEED); // change the sampling speed
-
+    // for testing change LOW_SPEED to VERY_HIGH_SPEED to see if ADC crashes
 #if DEBUG_FLAG
     Serial.println("Done initializing ADCs");
 #endif
@@ -87,7 +87,8 @@ void threadADC(void *pvParameters) {
 
     lastWakeTime = xTaskGetTickCount();
     while (true) {
-        vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
+        // vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
+        vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(2000)); // 2 second update delay to force wdt
         for (uint16_t currentIndexADC0 = 0;
              currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0) {
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
@@ -104,7 +105,11 @@ void threadADC(void *pvParameters) {
         ShockTravelUpdateData(
             adc0Reads[SUSP_TRAV_LINPOT1], adc0Reads[SUSP_TRAV_LINPOT2],
             adc0Reads[SUSP_TRAV_LINPOT3], adc0Reads[SUSP_TRAV_LINPOT4]);
-        APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
+        while (true) {
+            APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
+            vTaskDelay(1);
+        }
+
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
     }
 }

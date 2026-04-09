@@ -79,6 +79,6 @@ void WDT_Update_Task(void *pvParameters) {
             Serial.println("WDT: BSE and APPS updates overdue");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(25)); // 100ms delay
+        vTaskDelay(pdMS_TO_TICKS(WDT_CHECK_PERIOD_MS)); // 100ms delay
     }
 }

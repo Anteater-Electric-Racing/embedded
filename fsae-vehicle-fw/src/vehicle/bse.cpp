@@ -35,6 +35,12 @@ void BSE_Init() {
 }
 
 void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
+    // Update clock for WDT
+    if (bse_last_run_tick = xTaskGetTickCount()) {
+    } else {
+        Serial.println("BSE reading not updating WDT tick");
+    }
+
     // Filter incoming values
     LOWPASS_FILTER(bseReading1, bseRawData.bseRawFront, bseAlpha);
     LOWPASS_FILTER(bseReading2, bseRawData.bseRawRear, bseAlpha);
@@ -42,17 +48,7 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
     float bseVoltage1 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawFront);
     float bseVoltage2 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawRear);
 
-    // update clock for WDT
-    if (bseVoltage1 < BSE_LOWER_THRESHOLD ||
-        bseVoltage1 > BSE_UPPER_THRESHOLD ||
-        bseVoltage2 < BSE_LOWER_THRESHOLD ||
-        bseVoltage2 > BSE_UPPER_THRESHOLD) {
-        // Don't update the WDT tick if the reading is zero, which likely indicates a disconnected sensor rather than a stalled task
-        Serial.println("BSE reading is zero, not updating WDT tick");
-    } else {
-    bse_last_run_tick = xTaskGetTickCount();
-    }
-    //used same conditions to only update BSE when voltage is 0
+
 
     // // #if HIMACBSE_FLAG
     // Serial.print("bseRawData.bseRawFront: ");
