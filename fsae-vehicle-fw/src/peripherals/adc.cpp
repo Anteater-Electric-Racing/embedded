@@ -75,7 +75,7 @@ void ADC_Init() {
         ADC_CONVERSION_SPEED::LOW_SPEED); // change the conversion speed
     adc->adc1->setSamplingSpeed(
         ADC_SAMPLING_SPEED::LOW_SPEED); // change the sampling speed
-    // for testing change LOW_SPEED to VERY_HIGH_SPEED to see if ADC crashes
+
 #if DEBUG_FLAG
     Serial.println("Done initializing ADCs");
 #endif

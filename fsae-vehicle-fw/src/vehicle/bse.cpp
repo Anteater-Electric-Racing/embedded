@@ -4,8 +4,6 @@
 
 #include "utils/utils.h"
 
-#include "peripherals/wdt.h"
-
 #include "bse.h"
 
 #include "vehicle/faults.h"

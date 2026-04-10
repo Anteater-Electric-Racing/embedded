@@ -5,7 +5,6 @@
 #include <arduino_freertos.h>
 #include <cmath>
 
-#include "peripherals/wdt.h"
 #include "utils/utils.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
