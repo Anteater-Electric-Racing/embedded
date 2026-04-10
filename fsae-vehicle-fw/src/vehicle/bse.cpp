@@ -42,8 +42,6 @@ void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
     float bseVoltage1 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawFront);
     float bseVoltage2 = ADC_VALUE_TO_VOLTAGE(bseRawData.bseRawRear);
 
-
-
     // // #if HIMACBSE_FLAG
     // Serial.print("bseRawData.bseRawFront: ");
     // Serial.print(bseVoltage1);

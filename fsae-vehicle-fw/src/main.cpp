@@ -45,10 +45,10 @@ void setup() { // runs once on bootup
     thermal_Init();
     WDT_Init();
 
-
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
-    xTaskCreate(WDT_Update_Task, "threadWDT", 128, NULL, 3, NULL); // runs wdt update task
+    xTaskCreate(WDT_Update_Task, "threadWDT", 128, NULL, 3,
+                NULL); // runs wdt update task
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL,
                 THREAD_MOTOR_PRIORITY, NULL);
     xTaskCreate(threadTelemetry, "threadTelemetryCAN",
