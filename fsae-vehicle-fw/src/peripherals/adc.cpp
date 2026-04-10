@@ -1,6 +1,7 @@
 // Anteater Electric Racing, 2025
 
 #include "adc.h"
+#include "peripherals/wdt.h"
 #include "./vehicle/telemetry.h"
 #include "utils/utils.h"
 #include "vehicle/apps.h"
@@ -87,8 +88,9 @@ void threadADC(void *pvParameters) {
 
     lastWakeTime = xTaskGetTickCount();
     while (true) {
-        // vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
-        vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(2000)); // 2 second update delay to force wdt
+        adc_last_run_tick = xTaskGetTickCount(); // Update WDT tick
+        vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
+        
         for (uint16_t currentIndexADC0 = 0;
              currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0) {
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
@@ -105,11 +107,8 @@ void threadADC(void *pvParameters) {
         ShockTravelUpdateData(
             adc0Reads[SUSP_TRAV_LINPOT1], adc0Reads[SUSP_TRAV_LINPOT2],
             adc0Reads[SUSP_TRAV_LINPOT3], adc0Reads[SUSP_TRAV_LINPOT4]);
-        while (true) {
-            APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
-            vTaskDelay(1);
-        }
-
+        
+        APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
     }
 }

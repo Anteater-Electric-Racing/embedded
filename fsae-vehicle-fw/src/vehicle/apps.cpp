@@ -42,14 +42,8 @@ void APPS_Init() {
     appsAlpha = COMPUTE_ALPHA(100.0F);
 }
 
-void APPS_UpdateData(uint16_t rawReading1, uint16_t rawReading2) {
-    // changed uint16 from 32
-    // Update clock for WDT
-    if (apps_last_run_tick = xTaskGetTickCount()) {
-    } else {
-        Serial.println("APPS reading not updating WDT tick");
-    }
-
+void APPS_UpdateData(uint16_t rawReading1, 
+                     uint16_t rawReading2) { // changed uint16 from 32
     // Serial.print("Raw APPS1: ");
     // Serial.println(rawReading1);
     // Serial.print("Raw APPS2: ");

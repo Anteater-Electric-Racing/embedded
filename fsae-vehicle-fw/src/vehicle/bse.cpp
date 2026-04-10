@@ -35,12 +35,6 @@ void BSE_Init() {
 }
 
 void BSE_UpdateData(uint32_t bseReading1, uint32_t bseReading2) {
-    // Update clock for WDT
-    if (bse_last_run_tick = xTaskGetTickCount()) {
-    } else {
-        Serial.println("BSE reading not updating WDT tick");
-    }
-
     // Filter incoming values
     LOWPASS_FILTER(bseReading1, bseRawData.bseRawFront, bseAlpha);
     LOWPASS_FILTER(bseReading2, bseRawData.bseRawRear, bseAlpha);

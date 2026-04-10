@@ -8,6 +8,7 @@
 
 #include "peripherals/can.h"
 #include "peripherals/gpio.h"
+#include "peripherals/wdt.h"
 #include "utils/utils.h"
 #include <arduino_freertos.h>
 
@@ -64,6 +65,7 @@ void Motor_Init() {
 void threadMotor(void *pvParameters) {
     xLastWakeTime = xTaskGetTickCount();
     while (true) {
+        motor_last_run_tick = xTaskGetTickCount(); // Update WDT tick
         // Clear packet contents
         vcu1 = {0};
         bms1 = {0};

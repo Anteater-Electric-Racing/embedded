@@ -4,18 +4,22 @@
 
 #include "peripherals/wdt.h"
 #include "utils/utils.h"
-#include "vehicle/apps.h"
-#include "vehicle/bse.h"
 
 // Global watchdog tick tracking variables
-TickType_t bse_last_run_tick = 0;
-TickType_t apps_last_run_tick = 0;
+TickType_t adc_last_run_tick = 0;
+TickType_t motor_last_run_tick = 0;
+TickType_t telemetry_last_run_tick = 0;
 
 // Bitmask flag definition
-static uint8_t WDT_BIT_BSE = 0b01;
-static uint8_t WDT_BIT_APPS = 0b10;
+static uint8_t WDT_BIT_ADC = 0b001;
+static uint8_t WDT_BIT_MOTOR = 0b010;
+static uint8_t WDT_BIT_TELEMETRY = 0b100;
 
-static uint8_t WDT_REQUIRED_MASK = 0b00; // 0b00 represents no flags
+static uint8_t WDT_REQUIRED_MASK = 0b000; // 0b000 represents no flags
+
+#define ADC_FAULT_TIME_THRESHOLD_MS 1000
+#define MOTOR_FAULT_TIME_THRESHOLD_MS 1000
+#define TELEMETRY_FAULT_TIME_THRESHOLD_MS 1000
 
 static constexpr uint32_t WDT_CHECK_PERIOD_MS = 100;
 
@@ -23,8 +27,9 @@ static WDT_T4<WDT1> WDT;
 
 void WDT_Init() {
     TickType_t now = xTaskGetTickCount();
-    bse_last_run_tick = now;
-    apps_last_run_tick = now;
+    adc_last_run_tick = now;
+    motor_last_run_tick = now;
+    telemetry_last_run_tick = now;
 
     WDT_timings_t config;
 
@@ -40,45 +45,56 @@ void WDT_Init() {
 void WDT_Update_Task(void *pvParameters) {
     TickType_t now;
 
-    TickType_t bse_ageTicks;
-    uint32_t bse_ageMs;
+    TickType_t adc_ageTicks;
+    uint32_t adc_ageMs;
 
-    TickType_t apps_ageTicks;
-    uint32_t apps_ageMs;
+    TickType_t motor_ageTicks;
+    uint32_t motor_ageMs;
+
+    TickType_t telemetry_ageTicks;
+    uint32_t telemetry_ageMs;
 
     uint8_t mask;
 
     for (;;) {
         now = xTaskGetTickCount();
 
-        bse_ageTicks = now - bse_last_run_tick;
-        bse_ageMs = bse_ageTicks * portTICK_PERIOD_MS;
+        adc_ageTicks = now - adc_last_run_tick;
+        adc_ageMs = adc_ageTicks * portTICK_PERIOD_MS;
 
-        apps_ageTicks = now - apps_last_run_tick;
-        apps_ageMs = apps_ageTicks * portTICK_PERIOD_MS;
+        motor_ageTicks = now - motor_last_run_tick;
+        motor_ageMs = motor_ageTicks * portTICK_PERIOD_MS;
 
-        mask = 0b00;
+        telemetry_ageTicks = now - telemetry_last_run_tick;
+        telemetry_ageMs = telemetry_ageTicks * portTICK_PERIOD_MS;
 
-        // Fault time are both 100 ms
-        if (bse_ageMs >= BSE_FAULT_TIME_THRESHOLD_MS) {
-            mask |= WDT_BIT_BSE; // x |= y ==> x = x | y
+        mask = 0b000;
+
+        if (adc_ageMs >= ADC_FAULT_TIME_THRESHOLD_MS) {
+            mask |= WDT_BIT_ADC;
         }
-        if (apps_ageMs >= APPS_FAULT_TIME_THRESHOLD_MS) {
-            mask |= WDT_BIT_APPS;
+        if (motor_ageMs >= MOTOR_FAULT_TIME_THRESHOLD_MS) {
+            mask |= WDT_BIT_MOTOR;
+        }
+        if (telemetry_ageMs >= TELEMETRY_FAULT_TIME_THRESHOLD_MS) {
+            mask |= WDT_BIT_TELEMETRY;
         }
 
-        // pet if 0b00
+        // pet if 0b000
         if (mask == WDT_REQUIRED_MASK) {
             WDT.feed(); // pet hardware watchdog
             Serial.println("WDT fed successfully");
-        } else if (mask == WDT_BIT_BSE) {
-            Serial.println("WDT: BSE update overdue");
-        } else if (mask == WDT_BIT_APPS) {
-            Serial.println("WDT: APPS update overdue");
-        } else if (mask == (WDT_BIT_BSE | WDT_BIT_APPS)) { // mask = 0b11
-            Serial.println("WDT: BSE and APPS updates overdue");
+        } else {
+            if (mask & WDT_BIT_ADC) {
+                Serial.println("WDT: ADC thread overdue");
+            }
+            if (mask & WDT_BIT_MOTOR) {
+                Serial.println("WDT: Motor thread overdue");
+            }
+            if (mask & WDT_BIT_TELEMETRY) {
+                Serial.println("WDT: Telemetry thread overdue");
+            }
         }
-
         vTaskDelay(pdMS_TO_TICKS(WDT_CHECK_PERIOD_MS)); // 100ms delay
     }
 }
