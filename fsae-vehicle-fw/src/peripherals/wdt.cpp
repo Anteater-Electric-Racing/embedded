@@ -94,7 +94,7 @@ void WDT_Update_Task(void *pvParameters) {
         }
 
         // pet if 0b0000
-        if (mask == WDT_REQUIRED_MASK) {
+        if (mask & WDT_REQUIRED_MASK) {
             WDT.feed(); // pet hardware watchdog
             Serial.println("WDT fed successfully");
         } else {
