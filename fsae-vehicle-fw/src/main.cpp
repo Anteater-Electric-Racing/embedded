@@ -47,7 +47,7 @@ void setup() { // runs once on bootup
 
     xTaskCreate(threadADC, "threadADC", THREAD_ADC_STACK_SIZE, NULL,
                 THREAD_ADC_PRIORITY, NULL);
-    xTaskCreate(WDT_Update_Task, "threadWDT", 128, NULL, 3,
+    xTaskCreate(WDT_Update_Task, "threadWDT", 128, NULL, 10,
                 NULL); // runs wdt update task
     xTaskCreate(threadMotor, "threadMotor", THREAD_MOTOR_STACK_SIZE, NULL,
                 THREAD_MOTOR_PRIORITY, NULL);
@@ -75,7 +75,7 @@ void threadMain(void *pvParameters) {
     int toggle = 0;
 #endif
     while (true) {
-
+        main_last_run_tick = xTaskGetTickCount(); // Update WDT tick
         /*============LOW PRIORITY GPIO UPDATES============*/
         digitalWrite(13, HIGH); // orange led on teensy
 
