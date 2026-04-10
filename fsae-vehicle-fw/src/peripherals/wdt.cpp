@@ -78,7 +78,7 @@ void WDT_Update_Task(void *pvParameters) {
         telemetry_ageTicks = now - telemetry_last_run_tick;
         telemetry_ageMs = telemetry_ageTicks * portTICK_PERIOD_MS;
 
-        mask = 0b000;
+        mask = 0b0000;
 
         if (adc_ageMs >= ADC_FAULT_TIME_THRESHOLD_MS) {
             mask |= WDT_BIT_ADC;
@@ -93,7 +93,7 @@ void WDT_Update_Task(void *pvParameters) {
             mask |= WDT_BIT_TELEMETRY;
         }
 
-        // pet if 0b000
+        // pet if 0b0000
         if (mask == WDT_REQUIRED_MASK) {
             WDT.feed(); // pet hardware watchdog
             Serial.println("WDT fed successfully");
