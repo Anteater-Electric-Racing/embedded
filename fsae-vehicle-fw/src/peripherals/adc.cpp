@@ -2,6 +2,7 @@
 
 #include "adc.h"
 #include "./vehicle/telemetry.h"
+#include "peripherals/wdt.h"
 #include "utils/utils.h"
 #include "vehicle/apps.h"
 #include "vehicle/bse.h"
@@ -87,7 +88,9 @@ void threadADC(void *pvParameters) {
 
     lastWakeTime = xTaskGetTickCount();
     while (true) {
+        adc_last_run_tick = xTaskGetTickCount(); // Update WDT tick
         vTaskDelayUntil(&lastWakeTime, TICKTYPE_FREQUENCY);
+
         for (uint16_t currentIndexADC0 = 0;
              currentIndexADC0 < SENSOR_PIN_AMT_ADC0; ++currentIndexADC0) {
             uint16_t currentPinADC0 = adc0Pins[currentIndexADC0];
@@ -104,6 +107,7 @@ void threadADC(void *pvParameters) {
         ShockTravelUpdateData(
             adc0Reads[SUSP_TRAV_LINPOT1], adc0Reads[SUSP_TRAV_LINPOT2],
             adc0Reads[SUSP_TRAV_LINPOT3], adc0Reads[SUSP_TRAV_LINPOT4]);
+
         APPS_UpdateData(adc0Reads[APPS_1_INDEX], adc0Reads[APPS_2_INDEX]);
         BSE_UpdateData(adc0Reads[BSE_1_INDEX], adc0Reads[BSE_2_INDEX]);
     }

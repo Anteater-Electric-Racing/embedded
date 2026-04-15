@@ -4,6 +4,7 @@
 
 #include "vehicle/telemetry.h"
 
+#include "peripherals/wdt.h"
 #include <arduino_freertos.h>
 
 TelemetryData telemetryData;
@@ -77,7 +78,8 @@ void threadTelemetry(void *pvParameters) {
     static TickType_t lastWakeTime =
         xTaskGetTickCount(); // Initialize the last wake time
     while (true) {
-        taskENTER_CRITICAL(); // Enter critical section
+        telemetry_last_run_tick = xTaskGetTickCount(); // Update WDT tick
+        taskENTER_CRITICAL();                          // Enter critical section
         telemetryData = {
             .APPS_Travel = APPS_GetAPPSReading(),
 

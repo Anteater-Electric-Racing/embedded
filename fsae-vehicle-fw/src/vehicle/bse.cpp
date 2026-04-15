@@ -7,6 +7,7 @@
 #include "bse.h"
 
 #include "vehicle/faults.h"
+
 #include <arduino_freertos.h>
 
 typedef struct {

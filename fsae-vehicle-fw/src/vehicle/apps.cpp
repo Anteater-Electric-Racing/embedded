@@ -1,11 +1,13 @@
 // Anteater Electric Racing, 2025
 
 #include "apps.h"
+
+#include <arduino_freertos.h>
+#include <cmath>
+
 #include "utils/utils.h"
 #include "vehicle/faults.h"
 #include "vehicle/telemetry.h"
-#include <arduino_freertos.h>
-#include <cmath>
 
 typedef struct {
     float appsReading1_Percentage; // Percentage of pedal travel (0 to 1)
