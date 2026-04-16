@@ -131,9 +131,14 @@ void threadMotor(void *pvParameters) {
             vcu1.VCU_WorkMode = 0;
             vcu1.VCU_TorqueReq =
                 (uint8_t)((fabsf(motorData.desiredTorque) / MOTOR_MAX_TORQUE) *
-                          100); // Torque demand in percentage (0-99.6) 350Nm
-            vcu1.VCU_MotorMode = 1; // ? 1 : 2; // 0 = Standby, 1 = Drive, 2 =
-                                    // Generate Electricy, 3 = Reserved
+                          100 * 2.551F);
+
+            // this number only reaches 30?
+            // Scale Factor for INVT (back to Norm) 2.551 = 1/0.392
+
+            // Torque demand in percentage (0-99.6) 350Nm
+            vcu1.VCU_MotorMode = 1; // ? 1 : 2; // 0 = Standby, 1 = Drive, 2
+                                    // = Generate Electricy, 3 = Reserved
             break;
         }
 
@@ -423,8 +428,12 @@ void Motor_ClearToIdleFault() {
     RTMButton_Reset();
 }
 
+VCU1 *VCU_GetRawVCU() { return &vcu1; }
+
 void Motor_ClearFaultState() { motorData.state = MOTOR_STATE_DRIVING; }
 
 MotorState Motor_GetState() { return motorData.state; }
 
 float Motor_TargetTorque() { return targetTorque; }
+
+float Motor_desierdTorque() { return motorData.desiredTorque; }

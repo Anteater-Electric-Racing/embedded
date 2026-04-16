@@ -51,7 +51,7 @@ void CAN_Send(std::uint32_t id, std::uint64_t msg) {
 
     // @ksthakkar TODO: fix duplicate writes - watch CAN utilization
     can3.write(motorMsg);
-    can2.write(motorMsg);
+    can2.write(motorMsg); 
 }
 
 void CAN_Receive(std::uint32_t *rx_id, std::uint64_t *rx_data) {

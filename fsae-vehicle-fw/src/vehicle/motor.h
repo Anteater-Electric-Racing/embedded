@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "ifl100-36.h"
+
 #include <stdint.h>
 
 typedef enum {
@@ -29,3 +31,6 @@ void Motor_SetFaultState();
 void Motor_ClearFaultState();
 void Motor_ClearToIdleFault();
 float Motor_TargetTorque();
+float Motor_desierdTorque();
+
+VCU1 *VCU_GetRawVCU();

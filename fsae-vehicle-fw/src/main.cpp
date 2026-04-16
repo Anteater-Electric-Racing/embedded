@@ -118,8 +118,15 @@ void threadMain(void *pvParameters) {
         Serial.print(Motor_GetState());
         Serial.print(" | ");
 
-        Serial.print("T.out: ");
+        Serial.print("T.tx: ");
         Serial.print(Motor_TargetTorque());
+        Serial.print(" | ");
+        Serial.print("T.rx: ");
+        Serial.print(MCU_GetMCU1Data()->motorTorque);
+        Serial.print(" == ");
+        Serial.print(VCU_GetRawVCU()->VCU_TorqueReq);
+        Serial.print(" | ");
+        Serial.print(MCU_GetMCU1Data()->maxMotorTorque);
         Serial.print(" | ");
 
         Serial.print("APPS/BSE: ");
@@ -141,9 +148,9 @@ void threadMain(void *pvParameters) {
         Serial.print(" | ");
         Serial.print("B Volt: ");
         Serial.print(MCU_GetMCU3Data()->mcuVoltage);
-        Serial.print(" | ");
-        Serial.print("B Curr: ");
-        Serial.print(MCU_GetMCU3Data()->mcuCurrent);
+        // Serial.print(" | ");
+        // Serial.print("B Curr: ");
+        // Serial.print(MCU_GetMCU3Data()->mcuCurrent);
         Serial.print(" | ");
         Serial.print("P Curr: ");
         Serial.print(MCU_GetMCU3Data()->motorPhaseCurr);
@@ -159,12 +166,12 @@ void threadMain(void *pvParameters) {
         // // Serial.print(BMS_GetOrionData()->highTemp);
         // Serial.print(" | DCL: ");
         // Serial.print(BMS_GetOrionData()->dischargeLimit);
-        Serial.print(" | ");
-        Serial.print("MCU Temp: ");
-        Serial.print(MCU_GetMCU2Data()->mcuTemp);
-        Serial.print(" | ");
-        Serial.print("Mtr Temp: ");
-        Serial.print(MCU_GetMCU2Data()->motorTemp);
+        // Serial.print(" | ");
+        // Serial.print("MCU Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->mcuTemp);
+        // Serial.print(" | ");
+        // Serial.print("Mtr Temp: ");
+        // Serial.print(MCU_GetMCU2Data()->motorTemp);
 
         // Serial.print(" | ");
         // Serial.print("Regen: ");

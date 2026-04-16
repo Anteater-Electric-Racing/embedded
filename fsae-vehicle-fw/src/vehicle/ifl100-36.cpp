@@ -111,11 +111,9 @@ static void threadMCU(void *pvParameters) {
             taskENTER_CRITICAL(); // Enter critical section
             mcu1Data = {
                 .motorSpeed = CHANGE_ENDIANESS_16(mcu1.MCU_ActMotorSpd) *
-                              0.25F, // convert to RPM
-                .motorTorque = mcu1.MCU_ActMotorTq * 0.392F * torqueDirection *
-                               (MOTOR_MAX_TORQUE * 0.01F), // convert to Nm
-                .maxMotorTorque = mcu1.MCU_MaxMotorTq * 0.392F *
-                                  (MOTOR_MAX_TORQUE * 0.01F), // convert to Nm
+                              0.25F,                          // convert to RPM
+                .motorTorque = mcu1.MCU_ActMotorTq * 1.0F,    // convert to Nm
+                .maxMotorTorque = mcu1.MCU_MaxMotorTq * 1.0F, // convert to Nm
                 .maxMotorBrakeTorque = mcu1.MCU_MaxMotorBrakeTq * 0.392F *
                                        MOTOR_MAX_TORQUE, // convert to Nm
                 .motorDirection =
